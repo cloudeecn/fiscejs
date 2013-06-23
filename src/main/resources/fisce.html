@@ -1,0 +1,19 @@
+<html>
+<head>
+<script type="text/javascript">
+	function(){
+		var valid = false;
+		try {
+			valid = Uint32Array && Uint16Array && Uint8Array;
+		} catch (e) {
+		}
+		if (!valid) {
+			window.location.href = "help.html";
+		}
+	}();
+</script>
+<script type="text/javascript" src="fiscestu.js"></script>
+</head>
+<body>
+</body>
+</html>
