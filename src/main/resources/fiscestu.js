@@ -25,7 +25,7 @@ function FisceMethod() {
 	this.code = undefined;
 	this.nativeCode = undefined;
 
-	this.exceptionTabls = [];
+	this.exceptionTable = [];
 	this.lineNumberTable = [];
 
 	this.paramCount = 0;
