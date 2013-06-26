@@ -1,7 +1,8 @@
 <html>
 <head>
+<script type="text/javascript" src="jquery-1.10.1.min.js"></script>
 <script type="text/javascript">
-	function(){
+	(function(){
 		var valid = false;
 		try {
 			valid = Uint32Array && Uint16Array && Uint8Array;
@@ -10,9 +11,27 @@
 		if (!valid) {
 			window.location.href = "help.html";
 		}
-	}();
+	})();
 </script>
-<script type="text/javascript" src="fiscestu.js"></script>
+<script type="text/javascript" src="fisce-structs.js"></script>
+<script type="text/javascript" src="fisce-classloader.js"></script>
+<script type="text/javascript" src="fisce-context.js"></script>
+<script type="text/javascript">
+	jQuery(document).ready(function($){
+		var context=new FiScEContext();
+		
+		$.ajax({
+			url : "rt.json",
+			success : function(data){
+				var def=JSON.parse(data);
+				context.addClassDef(def);
+				var clazz=context.lookupClass("java/lang/Double");
+				console.log(clazz);
+				console.log(context);
+			}
+		});
+	});
+</script>
 </head>
 <body>
 </body>
