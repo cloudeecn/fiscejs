@@ -89,8 +89,10 @@ public class ClassConverter {
 				SimpleJSONUtil.add(sb, 3, "\"accessFlags\"",
 						(int) field.getAccessFlags());
 				SimpleJSONUtil.add(sb, 3, "\"posRel\"", field.getPosition());
-				SimpleJSONUtil.add(sb, 3, "\"size\"", field.getLength(), false);
-				
+				SimpleJSONUtil.add(sb, 3, "\"size\"", field.getLength());
+				SimpleJSONUtil.add(sb, 3, "\"constantValueIndex\"",
+						(int) field.getConstantValueIndex(), false);
+
 				SimpleJSONUtil.add(sb, 2, "}", i < max - 1);
 			}
 			SimpleJSONUtil.add(sb, 1, "]", true);
@@ -270,8 +272,8 @@ public class ClassConverter {
 			cc.convertJar(// "(function(context){context.addClassDef(",
 					new FileInputStream("rt.jar"),
 					// ");})(fisceContext);",
-					new OutputStreamWriter(new FileOutputStream("rt.json"),
-							"ISO8859-1"));
+					new OutputStreamWriter(new FileOutputStream(
+							"src/main/resources/rt.json"), "ISO8859-1"));
 		}
 		System.out.println("done");
 	}
