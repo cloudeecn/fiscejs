@@ -7,50 +7,83 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Writer;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import com.cirnoworks.fisce.util.SimpleJSONUtil;
-import com.cirnoworks.fisce.vm.VMContext;
-import com.cirnoworks.fisce.vm.data.ClassBase;
-import com.cirnoworks.fisce.vm.data.ClassField;
-import com.cirnoworks.fisce.vm.data.ClassMethod;
+import com.cirnoworks.fisce.classloader.utils.Phase0ClassLoader;
+import com.cirnoworks.fisce.classloader.utils.SimpleJSONUtil;
+import com.cirnoworks.fisce.classloader.utils.StringPool;
+import com.cirnoworks.fisce.data.ClassData;
+import com.cirnoworks.fisce.data.FieldData;
+import com.cirnoworks.fisce.data.MethodData;
+import com.cirnoworks.fisce.data.constants.ConstantData;
+import com.cirnoworks.fisce.data.constants.JSONExportableConstantData;
 import com.cirnoworks.fisce.vm.data.attributes.ExceptionHandler;
 import com.cirnoworks.fisce.vm.data.attributes.LineNumber;
-import com.cirnoworks.fisce.vm.data.constants.Constant;
-import com.cirnoworks.fisce.vm.data.constants.ConstantClass;
-import com.cirnoworks.fisce.vm.default_impl.DefaultClassLoader;
 
 public class ClassConverter {
-	private StringBuilder sb = new StringBuilder(16384);
+	private final StringBuilder sb = new StringBuilder(16384);
+
+	private final LinkedHashMap<JSONExportableConstantData, Integer> constantTable = new LinkedHashMap<JSONExportableConstantData, Integer>();
+	{
+		constantTable.put(null, 0);
+	}
+
+	public int poolConstant(JSONExportableConstantData constant) {
+		Integer pos = constantTable.get(constant);
+		if (pos == null) {
+			pos = constantTable.size();
+			constantTable.put(constant, pos);
+		}
+		return pos;
+	}
+
+	LinkedHashMap<String, Integer> stringTable = new LinkedHashMap<String, Integer>();
+	private final StringPool stringPool = new StringPool() {
+		{
+			stringTable.put(null, 0);
+		}
+
+		@Override
+		public int poolString(String str) {
+			Integer pos = stringTable.get(str);
+			if (pos == null) {
+				pos = stringTable.size();
+				stringTable.put(str, pos);
+			}
+			return pos;
+		}
+
+	};
 
 	private void convert(InputStream is) throws IOException {
-		DefaultClassLoader dcl = new DefaultClassLoader();
-		VMContext dummyContext = new VMContext();
-		ClassBase clazz = new ClassBase(dummyContext, dcl);
-		dcl.loadClassFromStream(clazz, is, dummyContext);
+		ClassData clazz = Phase0ClassLoader.loadClassFromStream(is);
 
 		sb.append("{\n");
 		SimpleJSONUtil.add(sb, 1, "\"name\"",
-				SimpleJSONUtil.escapeString(clazz.getName(), true));
-		SimpleJSONUtil.add(sb, 1, "\"sourceFile\"",
-				SimpleJSONUtil.escapeString(clazz.getSourceFile(), true));
+				stringPool.poolString(clazz.getName()), true);
 
-		// Version
-		SimpleJSONUtil.add(sb, 1, "\"minorVersion\"",
-				(int) clazz.getMinorVersion());
-		SimpleJSONUtil.add(sb, 1, "\"majorVersion\"",
-				(int) clazz.getMajorVersion());
+		if (clazz.getSourceFile() != null) {
+			SimpleJSONUtil.add(sb, 1, "\"sourceFile\"",
+					stringPool.poolString(clazz.getSourceFile()), true);
+		}
 
 		{ // Constant Pool
 			SimpleJSONUtil.add(sb, 1, "\"constants\"", "[", false);
-			Constant[] constants = clazz.getConstantPool();
+			ConstantData[] constants = clazz.getConstantPool();
 			for (int i = 0, max = constants.length; i < max; i++) {
-				Constant constant = constants[i];
-				if (constant == null) {
-					SimpleJSONUtil.add(sb, 2, "null", i < max - 1);
+				ConstantData constant = constants[i];
+				if (constant == null
+						|| !(constant instanceof JSONExportableConstantData)) {
+					SimpleJSONUtil.add(sb, 2, "0", i < max - 1);
 				} else {
-					constant.appendJSON(sb, 2, i < max - 1);
+					SimpleJSONUtil
+							.add(sb,
+									2,
+									String.valueOf(poolConstant((JSONExportableConstantData) constant)),
+									i < max - 1);
 				}
 			}
 			SimpleJSONUtil.add(sb, 1, "]", true);
@@ -58,39 +91,36 @@ public class ClassConverter {
 
 		SimpleJSONUtil.add(sb, 1, "\"accessFlags\"",
 				(int) clazz.getAccessFlags());
-		SimpleJSONUtil.add(sb, 1, "\"needFinalize\"",
-				String.valueOf(clazz.isNeedFinalize()));
 
-		if (clazz.getSuperClassInfo() != null) {
-			SimpleJSONUtil.add(sb, 1, "\"superClassName\"", SimpleJSONUtil
-					.escapeString(clazz.getSuperClassInfo().getName(), true));
-		}
+		SimpleJSONUtil.add(sb, 1, "\"superClassData\"",
+				(int) clazz.getSuperClassInfoIndex());
+
 		{// interfaces
-			SimpleJSONUtil.add(sb, 1, "\"interfaceNames\"", "[", false);
-			ConstantClass[] interfaceInfos = clazz.getInterfaceInfos();
+			SimpleJSONUtil.add(sb, 1, "\"interfaceDatas\"", "[", false);
+			int[] interfaceInfos = clazz.getInterfaceInfoIndexs();
 			for (int i = 0, max = interfaceInfos.length; i < max; i++) {
-				SimpleJSONUtil.add(sb, 2, SimpleJSONUtil.escapeString(
-						interfaceInfos[i].getName(), true), i < max - 1);
+				SimpleJSONUtil.add(sb, 2, String.valueOf(interfaceInfos[i]),
+						i < max - 1);
 			}
 			SimpleJSONUtil.add(sb, 1, "]", true);
 		}
 
 		{// Fields
 			SimpleJSONUtil.add(sb, 1, "\"fields\"", "[", false);
-			ClassField[] fields = clazz.getFields();
+			FieldData[] fields = clazz.getFields();
 			for (int i = 0, max = fields.length; i < max; i++) {
-				ClassField field = fields[i];
+				FieldData field = fields[i];
 				SimpleJSONUtil.add(sb, 2, "{", false);
 
 				SimpleJSONUtil.add(sb, 3, "\"name\"",
-						SimpleJSONUtil.escapeString(field.getName()));
+						stringPool.poolString(field.getName()));
 				SimpleJSONUtil.add(sb, 3, "\"descriptor\"",
-						SimpleJSONUtil.escapeString(field.getDescriptor()));
+						stringPool.poolString(field.getDescriptor()));
 				SimpleJSONUtil.add(sb, 3, "\"accessFlags\"",
 						(int) field.getAccessFlags());
 				SimpleJSONUtil.add(sb, 3, "\"posRel\"", field.getPosition());
 				SimpleJSONUtil.add(sb, 3, "\"size\"", field.getLength());
-				SimpleJSONUtil.add(sb, 3, "\"constantValueIndex\"",
+				SimpleJSONUtil.add(sb, 3, "\"constantValueData\"",
 						(int) field.getConstantValueIndex(), false);
 
 				SimpleJSONUtil.add(sb, 2, "}", i < max - 1);
@@ -100,49 +130,17 @@ public class ClassConverter {
 
 		{// Methods
 			SimpleJSONUtil.add(sb, 1, "\"methods\"", "[", false);
-			ClassMethod[] methods = clazz.getMethods();
+			MethodData[] methods = clazz.getMethods();
 			for (int i = 0, max = methods.length; i < max; i++) {
-				ClassMethod method = methods[i];
+				MethodData method = methods[i];
 				SimpleJSONUtil.add(sb, 2, "{", false);
 
 				SimpleJSONUtil.add(sb, 3, "\"name\"",
-						SimpleJSONUtil.escapeString(method.getName()));
+						stringPool.poolString(method.getName()));
 				SimpleJSONUtil.add(sb, 3, "\"descriptor\"",
-						SimpleJSONUtil.escapeString(method.getDescriptor()));
+						stringPool.poolString(method.getDescriptor()));
 				SimpleJSONUtil.add(sb, 3, "\"accessFlags\"",
 						(int) method.getAccessFlags());
-
-				SimpleJSONUtil.add(sb, 3, "\"paramStackUsage\"",
-						method.getParamCount());
-				SimpleJSONUtil.add(sb, 3, "\"paramType\"", SimpleJSONUtil
-						.escapeString(new String(method.getParamType(),
-								"ISO8859-1"), true));
-				SimpleJSONUtil.add(sb, 3, "\"returnType\"", SimpleJSONUtil
-						.escapeString(
-								String.valueOf((char) method.getReturnType()),
-								true));
-
-				SimpleJSONUtil.add(sb, 3, "\"parameterCount\"",
-						method.getParameterCount());
-				{// Parameter class names
-					SimpleJSONUtil.add(sb, 3, "\"parameterClassNames\"", "[",
-							false);
-					String[] pcns = method.getParameterTypeClassNames();
-					for (int j = 0, maxj = pcns.length; j < maxj; j++) {
-						String pcn = pcns[j];
-						SimpleJSONUtil.add(sb, 4,
-								SimpleJSONUtil.escapeString(pcn, true),
-								j < maxj - 1);
-					}
-					SimpleJSONUtil.add(sb, 3, "]");
-				}
-				SimpleJSONUtil.add(
-						sb,
-						3,
-						"\"returnClassName\"",
-						method.getReturnTypeClassName() == null ? "null"
-								: SimpleJSONUtil.escapeString(
-										method.getReturnTypeClassName(), true));
 
 				ExceptionHandler[] exceptionHandlerTable = method
 						.getExceptionTable();
@@ -154,16 +152,8 @@ public class ClassConverter {
 						SimpleJSONUtil
 								.add(sb, 5, "\"start\"", (int) eh.startPc);
 						SimpleJSONUtil.add(sb, 5, "\"end\"", (int) eh.endPc);
-						if (eh.catchClass != null) {
-							SimpleJSONUtil.add(sb, 5, "\"exceptionClassName\"",
-									SimpleJSONUtil.escapeString(eh.catchClass
-											.getName()));
-						} else {
-							if (eh.catchType != 0) {
-								throw new RuntimeException(
-										"Illegal ExceptionHandler: " + eh);
-							}
-						}
+						SimpleJSONUtil.add(sb, 5, "\"catchClassData\"",
+								(int) eh.catchClassIdx);
 						SimpleJSONUtil.add(sb, 5, "\"handler\"",
 								(int) eh.handlerPc, false);
 						SimpleJSONUtil.add(sb, 4, "}", j < maxj - 1);
@@ -210,7 +200,34 @@ public class ClassConverter {
 					sb.append('\n');
 					SimpleJSONUtil.add(sb, 3, "]", true);
 				}
-				SimpleJSONUtil.add(sb, 3, "\"converted\"", "true", false);
+				SimpleJSONUtil.add(sb, 3, "\"paramStackUsage\"",
+						method.getParamCount());
+				SimpleJSONUtil.add(sb, 3, "\"paramType\"", stringPool
+						.poolString(new String(method.getParamType(),
+								"ISO8859-1")));
+				SimpleJSONUtil.add(sb, 3, "\"returnType\"", stringPool
+						.poolString(String.valueOf((char) method
+								.getReturnType())));
+
+				SimpleJSONUtil.add(sb, 3, "\"parameterCount\"",
+						method.getParameterCount());
+
+				// Parameter class names
+				SimpleJSONUtil.add(sb, 3, "\"parameterClassNames\"", "[",
+						false);
+				{
+					String[] pcns = method.getParameterTypeClassNames();
+					for (int j = 0, maxj = pcns.length; j < maxj; j++) {
+						String pcn = pcns[j];
+						SimpleJSONUtil.add(sb, 4,
+								String.valueOf(stringPool.poolString(pcn)),
+								j < maxj - 1);
+					}
+				}
+				SimpleJSONUtil.add(sb, 3, "]", true);
+				SimpleJSONUtil.add(sb, 3, "\"returnClassName\"",
+						stringPool.poolString(method.getReturnTypeClassName()),
+						false);
 
 				SimpleJSONUtil.add(sb, 2, "}", i < max - 1);
 			}
@@ -231,7 +248,8 @@ public class ClassConverter {
 
 	public void convertJar(String prefix, InputStream is, String postfix,
 			Writer os) throws IOException {
-		SimpleJSONUtil.add(sb, 0, "[", false);
+		SimpleJSONUtil.add(sb, 0, "{", false);
+		SimpleJSONUtil.add(sb, 0, "\"classes\"", "[", false);
 		ZipInputStream jar = new ZipInputStream(is);
 		try {
 			ZipEntry entry;
@@ -249,8 +267,41 @@ public class ClassConverter {
 				e.printStackTrace();
 			}
 		}
+
 		sb.setLength(sb.length() - 1);
+		SimpleJSONUtil.add(sb, 0, "]", true);
+
+		SimpleJSONUtil.add(sb, 0, "\"constants\"", "[", false);
+		{
+			Iterator<JSONExportableConstantData> i = constantTable.keySet()
+					.iterator();
+			while (i.hasNext()) {
+				JSONExportableConstantData constant = i.next();
+				if (constant == null) {
+					SimpleJSONUtil.add(sb, 1, "null", i.hasNext());
+				} else {
+					constant.appendJSON(stringPool, sb, 1, i.hasNext());
+				}
+			}
+		}
+		SimpleJSONUtil.add(sb, 0, "]", true);
+
+		SimpleJSONUtil.add(sb, 0, "\"strings\"", "[", false);
+		{
+			Iterator<String> i = stringTable.keySet().iterator();
+			while (i.hasNext()) {
+				String str = i.next();
+				if (str == null) {
+					SimpleJSONUtil.add(sb, 1, "null", i.hasNext());
+				} else {
+					SimpleJSONUtil.add(sb, 1, SimpleJSONUtil.escapeString(str),
+							i.hasNext());
+				}
+			}
+		}
 		SimpleJSONUtil.add(sb, 0, "]", false);
+
+		SimpleJSONUtil.add(sb, 0, "}", false);
 		if (prefix != null) {
 			os.write(prefix);
 		}
@@ -273,8 +324,9 @@ public class ClassConverter {
 					new FileInputStream("rt.jar"),
 					// ");})(fisceContext);",
 					new OutputStreamWriter(new FileOutputStream(
-							"src/main/resources/rt.json"), "ISO8859-1"));
+							"src/test/resources/rt.json"), "ISO8859-1"));
 		}
+
 		System.out.println("done");
 	}
 }

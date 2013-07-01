@@ -67,9 +67,9 @@ FiScEClassLoader.prototype.loadClass = function(name) {
 	 * @returns {FiScEClass}
 	 */
 	var clazz;
-	name = FiScEContext.pool(name);
-	if (name.charAt(0) == FiScEConst.FY_TYPE_ARRAY) {
+	if (name.charAt(0) === FiScEConst.FY_TYPE_ARRAY) {
 		// Array
+		name = this.context.pool(name);
 		clazz = new FiScEClass(FiScEConst.TYPE_ARRAY);
 		clazz.name = name;
 		clazz.superClass = this.context.lookupClass(FiScEConst.FY_BASE_OBJECT);
@@ -90,6 +90,7 @@ FiScEClassLoader.prototype.loadClass = function(name) {
 		}
 	} else if (FiScEContext.mapPrimitivesRev[name]) {
 		// Primitive
+		name = this.context.pool(name);
 		clazz = new FiScEClass(FiScEConst.TYPE_PRIMITIVE);
 		clazz.name = name;
 		clazz.superClass = this.context.lookupClass(FiScEConst.FY_BASE_OBJECT);
@@ -101,6 +102,7 @@ FiScEClassLoader.prototype.loadClass = function(name) {
 			throw new FiScEException(FiScEConst.FY_EXCEPTION_CLASSNOTFOUND,
 					"Class not found: " + name);
 		}
+		name = this.context.pool(name);
 		clazz = new FiScEClass(FiScEConst.TYPE_OBJECT);
 
 		FiScEUtils.shallowClone(classDef, clazz);
@@ -113,9 +115,16 @@ FiScEClassLoader.prototype.loadClass = function(name) {
 				 * @returns {FiScEMethod}
 				 */
 				var method = methods[i];
-				method.fullName = "." + method.name + "." + method.descriptor;
-				method.uniqueName = clazz.name + method.fullName;
+
+				method.fullName = this.context.pool("." + method.name + "."
+						+ method.descriptor);
+				method.uniqueName = this.context.pool(clazz.name
+						+ method.fullName);
 				method.owner = clazz;
+				if (method.name === "<clinit>") {
+					clazz.clinit = method;
+				}
+				this.context.registerMethod(method);
 			}
 		}
 
@@ -127,9 +136,12 @@ FiScEClassLoader.prototype.loadClass = function(name) {
 				 * @returns {FiScEField}
 				 */
 				var field = fields[i];
-				field.fullName = "." + field.name + "." + field.descriptor;
-				field.uniqueName = clazz.name + field.fullName;
+				field.fullName = this.context.pool("." + field.name + "."
+						+ field.descriptor);
+				field.uniqueName = this.context.pool(clazz.name
+						+ field.fullName);
 				field.owner = clazz;
+				this.context.registerField(field);
 			}
 		}
 
@@ -137,8 +149,16 @@ FiScEClassLoader.prototype.loadClass = function(name) {
 			clazz.staticArea = new Uint32Array(clazz.staticSize);
 		}
 
-		if (clazz.superClassName) {
-			clazz.superClass = this.context.lookupClass(clazz.superClassName);
+		if (clazz.superClassData) {
+			var superClassName = clazz.superClassData.name;
+			clazz.superClass = this.context
+					.lookupClassFromConstant(clazz.superClassData);
+			if (!clazz.superClass) {
+				console.log("Class not found: " + superClassName);
+				throw new FiScEException(FiScEConst.FY_EXCEPTION_CLASSNOTFOUND,
+						clazz.superClassData.name);
+			}
+			delete clazz.superClassData;
 		}
 
 		if (!this.context.TOP_CLASS && clazz.name == FiScEConst.FY_BASE_OBJECT) {
@@ -182,15 +202,19 @@ FiScEClassLoader.prototype.phase2 = function(clazz) {
 		break;
 	case FiScEConst.TYPE_OBJECT: {
 		// Count method params already done.
+		{
+			var interfaceDatas = clazz.interfaceDatas;
+			var len = interfaceDatas.length;
 
-		var interfaceNames = clazz.interfaceNames;
-		var len = interfaceNames.length;
-		for ( var i = 0; i < len; i++) {
-			/**
-			 * @returns {String}
-			 */
-			var interfaceName = interfaceNames[i];
-			clazz.interfaces[i] = this.context.lookupClass(interfaceName);
+			for ( var i = 0; i < len; i++) {
+				/**
+				 * @returns {String}
+				 */
+				var interfaceData = interfaceDatas[i];
+				clazz.interfaces[i] = this.context
+						.lookupClassFromConstant(interfaceData);
+			}
+			delete clazz.interfaceDatas;
 		}
 
 		if (clazz.superClass) {
@@ -293,7 +317,7 @@ FiScEClassLoader.prototype.phase2 = function(clazz) {
 				}
 
 				// init static fields for reflection
-				if (field.constantValueIndex) {
+				if (field.constantValueData) {
 					if ((field.accessFlags & FiScEConst.FY_ACC_STATIC)
 							&& (field.accessFlags & FiScEConst.FY_ACC_FINAL)) {
 						switch (field.descriptor.charAt(0)) {
@@ -302,18 +326,17 @@ FiScEClassLoader.prototype.phase2 = function(clazz) {
 						case FiScEConst.FY_TYPE_SHORT:
 						case FiScEConst.FY_TYPE_CHAR:
 						case FiScEConst.FY_TYPE_INT:
-							clazz.staticArea[field.posAbs] = clazz.constants[field.constantValueIndex].value;
-							break;
 						case FiScEConst.FY_TYPE_FLOAT:
-							clazz.staticArea[field.posAbs] = clazz.constants[field.constantValueIndex].ieeeValue;
+							clazz.staticArea[field.posAbs] = field.constantValueData.value;
 							break;
 						case FiScEConst.FY_TYPE_DOUBLE:
-							clazz.staticArea[field.posAbs] = clazz.constants[field.constantValueIndex].ieeeValueHigh;
-							clazz.staticArea[field.posAbs + 1] = clazz.constants[field.constantValueIndex].ieeeValueLow;
-							break;
 						case FiScEConst.FY_TYPE_LONG:
+							clazz.staticArea[field.posAbs] = field.constantValueData.value[0];
+							clazz.staticArea[field.posAbs + 1] = field.constantValueData.value[1];
 							break;
-						// Handle type will be lazy loaded in Field.get()
+						case FiScEConst.FY_TYPE_HANDLE:
+							// Handle type will be lazy loaded in Field.get()
+							break;
 						}
 					}
 				}
@@ -347,7 +370,7 @@ FiScEClassLoader.prototype.canCast = function(from, to) {
 				 * @returns {FiScEClass}
 				 */
 				var intf = from.interfaces[i];
-				if(this.canCast(intf, to)){
+				if (this.canCast(intf, to)) {
 					return true;
 				}
 			}

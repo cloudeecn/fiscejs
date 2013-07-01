@@ -24,8 +24,10 @@
  */
 var FiScEUtils = {
 	/**
-	 * @param {Object} src
-	 * @param {Object} dest
+	 * @param {Object}
+	 *            src
+	 * @param {Object}
+	 *            dest
 	 */
 	shallowClone : function(src, dest) {
 		for ( var key in src) {
@@ -33,7 +35,6 @@ var FiScEUtils = {
 		}
 	}
 };
-
 
 function __FiScEConst() {
 	this.TYPE_OBJECT = 0;
@@ -274,7 +275,7 @@ function FiScEMethod() {
 	this.clinited = false;
 }
 
-var method=new FiScEMethod(); 
+var method = new FiScEMethod();
 
 function FiScEField() {
 	this.name = "";
@@ -301,7 +302,8 @@ function FiScEField() {
 
 /**
  * 
- * @param {Number} type
+ * @param {Number}
+ *            type
  */
 function FiScEClass(type) {
 	this.name = "";
@@ -312,9 +314,9 @@ function FiScEClass(type) {
 	this.constants = [];
 
 	this.accessFlags = 0;
-	this.needFinalize = false;
-	this.superClassName = undefined;
-	this.interfaceNames = [];
+
+//	this.superClassData = undefined;
+//	this.interfaceDatas = undefined;
 
 	this.fields = [];
 	this.methods = [];
@@ -324,6 +326,7 @@ function FiScEClass(type) {
 	this.phase = 0;
 
 	/* Filled by class loader */
+	this.needFinalize = false;
 	this.classId = 0;
 	this.sizeAbs = 0;
 	this.ofsInHeap = 0;
@@ -340,7 +343,7 @@ function FiScEClass(type) {
 	 * this.prm = { pType : "" };
 	 */
 
-	this.clinitThreadId = 0;
+	this.clinitThreadId = -1;
 	/**
 	 * @return FiScEMethod
 	 */
@@ -363,8 +366,10 @@ function FiScEClass(type) {
 /**
  * FiScEException
  * 
- * @param {String} clazz Class name for inner class
- * @param {String} msg message
+ * @param {String}
+ *            clazz Class name for inner class
+ * @param {String}
+ *            msg message
  */
 function FiScEException(clazz, message) {
 	this.clazz = clazz;
@@ -374,12 +379,18 @@ function FiScEException(clazz, message) {
 /**
  * FiScEInputStream
  * 
- * @param {FiScEContext} context
- * @param {Object} data
- * @param {function} readFunction
- * @param {function} readBlockFunction
- * @param {function} skipFunction
- * @param {function} closeFunction
+ * @param {FiScEContext}
+ *            context
+ * @param {Object}
+ *            data
+ * @param {function}
+ *            readFunction
+ * @param {function}
+ *            readBlockFunction
+ * @param {function}
+ *            skipFunction
+ * @param {function}
+ *            closeFunction
  * @returns
  */
 function FiScEInputStream(context, data, readFunction, readBlockFunction,
@@ -391,3 +402,4 @@ function FiScEInputStream(context, data, readFunction, readBlockFunction,
 	this.skipFunction = skipFunction;
 	this.closeFunction = closeFunction;
 };
+

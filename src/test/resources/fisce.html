@@ -1,8 +1,8 @@
 <html>
 <head>
 <script type="text/javascript" src="jquery-1.10.1.min.js"></script>
-<script type="text/javascript" src="qunit-1.12.0.js"></script>
 <link rel="stylesheet" href="qunit-1.12.0.css">
+<script type="text/javascript" src="qunit-1.12.0.js"></script>
 <script type="text/javascript">
 	(function() {
 		var valid = false;
@@ -15,84 +15,40 @@
 		}
 	})();
 </script>
-<script type="text/javascript" src="../src/fisce/portable.js"></script>
-<script type="text/javascript" src="../src/fisce/structs.js"></script>
-<script type="text/javascript" src="../src/fisce/classloader.js"></script>
-<script type="text/javascript" src="../src/fisce/context.js"></script>
+
+<script type="text/javascript" src="test.js"></script>
+
+<script type="text/javascript" src="fisce/portable.js"></script>
+
+<script type="text/javascript" src="fisce/structs.js"></script>
+
+<script type="text/javascript" src="fisce/context.js"></script>
+<script type="text/javascript" src="context.test.js"></script>
+
+<script type="text/javascript" src="fisce/classloader.js"></script>
+<script type="text/javascript" src="classloader.test.js"></script>
+
+
 <script type="text/javascript">
 	jQuery(document).ready(function($) {
 		$.ajax({
 			url : "rt.json",
 			success : function(data) {
-				testAll(data);
+				fisceTests.classDefData = data;
+				fisceTests.iterate(function(message, fun) {
+					test(message, fun);
+				});
 			}
 		});
 	});
 
-	function assertCanCast(context, from, to, expected) {
-		console.log("cast test " + from + " -> " + to);
-		var result = context.classLoader.canCast(context.lookupClass(from),
-				context.lookupClass(to));
-		console.log("=cast test " + from + " -> " + to + " = " + result);
-		strictEqual(result, expected, from
-				+ (expected ? " can cast to " : " can't cast to ") + to);
-	}
-
-	function testAll(classDefData) {
-		test("ClassLoader", function() {
-			var context = new FiScEContext();
-			context.addClassDef(JSON.parse(classDefData));
-
-			var names = [ FiScEConst.FY_BASE_STRING,
-					"[[[L" + FiScEConst.FY_BASE_STRING + ";", "[[[I", "int",
-					"double", FiScEConst.FY_BASE_DOUBLE,
-					FiScEConst.FY_BASE_MATH ];
-
-			var classes = [];
-
-			for ( var i = 0, max = names.length; i < max; i++) {
-				classes[i] = context.lookupClass(names[i]);
-			}
-			var clStr = context.lookupClass(FiScEConst.FY_BASE_STRING);
-			var clObj = context.lookupClass(FiScEConst.FY_BASE_OBJECT);
-			var clazz = context.lookupClass(FiScEConst.FY_BASE_INT);
-
-			strictEqual(context.classLoader.canCast(clStr, clObj), true,
-					"String can cast to Object");
-			strictEqual(context.classLoader.canCast(clStr, clazz), false,
-					"String can't cast to Integer");
-
-			assertCanCast(context, "[[[Ljava/lang/Integer;",
-					"[[[Ljava/lang/Object;", true);
-			assertCanCast(context, "[[[Ljava/lang/Integer;",
-					"[[Ljava/lang/Object;", true);
-			assertCanCast(context, "[[[Ljava/lang/Integer;",
-					"[[[[Ljava/lang/Object;", false);
-
-			assertCanCast(context, "[[[Ljava/lang/Integer;",
-					"[[[Ljava/lang/Number;", true);
-			assertCanCast(context, "[[[Ljava/lang/Integer;",
-					"[[Ljava/lang/Number;", false);
-			assertCanCast(context, "[[[Ljava/lang/Integer;",
-					"[[[[Ljava/lang/Number;", false);
-
-			assertCanCast(context, "int", "java/lang/Object", true);
-			assertCanCast(context, "int", "java/lang/Integer", false);
-
-			assertCanCast(context, "java/util/LinkedHashMap", "java/util/Map",
-					true);
-			assertCanCast(context, "java/util/LinkedHashMap",
-					"java/util/HashMap", true);
-			assertCanCast(context, "java/util/LinkedHashMap",
-					"java/lang/Cloneable", true);
-
-			console.log(context);
-		});
-	}
+	
 </script>
 </head>
 <body>
+	<pre id="console"></pre>
 	<div id="qunit"></div>
 	<div id="qunit-fixture"></div>
+
 </body>
 </html>
