@@ -3,18 +3,8 @@
 <script type="text/javascript" src="jquery-1.10.1.min.js"></script>
 <link rel="stylesheet" href="qunit-1.12.0.css">
 <script type="text/javascript" src="qunit-1.12.0.js"></script>
-<script type="text/javascript">
-	(function() {
-		var valid = false;
-		try {
-			valid = Uint32Array && Uint16Array && Uint8Array;
-		} catch (e) {
-		}
-		if (!valid) {
-			window.location.href = "help.html";
-		}
-	})();
-</script>
+
+<script type="text/javascript" src="fisce/typedarray.js"></script>
 
 <script type="text/javascript" src="test.js"></script>
 
