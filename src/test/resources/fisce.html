@@ -34,6 +34,9 @@
 		$.ajax({
 			url : "rt.json",
 			success : function(data) {
+				if(typeof data === 'object'){
+					data=JSON.stringify(data);
+				}
 				fisceTests.classDefData = data;
 				fisceTests.iterate(function(message, fun) {
 					test(message, fun);
