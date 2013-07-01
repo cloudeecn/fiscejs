@@ -39,6 +39,60 @@ var FiScEContext;
 		return array[idx];
 	}
 
+	/**
+	 * Walk through all interfaces from one class, and invoke a custom function
+	 * on it
+	 * 
+	 * @param {FiScEClass}
+	 *            clazz
+	 * @param {Function}
+	 *            fun
+	 * @param {Object}
+	 *            walked
+	 */
+	function walkInterfaces(clazz, fun, $this, walked) {
+		if (clazz.name === "EXCLUDE/fisce/test/TestTag2") {
+			var test_breakpoint = 0;
+			test_breakpoint++;
+		}
+		var ret;
+		var toWalk = [];
+		if (!walked) {
+			walked = {};
+		}
+
+		for ( var i = 0, max = clazz.interfaces.length; i < max; i++) {
+			/**
+			 * @returns {FiScEClass}
+			 */
+			var intf = clazz.interfaces[i];
+			if (!walked[intf.classId]) {
+				toWalk.push(intf);
+				walked[intf.classId] = true;
+				ret = fun.call($this, intf);
+				if (ret !== undefined) {
+					return ret;
+				}
+			}
+		}
+
+		for ( var i = 0, max = toWalk.length; i < max; i++) {
+			ret = walkInterfaces(toWalk[i], fun, $this, walked);
+			if (ret !== undefined) {
+				return ret;
+			}
+		}
+
+		if (((clazz.accessFlags & FiScEConst.FY_ACC_INTERFACE) === 0)
+				&& (clazz.superClass)) {
+			ret = walkInterfaces(clazz.superClass, fun, $this, walked);
+			if (ret !== undefined) {
+				return ret;
+			}
+		}
+		return undefined;
+	}
+
 	FiScEContext = function() {
 		this.classDef = {};
 
@@ -278,7 +332,7 @@ var FiScEContext;
 		var c;
 
 		var fid = this.mapFieldNameToId[this.pool(clazz.name + fullName)];
-		if (fid) {
+		if (fid !== undefined) {
 			return this.fields[fid];
 		}
 
@@ -293,20 +347,18 @@ var FiScEContext;
 			c = c.superClass;
 		}
 
-		c = clazz;
-		while (c) {
-			var interfaces = c.interfaces;
-			for ( var i = 0, max = interfaces.length; i < max; i++) {
-				var intf = interfaces[i];
-				fid = this.mapFieldNameToId[intf.name + fullName];
-				if (fid !== undefined) {
-					this.mapFieldNameToId[this.pool(clazz.name + fullName)] = fid;
-					return this.fields[fid];
-				}
+		return walkInterfaces(clazz,
+		/**
+		 * @param {FiScEClass}
+		 *            intf
+		 */
+		function(intf) {
+			var fid = this.mapFieldNameToId[intf.name + fullName];
+			if (fid !== undefined) {
+				this.mapFieldNameToId[this.pool(clazz.name + fullName)] = fid;
+				return this.fields[fid];
 			}
-
-			c = c.superClass;
-		}
+		}, this);
 		return undefined;
 	};
 
@@ -390,14 +442,9 @@ var FiScEContext;
 		 * @returns {FiScEClass}
 		 */
 		var c;
-		
-		if (fullName === ".method1.()I") {
-			var iasdf = 0;
-			iasdf++;
-		}
 
 		var mid = this.mapMethodNameToId[this.pool(clazz.name + fullName)];
-		if (mid) {
+		if (mid !== undefined) {
 			return this.methods[mid];
 		}
 
@@ -412,21 +459,18 @@ var FiScEContext;
 			c = c.superClass;
 		}
 
-		c = clazz;
-		while (c) {
-			var interfaces = c.interfaces;
-			for ( var i = 0, max = interfaces.length; i < max; i++) {
-				var intf = interfaces[i];
-				mid = this.mapMethodNameToId[intf.name + fullName];
-				if (mid !== undefined) {
-					this.mapMethodNameToId[this.pool(clazz.name + fullName)] = mid;
-					return this.methods[mid];
-				}
+		return walkInterfaces(clazz,
+		/**
+		 * @param {FiScEClass}
+		 *            intf
+		 */
+		function(intf) {
+			var mid = this.mapMethodNameToId[intf.name + fullName];
+			if (mid !== undefined) {
+				this.mapMethodNameToId[this.pool(clazz.name + fullName)] = mid;
+				return this.methods[mid];
 			}
-
-			c = c.superClass;
-		}
-		return undefined;
+		}, this);
 	};
 
 	/**

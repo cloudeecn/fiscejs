@@ -359,7 +359,7 @@ FiScEClassLoader.prototype.phase2 = function(clazz) {
  * @returns {Boolean} whether class [from] can cast to class [to]
  */
 FiScEClassLoader.prototype.canCast = function(from, to) {
-	console.log("+cast test " + from.name + " -> " + to.name);
+//	console.log("+cast test " + from.name + " -> " + to.name);
 	if (from === to || to === this.context.TOP_CLASS) {
 		return true;
 	}
