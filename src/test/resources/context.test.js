@@ -134,7 +134,7 @@
 				},
 				"    Hierarchy.fields" : function() {
 					/**
-					 * @returns {FiScEContext}
+					 * @returns {FyContext}
 					 */
 					var context = fisceTests.context();
 					var constant;

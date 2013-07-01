@@ -18,11 +18,11 @@
 /**
  * Class loader
  * 
- * @param {FiScEContext}
+ * @param {FyContext}
  *            context
  */
 
-function FiScEClassLoader(context) {
+function FyClassLoader(context) {
 	this.context = context;
 }
 
@@ -32,24 +32,24 @@ function FiScEClassLoader(context) {
  * @param {String}
  *            arrayName
  */
-FiScEClassLoader.getArrayContentType = function(arrayName) {
+FyClassLoader.getArrayContentType = function(arrayName) {
 	switch (arrayName.charAt(1)) {
-	case FiScEConst.FY_TYPE_BOOLEAN:
-	case FiScEConst.FY_TYPE_BYTE:
-		return FiScEConst.FY_AT_BYTE;
-	case FiScEConst.FY_TYPE_DOUBLE:
-	case FiScEConst.FY_TYPE_LONG:
-		return FiScEConst.FY_AT_LONG;
-	case FiScEConst.FY_TYPE_CHAR:
-	case FiScEConst.FY_TYPE_SHORT:
-		return FiScEConst.FY_AT_SHORT;
-	case FiScEConst.FY_TYPE_INT:
-	case FiScEConst.FY_TYPE_FLOAT:
-	case FiScEConst.FY_TYPE_HANDLE:
-	case FiScEConst.FY_TYPE_ARRAY:
-		return FiScEConst.FY_AT_INT;
+	case FyConst.FY_TYPE_BOOLEAN:
+	case FyConst.FY_TYPE_BYTE:
+		return FyConst.FY_AT_BYTE;
+	case FyConst.FY_TYPE_DOUBLE:
+	case FyConst.FY_TYPE_LONG:
+		return FyConst.FY_AT_LONG;
+	case FyConst.FY_TYPE_CHAR:
+	case FyConst.FY_TYPE_SHORT:
+		return FyConst.FY_AT_SHORT;
+	case FyConst.FY_TYPE_INT:
+	case FyConst.FY_TYPE_FLOAT:
+	case FyConst.FY_TYPE_HANDLE:
+	case FyConst.FY_TYPE_ARRAY:
+		return FyConst.FY_AT_INT;
 	default:
-		throw new FiScEException(null, "Illegal array type: " + arrayName + "("
+		throw new FyException(null, "Illegal array type: " + arrayName + "("
 				+ arrayName.charCodeAt(1) + ")");
 	}
 };
@@ -60,59 +60,59 @@ FiScEClassLoader.getArrayContentType = function(arrayName) {
  * @param {String}
  *            name
  */
-FiScEClassLoader.prototype.loadClass = function(name) {
+FyClassLoader.prototype.loadClass = function(name) {
 	/**
-	 * tell eclipse JSDT clazz is a FiScEClass
+	 * tell eclipse JSDT clazz is a FyClass
 	 * 
-	 * @returns {FiScEClass}
+	 * @returns {FyClass}
 	 */
 	var clazz;
-	if (name.charAt(0) === FiScEConst.FY_TYPE_ARRAY) {
+	if (name.charAt(0) === FyConst.FY_TYPE_ARRAY) {
 		// Array
 		name = this.context.pool(name);
-		clazz = new FiScEClass(FiScEConst.TYPE_ARRAY);
+		clazz = new FyClass(FyConst.TYPE_ARRAY);
 		clazz.name = name;
-		clazz.superClass = this.context.lookupClass(FiScEConst.FY_BASE_OBJECT);
-		clazz.arrayType = FiScEClassLoader.getArrayContentType(name);
+		clazz.superClass = this.context.lookupClass(FyConst.FY_BASE_OBJECT);
+		clazz.arrayType = FyClassLoader.getArrayContentType(name);
 		switch (name.charAt(1)) {
-		case FiScEConst.FY_TYPE_ARRAY:
+		case FyConst.FY_TYPE_ARRAY:
 			clazz.contentClass = this.context.lookupClass(name.substring(1,
 					name.length));
 			break;
-		case FiScEConst.FY_TYPE_HANDLE:
+		case FyConst.FY_TYPE_HANDLE:
 			clazz.contentClass = this.context.lookupClass(name.substring(2,
 					name.length - 1));
 			break;
 		default:
 			clazz.contentClass = this.context
-					.lookupClass(FiScEContext.primitives[name.charAt(1)]);
+					.lookupClass(FyContext.primitives[name.charAt(1)]);
 			break;
 		}
-	} else if (FiScEContext.mapPrimitivesRev[name]) {
+	} else if (FyContext.mapPrimitivesRev[name]) {
 		// Primitive
 		name = this.context.pool(name);
-		clazz = new FiScEClass(FiScEConst.TYPE_PRIMITIVE);
+		clazz = new FyClass(FyConst.TYPE_PRIMITIVE);
 		clazz.name = name;
-		clazz.superClass = this.context.lookupClass(FiScEConst.FY_BASE_OBJECT);
-		clazz.pType = FiScEContext.mapPrimitivesRev[name];
+		clazz.superClass = this.context.lookupClass(FyConst.FY_BASE_OBJECT);
+		clazz.pType = FyContext.mapPrimitivesRev[name];
 	} else {
 		// Normal class
 		var classDef = this.context.classDef[name];
 		if (!classDef) {
-			throw new FiScEException(FiScEConst.FY_EXCEPTION_CLASSNOTFOUND,
+			throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 					"Class not found: " + name);
 		}
 		name = this.context.pool(name);
-		clazz = new FiScEClass(FiScEConst.TYPE_OBJECT);
+		clazz = new FyClass(FyConst.TYPE_OBJECT);
 
-		FiScEUtils.shallowClone(classDef, clazz);
+		FyUtils.shallowClone(classDef, clazz);
 
 		{// Methods
 			var methods = clazz.methods;
 			var len = methods.length;
 			for ( var i = 0; i < len; i++) {
 				/**
-				 * @returns {FiScEMethod}
+				 * @returns {FyMethod}
 				 */
 				var method = methods[i];
 
@@ -133,7 +133,7 @@ FiScEClassLoader.prototype.loadClass = function(name) {
 			var len = fields.length;
 			for ( var i = 0; i < len; i++) {
 				/**
-				 * @returns {FiScEField}
+				 * @returns {FyField}
 				 */
 				var field = fields[i];
 				field.fullName = this.context.pool("." + field.name + "."
@@ -155,31 +155,31 @@ FiScEClassLoader.prototype.loadClass = function(name) {
 					.lookupClassFromConstant(clazz.superClassData);
 			if (!clazz.superClass) {
 				console.log("Class not found: " + superClassName);
-				throw new FiScEException(FiScEConst.FY_EXCEPTION_CLASSNOTFOUND,
+				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 						clazz.superClassData.name);
 			}
 			delete clazz.superClassData;
 		}
 
-		if (!this.context.TOP_CLASS && clazz.name == FiScEConst.FY_BASE_OBJECT) {
+		if (!this.context.TOP_CLASS && clazz.name == FyConst.FY_BASE_OBJECT) {
 			this.context.TOP_CLASS = clazz;
 		} else if (!this.context.TOP_THROWABLE
-				&& clazz.name == FiScEConst.FY_BASE_THROWABLE) {
+				&& clazz.name == FyConst.FY_BASE_THROWABLE) {
 			this.context.TOP_THROWABLE = clazz;
 		} else if (!this.context.TOP_ENUM
-				&& clazz.name == FiScEConst.FY_BASE_ENUM) {
+				&& clazz.name == FyConst.FY_BASE_ENUM) {
 			this.context.TOP_ENUM = clazz;
 		} else if (!this.context.TOP_ANNOTATION
-				&& clazz.name == FiScEConst.FY_BASE_ANNOTATION) {
+				&& clazz.name == FyConst.FY_BASE_ANNOTATION) {
 			this.context.TOP_ANNOTATION = clazz;
 		} else if (!this.context.TOP_SOFT_REF
-				&& clazz.name == FiScEConst.FY_REF_SOFT) {
+				&& clazz.name == FyConst.FY_REF_SOFT) {
 			this.context.TOP_SOFT_REF = clazz;
 		} else if (!this.context.TOP_WEAK_REF
-				&& clazz.name == FiScEConst.FY_REF_WEAK) {
+				&& clazz.name == FyConst.FY_REF_WEAK) {
 			this.context.TOP_WEAK_REF = clazz;
 		} else if (!this.context.TOP_PHANTOM_REF
-				&& clazz.name == FiScEConst.FY_REF_PHANTOM) {
+				&& clazz.name == FyConst.FY_REF_PHANTOM) {
 			this.context.TOP_PHANTOM_REF = clazz;
 		}
 	}
@@ -190,17 +190,17 @@ FiScEClassLoader.prototype.loadClass = function(name) {
 /**
  * Load class phase 2
  * 
- * @param {FiScEClass}
+ * @param {FyClass}
  *            clazz
  */
-FiScEClassLoader.prototype.phase2 = function(clazz) {
+FyClassLoader.prototype.phase2 = function(clazz) {
 	if (!clazz || !clazz.name || clazz.phase !== 1) {
 		throw "Passed illegal class to class loader phase 2";
 	}
 	switch (clazz.type) {
-	case FiScEConst.TYPE_ARRAY:
+	case FyConst.TYPE_ARRAY:
 		break;
-	case FiScEConst.TYPE_OBJECT: {
+	case FyConst.TYPE_OBJECT: {
 		// Count method params already done.
 		{
 			var interfaceDatas = clazz.interfaceDatas;
@@ -229,10 +229,10 @@ FiScEClassLoader.prototype.phase2 = function(clazz) {
 			var len = fields.length;
 			for ( var i = 0; i < len; i++) {
 				/**
-				 * @returns {FiScEField}
+				 * @returns {FyField}
 				 */
 				var field = fields[i];
-				if (field.accessFlags & FiScEConst.FY_ACC_STATIC) {
+				if (field.accessFlags & FyConst.FY_ACC_STATIC) {
 					field.posAbs = field.posRel;
 				} else {
 					field.posAbs = clazz.superClass.sizeAbs + field.posRel;
@@ -240,10 +240,10 @@ FiScEClassLoader.prototype.phase2 = function(clazz) {
 			}
 
 			/**
-			 * @returns {FiScEMethod}
+			 * @returns {FyMethod}
 			 */
 			var finalizeMethod = this.context.lookupMethodVirtual(clazz,
-					FiScEConst.FY_METHODF_FINALIZE);
+					FyConst.FY_METHODF_FINALIZE);
 
 			if (finalizeMethod && finalizeMethod.code.length > 1) {
 				clazz.needFinalize = true;
@@ -256,7 +256,7 @@ FiScEClassLoader.prototype.phase2 = function(clazz) {
 			var len = fields.length;
 			for ( var i = 0; i < len; i++) {
 				/**
-				 * @returns {FiScEField}
+				 * @returns {FyField}
 				 */
 				var field = fields[i];
 				field.posAbs = field.posRel;
@@ -264,15 +264,15 @@ FiScEClassLoader.prototype.phase2 = function(clazz) {
 		}
 
 		if (this.canCastWithNull(clazz, this.context.TOP_ANNOTATION)) {
-			clazz.accessFlags |= FiScEConst.FY_ACC_ANNOTATION;
+			clazz.accessFlags |= FyConst.FY_ACC_ANNOTATION;
 		} else if (this.canCastWithNull(clazz, this.context.TOP_ENUM)) {
-			clazz.accessFlags |= FiScEConst.FY_ACC_ENUM;
+			clazz.accessFlags |= FyConst.FY_ACC_ENUM;
 		} else if (this.canCastWithNull(clazz, this.context.TOP_PHANTOM_REF)) {
-			clazz.accessFlags |= FiScEConst.FY_ACC_PHANTOM_REF;
+			clazz.accessFlags |= FyConst.FY_ACC_PHANTOM_REF;
 		} else if (this.canCastWithNull(clazz, this.context.TOP_WEAK_REF)) {
-			clazz.accessFlags |= FiScEConst.FY_ACC_WEAK_REF;
+			clazz.accessFlags |= FyConst.FY_ACC_WEAK_REF;
 		} else if (this.canCastWithNull(clazz, this.context.TOP_SOFT_REF)) {
-			clazz.accessFlags |= FiScEConst.FY_ACC_SOFT_REF;
+			clazz.accessFlags |= FyConst.FY_ACC_SOFT_REF;
 		}
 
 		// fields data for gc
@@ -287,10 +287,10 @@ FiScEClassLoader.prototype.phase2 = function(clazz) {
 			var len = fields.length;
 			for ( var i = 0; i < len; i++) {
 				/**
-				 * @returns {FiScEField}
+				 * @returns {FyField}
 				 */
 				var field = fields[i];
-				if (field.accessFlags & FiScEConst.FY_ACC_STATIC) {
+				if (field.accessFlags & FyConst.FY_ACC_STATIC) {
 					clazz.fieldStatic[field.posAbs] = field;
 				} else {
 					clazz.fieldAbs[field.posAbs] = field;
@@ -306,35 +306,35 @@ FiScEClassLoader.prototype.phase2 = function(clazz) {
 							.substring(1, field.descriptor.length - 1));
 					break;
 				default:
-					var typeClassName = FiScEContext.primitives[field.descriptor
+					var typeClassName = FyContext.primitives[field.descriptor
 							.charAt(0)];
 					if (typeClassName) {
 						field.type = this.context.lookupClass(typeClassName);
 					} else {
-						throw new FiScEException(null,
+						throw new FyException(null,
 								"Illegal descriptor of field!");
 					}
 				}
 
 				// init static fields for reflection
 				if (field.constantValueData) {
-					if ((field.accessFlags & FiScEConst.FY_ACC_STATIC)
-							&& (field.accessFlags & FiScEConst.FY_ACC_FINAL)) {
+					if ((field.accessFlags & FyConst.FY_ACC_STATIC)
+							&& (field.accessFlags & FyConst.FY_ACC_FINAL)) {
 						switch (field.descriptor.charAt(0)) {
-						case FiScEConst.FY_TYPE_BOOLEAN:
-						case FiScEConst.FY_TYPE_BYTE:
-						case FiScEConst.FY_TYPE_SHORT:
-						case FiScEConst.FY_TYPE_CHAR:
-						case FiScEConst.FY_TYPE_INT:
-						case FiScEConst.FY_TYPE_FLOAT:
+						case FyConst.FY_TYPE_BOOLEAN:
+						case FyConst.FY_TYPE_BYTE:
+						case FyConst.FY_TYPE_SHORT:
+						case FyConst.FY_TYPE_CHAR:
+						case FyConst.FY_TYPE_INT:
+						case FyConst.FY_TYPE_FLOAT:
 							clazz.staticArea[field.posAbs] = field.constantValueData.value;
 							break;
-						case FiScEConst.FY_TYPE_DOUBLE:
-						case FiScEConst.FY_TYPE_LONG:
+						case FyConst.FY_TYPE_DOUBLE:
+						case FyConst.FY_TYPE_LONG:
 							clazz.staticArea[field.posAbs] = field.constantValueData.value[0];
 							clazz.staticArea[field.posAbs + 1] = field.constantValueData.value[1];
 							break;
-						case FiScEConst.FY_TYPE_HANDLE:
+						case FyConst.FY_TYPE_HANDLE:
 							// Handle type will be lazy loaded in Field.get()
 							break;
 						}
@@ -344,7 +344,7 @@ FiScEClassLoader.prototype.phase2 = function(clazz) {
 		}
 		break;
 	}
-	case FiScEConst.TYPE_PRIMITIVE:
+	case FyConst.TYPE_PRIMITIVE:
 		break;
 	}
 	clazz.phase = 2;
@@ -352,22 +352,22 @@ FiScEClassLoader.prototype.phase2 = function(clazz) {
 
 /**
  * 
- * @param {FiScEClass}
+ * @param {FyClass}
  *            from
- * @param {FiScEClass}
+ * @param {FyClass}
  *            to
  * @returns {Boolean} whether class [from] can cast to class [to]
  */
-FiScEClassLoader.prototype.canCast = function(from, to) {
+FyClassLoader.prototype.canCast = function(from, to) {
 //	console.log("+cast test " + from.name + " -> " + to.name);
 	if (from === to || to === this.context.TOP_CLASS) {
 		return true;
 	}
-	if (from.type === FiScEConst.TYPE_OBJECT) {
-		if (to.accessFlags & FiScEConst.FY_ACC_INTERFACE) {
+	if (from.type === FyConst.TYPE_OBJECT) {
+		if (to.accessFlags & FyConst.FY_ACC_INTERFACE) {
 			for ( var i = 0, max = from.interfaces.length; i < max; i++) {
 				/**
-				 * @returns {FiScEClass}
+				 * @returns {FyClass}
 				 */
 				var intf = from.interfaces[i];
 				if (this.canCast(intf, to)) {
@@ -378,10 +378,10 @@ FiScEClassLoader.prototype.canCast = function(from, to) {
 		if (from.superClass) {
 			return this.canCast(from.superClass, to);
 		}
-	} else if (from.type === FiScEConst.TYPE_ARRAY) {
-		if (to.type == FiScEConst.TYPE_ARRAY) {
+	} else if (from.type === FyConst.TYPE_ARRAY) {
+		if (to.type == FyConst.TYPE_ARRAY) {
 			return this.canCast(from.contentClass, to.contentClass);
-		} else if (to.type == FiScEConst.TYPE_OBJECT) {
+		} else if (to.type == FyConst.TYPE_OBJECT) {
 			return to === this.context.TOP_CLASS;
 		} else {
 			return false;
@@ -391,14 +391,14 @@ FiScEClassLoader.prototype.canCast = function(from, to) {
 };
 /**
  * 
- * @param {FiScEClass}
+ * @param {FyClass}
  *            from
- * @param {FiScEClass}
+ * @param {FyClass}
  *            to
  * @returns {Boolean} whether class [from] can cast to class [to] (if to is
  *          undefined/null it will return false)
  */
-FiScEClassLoader.prototype.canCastWithNull = function(from, to) {
+FyClassLoader.prototype.canCastWithNull = function(from, to) {
 	if (to === undefined || to === null) {
 		return false;
 	} else {

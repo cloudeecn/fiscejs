@@ -1,11 +1,11 @@
-var FiScETests;
+var FyTests;
 (function() {
-	FiScETests = function() {
+	FyTests = function() {
 		this.tests = {};
 		this.classDefData = undefined;
 	};
 
-	FiScETests.prototype.extend = function(obj) {
+	FyTests.prototype.extend = function(obj) {
 		for ( var key in obj) {
 			var value = obj[key];
 			if (typeof value === "function") {
@@ -24,7 +24,7 @@ var FiScETests;
 		}
 	};
 
-	FiScETests.prototype.iterate = function(fun) {
+	FyTests.prototype.iterate = function(fun) {
 		var keys = [];
 		for ( var key in this.tests) {
 			keys.push(key);
@@ -41,13 +41,13 @@ var FiScETests;
 	/**
 	 * initialize a context from classDefData
 	 * 
-	 * @returns {FiScEContext} context
+	 * @returns {FyContext} context
 	 */
-	FiScETests.prototype.context = function() {
-		var context = new FiScEContext();
+	FyTests.prototype.context = function() {
+		var context = new FyContext();
 		context.addClassDef(JSON.parse(this.classDefData));
 		return context;
 	};
 })();
 
-var fisceTests = new FiScETests();
+var fisceTests = new FyTests();

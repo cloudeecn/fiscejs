@@ -22,7 +22,7 @@
  * @param src
  * @param dest
  */
-var FiScEUtils = {
+var FyUtils = {
 	/**
 	 * @param {Object}
 	 *            src
@@ -36,7 +36,7 @@ var FiScEUtils = {
 	}
 };
 
-function __FiScEConst() {
+function __FyConst() {
 	this.TYPE_OBJECT = 0;
 	this.TYPE_PRIMITIVE = 1;
 	this.TYPE_ARRAY = 2;
@@ -113,7 +113,7 @@ function __FiScEConst() {
 
 	/* Core classes */
 	this.FY_BASE_STRING = "java/lang/String";
-	this.FY_BASE_VM = "com/cirnoworks/fisce/privat/FiScEVM";
+	this.FY_BASE_VM = "com/cirnoworks/fisce/privat/FyVM";
 	this.FY_BASE_ENUM = "java/lang/Enum";
 	this.FY_BASE_ANNOTATION = "java/lang/annotation/Annotation";
 	this.FY_BASE_STRING_BUILDER = "java/lang/StringBuilder";
@@ -220,14 +220,14 @@ function __FiScEConst() {
 
 }
 
-var FiScEConst = new __FiScEConst();
+var FyConst = new __FyConst();
 
-function FiScELineNumber() {
+function FyLineNumber() {
 	this.start = 0;
 	this.line = 0;
 }
 
-function FiScEExceptionHandler() {
+function FyExceptionHandler() {
 	this.start = 0;
 	this.end = 0;
 	this.exceptionClassName = "";
@@ -236,12 +236,12 @@ function FiScEExceptionHandler() {
 	/***************************************************************************
 	 * Filled in by class loader /**
 	 * 
-	 * @type {FiScEClass}
+	 * @type {FyClass}
 	 */
 	this.exceptionClass = undefined;
 }
 
-function FiScEMethod() {
+function FyMethod() {
 	this.name = "";
 	this.descriptor = "";
 	this.accessFlags = "";
@@ -275,9 +275,9 @@ function FiScEMethod() {
 	this.clinited = false;
 }
 
-var method = new FiScEMethod();
+var method = new FyMethod();
 
-function FiScEField() {
+function FyField() {
 	this.name = "";
 	this.descriptor = "";
 	this.accessFlags = 0;
@@ -305,7 +305,7 @@ function FiScEField() {
  * @param {Number}
  *            type
  */
-function FiScEClass(type) {
+function FyClass(type) {
 	this.name = "";
 	this.sourceFile = undefined;
 
@@ -345,7 +345,7 @@ function FiScEClass(type) {
 
 	this.clinitThreadId = -1;
 	/**
-	 * @return FiScEMethod
+	 * @return FyMethod
 	 */
 	this.clinit = undefined;
 
@@ -364,22 +364,22 @@ function FiScEClass(type) {
 	this.pType = undefined;
 }
 /**
- * FiScEException
+ * FyException
  * 
  * @param {String}
  *            clazz Class name for inner class
  * @param {String}
  *            msg message
  */
-function FiScEException(clazz, message) {
+function FyException(clazz, message) {
 	this.clazz = clazz;
 	this.message = message;
 }
 
 /**
- * FiScEInputStream
+ * FyInputStream
  * 
- * @param {FiScEContext}
+ * @param {FyContext}
  *            context
  * @param {Object}
  *            data
@@ -393,7 +393,7 @@ function FiScEException(clazz, message) {
  *            closeFunction
  * @returns
  */
-function FiScEInputStream(context, data, readFunction, readBlockFunction,
+function FyInputStream(context, data, readFunction, readBlockFunction,
 		skipFunction, closeFunction) {
 	this.context = context;
 	this.data = data;

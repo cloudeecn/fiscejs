@@ -1,7 +1,7 @@
-var FiScEHeap;
-var FiScEObject;
+var FyHeap;
+var FyObject;
 (function() {
-	FiScEHeap = function(context) {
+	FyHeap = function(context) {
 		this.context = context;
 
 		this.clazz = undefined;

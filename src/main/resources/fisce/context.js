@@ -15,7 +15,7 @@
  * fiscejs. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var FiScEContext;
+var FyContext;
 
 (function() {
 
@@ -43,7 +43,7 @@ var FiScEContext;
 	 * Walk through all interfaces from one class, and invoke a custom function
 	 * on it
 	 * 
-	 * @param {FiScEClass}
+	 * @param {FyClass}
 	 *            clazz
 	 * @param {Function}
 	 *            fun
@@ -63,7 +63,7 @@ var FiScEContext;
 
 		for ( var i = 0, max = clazz.interfaces.length; i < max; i++) {
 			/**
-			 * @returns {FiScEClass}
+			 * @returns {FyClass}
 			 */
 			var intf = clazz.interfaces[i];
 			if (!walked[intf.classId]) {
@@ -83,7 +83,7 @@ var FiScEContext;
 			}
 		}
 
-		if (((clazz.accessFlags & FiScEConst.FY_ACC_INTERFACE) === 0)
+		if (((clazz.accessFlags & FyConst.FY_ACC_INTERFACE) === 0)
 				&& (clazz.superClass)) {
 			ret = walkInterfaces(clazz.superClass, fun, $this, walked);
 			if (ret !== undefined) {
@@ -93,7 +93,7 @@ var FiScEContext;
 		return undefined;
 	}
 
-	FiScEContext = function() {
+	FyContext = function() {
 		this.classDef = {};
 
 		/* Classes begins from 1 */
@@ -110,13 +110,13 @@ var FiScEContext;
 
 		this.nativeHandlers = {};
 
-		this.classLoader = new FiScEClassLoader(this);
+		this.classLoader = new FyClassLoader(this);
 
 		/** Special types* */
 		/**
 		 * TOP_CLASS
 		 * 
-		 * @returns {FiScEClass}
+		 * @returns {FyClass}
 		 */
 		this.TOP_CLASS = undefined;
 		this.TOP_THROWABLE = undefined;
@@ -127,7 +127,7 @@ var FiScEContext;
 		this.TOP_PHANTOM_REF = undefined;
 	};
 
-	FiScEContext.primitives = {
+	FyContext.primitives = {
 		'Z' : 'boolean',
 		'B' : 'byte',
 		'S' : 'short',
@@ -139,7 +139,7 @@ var FiScEContext;
 		'V' : 'void'
 	};
 
-	FiScEContext.mapPrimitivesRev = {
+	FyContext.mapPrimitivesRev = {
 		'boolean' : 'Z',
 		'byte' : 'B',
 		'short' : 'S',
@@ -151,7 +151,7 @@ var FiScEContext;
 		'void' : 'V'
 	};
 
-	FiScEContext.stringPool = {};
+	FyContext.stringPool = {};
 
 	/**
 	 * Pool a string to string pool
@@ -160,16 +160,16 @@ var FiScEContext;
 	 *            string
 	 * @returns {String} result
 	 */
-	FiScEContext.prototype.pool = function(string) {
-		var ret = FiScEContext.stringPool[string];
+	FyContext.prototype.pool = function(string) {
+		var ret = FyContext.stringPool[string];
 		if (ret === undefined) {
 			ret = string;
-			FiScEContext.stringPool[string] = string;
+			FyContext.stringPool[string] = string;
 		}
 		return ret;
 	};
 
-	FiScEContext.prototype.addClassDef = function(data) {
+	FyContext.prototype.addClassDef = function(data) {
 		/**
 		 * @returns {Array}
 		 */
@@ -289,10 +289,10 @@ var FiScEContext;
 	/**
 	 * Register a field to context
 	 * 
-	 * @param {FiScEField}
+	 * @param {FyField}
 	 *            field
 	 */
-	FiScEContext.prototype.registerField = function(field) {
+	FyContext.prototype.registerField = function(field) {
 		var fid = this.mapFieldNameToId[field.uniqueName];
 		if (fid === undefined) {
 			fid = this.fields.length;
@@ -306,9 +306,9 @@ var FiScEContext;
 	 * 
 	 * @param {string}
 	 *            uniqueName
-	 * @returns {FiScEField} field
+	 * @returns {FyField} field
 	 */
-	FiScEContext.prototype.getField = function(uniqueName) {
+	FyContext.prototype.getField = function(uniqueName) {
 		var fid = this.mapFieldNameToId[uniqueName];
 		if (fid === undefined) {
 			return undefined;
@@ -319,15 +319,15 @@ var FiScEContext;
 	/**
 	 * Lookup field throw class and super classes
 	 * 
-	 * @param {FiScEClass}
+	 * @param {FyClass}
 	 *            clazz
 	 * @param {String}
 	 *            fullName
-	 * @returns {FiScEField}
+	 * @returns {FyField}
 	 */
-	FiScEContext.prototype.lookupFieldVirtual = function(clazz, fullName) {
+	FyContext.prototype.lookupFieldVirtual = function(clazz, fullName) {
 		/**
-		 * @returns {FiScEClass}
+		 * @returns {FyClass}
 		 */
 		var c;
 
@@ -349,7 +349,7 @@ var FiScEContext;
 
 		return walkInterfaces(clazz,
 		/**
-		 * @param {FiScEClass}
+		 * @param {FyClass}
 		 *            intf
 		 */
 		function(intf) {
@@ -367,17 +367,17 @@ var FiScEContext;
 	 * 
 	 * @param constant :
 	 *            field constant
-	 * @returns {FiScEField} field
+	 * @returns {FyField} field
 	 */
-	FiScEContext.prototype.lookupFieldVirtualFromConstant = function(constant) {
+	FyContext.prototype.lookupFieldVirtualFromConstant = function(constant) {
 		var resolvedField = constant.resolvedField;
 		if (!resolvedField) {
 			/**
-			 * @returns {FiScEClass}
+			 * @returns {FyClass}
 			 */
 			var clazz = this.lookupClass(constant.className);
 			if (clazz === undefined) {
-				throw new FiScEException(FiScEConst.FY_EXCEPTION_CLASSNOTFOUND,
+				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 						constant.className);
 			}
 
@@ -386,8 +386,8 @@ var FiScEContext;
 			if (resolvedField) {
 				constant.resolvedField = resolvedField;
 			} else {
-				throw new FiScEException(
-						FiScEConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+				throw new FyException(
+						FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 						constant.className + "." + constant.nameAndType
 								+ " not found");
 			}
@@ -400,10 +400,10 @@ var FiScEContext;
 	/**
 	 * Register a method to context
 	 * 
-	 * @param {FiScEMethod}
+	 * @param {FyMethod}
 	 *            method
 	 */
-	FiScEContext.prototype.registerMethod = function(method) {
+	FyContext.prototype.registerMethod = function(method) {
 		var mid = this.mapMethodNameToId[method.uniqueName];
 		if (mid === undefined) {
 			mid = this.methods.length;
@@ -417,9 +417,9 @@ var FiScEContext;
 	 * 
 	 * @param {string}
 	 *            uniqueName
-	 * @returns {FiScEMethod} method
+	 * @returns {FyMethod} method
 	 */
-	FiScEContext.prototype.getMethod = function(uniqueName) {
+	FyContext.prototype.getMethod = function(uniqueName) {
 		var mid = this.mapMethodNameToId[uniqueName];
 		if (mid === undefined) {
 			return undefined;
@@ -431,15 +431,15 @@ var FiScEContext;
 	 * 
 	 * Lookup method from specific class and it's super classes
 	 * 
-	 * @param {FiScEClass}
+	 * @param {FyClass}
 	 *            clazz
 	 * @param {String}
 	 *            fullName
-	 * @returns {FiScEMethod} method
+	 * @returns {FyMethod} method
 	 */
-	FiScEContext.prototype.lookupMethodVirtual = function(clazz, fullName) {
+	FyContext.prototype.lookupMethodVirtual = function(clazz, fullName) {
 		/**
-		 * @returns {FiScEClass}
+		 * @returns {FyClass}
 		 */
 		var c;
 
@@ -461,7 +461,7 @@ var FiScEContext;
 
 		return walkInterfaces(clazz,
 		/**
-		 * @param {FiScEClass}
+		 * @param {FyClass}
 		 *            intf
 		 */
 		function(intf) {
@@ -476,28 +476,28 @@ var FiScEContext;
 	/**
 	 * Lookup method virtually
 	 * 
-	 * @param {FiScEClass}
+	 * @param {FyClass}
 	 *            clazz
-	 * @param {FiScEMethod}
+	 * @param {FyMethod}
 	 *            method
-	 * @returns {FiScEMethod} method
+	 * @returns {FyMethod} method
 	 */
-	FiScEContext.prototype.lookupMethodVirtualByMethod = function(clazz, method) {
+	FyContext.prototype.lookupMethodVirtualByMethod = function(clazz, method) {
 		var mid = method.methodId;
 		/**
-		 * @returns {FiScEMethodd}
+		 * @returns {FyMethodd}
 		 */
 		var ret = clazz.virtualTable[mid];
 		if (ret === undefined) {
 			ret = this.lookupMethodVirtual(clazz, method.fullName);
 			if (ret === undefined
-					|| (ret.accessFlags & FiScEConst.FY_ACC_ABSTRACT)) {
-				throw new FiScEException(FiScEConst.FY_EXCEPTION_ABSTRACT,
+					|| (ret.accessFlags & FyConst.FY_ACC_ABSTRACT)) {
+				throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,
 						clazz.name + method.fullName);
 			}
-			if (ret.accessFlags & FiScEConst.FY_ACC_STATIC) {
-				throw new FiScEException(
-						FiScEConst.FY_EXCEPTION_INCOMPAT_CHANGE, "Method "
+			if (ret.accessFlags & FyConst.FY_ACC_STATIC) {
+				throw new FyException(
+						FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, "Method "
 								+ clazz.name + method.fullName
 								+ " changed to static");
 			}
@@ -509,13 +509,13 @@ var FiScEContext;
 	/**
 	 * Lookup method from all interfaces the class implemented
 	 * 
-	 * @param {FiScEClass}
+	 * @param {FyClass}
 	 *            clazz
 	 * @param {String}
 	 *            fullName
-	 * @returns {FiScEMethod} method
+	 * @returns {FyMethod} method
 	 */
-	FiScEContext.prototype.lookupMethodVirtualFromInterfaces = function(clazz,
+	FyContext.prototype.lookupMethodVirtualFromInterfaces = function(clazz,
 			fullName) {
 		/**
 		 * @returns {String}
@@ -526,7 +526,7 @@ var FiScEContext;
 			var interfaces = clazz.interfaces;
 			for ( var i = 0, max = interfaces.length; i < max; i++) {
 				/**
-				 * @returns {FiScEClass}
+				 * @returns {FyClass}
 				 */
 				var intf = interfaces[i];
 				var mid = this.mapMethodNameToId[intf.name + fullName];
@@ -548,17 +548,17 @@ var FiScEContext;
 	 * 
 	 * @param constant :
 	 *            method constant
-	 * @returns {FiScEMethod} method
+	 * @returns {FyMethod} method
 	 */
-	FiScEContext.prototype.lookupMethodVirtualFromConstant = function(constant) {
+	FyContext.prototype.lookupMethodVirtualFromConstant = function(constant) {
 		var resolvedMethod = constant.resolvedMethod;
 		if (!resolvedMethod) {
 			/**
-			 * @returns {FiScEClass}
+			 * @returns {FyClass}
 			 */
 			var clazz = this.lookupClass(constant.className);
 			if (clazz === undefined) {
-				throw new FiScEException(FiScEConst.FY_EXCEPTION_CLASSNOTFOUND,
+				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 						constant.className);
 			}
 
@@ -567,8 +567,8 @@ var FiScEContext;
 			if (resolvedMethod) {
 				constant.resolvedMethod = resolvedMethod;
 			} else {
-				throw new FiScEException(
-						FiScEConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+				throw new FyException(
+						FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 						constant.className + "." + constant.nameAndType
 								+ " not found");
 			}
@@ -581,10 +581,10 @@ var FiScEContext;
 	/**
 	 * Register a class to context
 	 * 
-	 * @param {FiScEClass}
+	 * @param {FyClass}
 	 *            clazz
 	 */
-	FiScEContext.prototype.registerClass = function(clazz) {
+	FyContext.prototype.registerClass = function(clazz) {
 		var cid = this.mapClassNameToId[clazz.name];
 		if (cid === undefined) {
 			cid = this.classes.length;
@@ -599,9 +599,9 @@ var FiScEContext;
 	 * 
 	 * @param {string}
 	 *            name
-	 * @returns {FiScEClass} class to return
+	 * @returns {FyClass} class to return
 	 */
-	FiScEContext.prototype.getClass = function(name) {
+	FyContext.prototype.getClass = function(name) {
 		var cid = this.mapClassNameToId[name];
 		if (cid === undefined || this.classes[cid] === undefined) {
 			return undefined;
@@ -614,9 +614,9 @@ var FiScEContext;
 	 * 
 	 * @param {string}
 	 *            name
-	 * @returns {FiScEClass} class to return
+	 * @returns {FyClass} class to return
 	 */
-	FiScEContext.prototype.lookupClass = function(name) {
+	FyContext.prototype.lookupClass = function(name) {
 		var clazz = this.getClass(name);
 		if (clazz === undefined) {
 			if (!name) {
@@ -625,7 +625,7 @@ var FiScEContext;
 			clazz = this.classLoader.loadClass(name);
 			this.registerClass(clazz);
 			this.classLoader.phase2(clazz);
-			this.lookupClass(FiScEConst.FY_BASE_CLASS);
+			this.lookupClass(FyConst.FY_BASE_CLASS);
 		}
 		return clazz;
 	};
@@ -637,11 +637,11 @@ var FiScEContext;
 	 *            the constant entry
 	 * @returns
 	 */
-	FiScEContext.prototype.lookupClassFromConstant = function(constant) {
+	FyContext.prototype.lookupClassFromConstant = function(constant) {
 		if (!constant.resolvedClass) {
 			constant.resolvedClass = this.lookupClass(constant.name);
 			if (!constant.resolvedClass) {
-				throw new FiScEException(FiScEConst.FY_EXCEPTION_CLASSNOTFOUND,
+				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 						constant.name);
 			}
 			delete constant.name;

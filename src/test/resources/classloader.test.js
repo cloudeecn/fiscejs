@@ -11,19 +11,19 @@
 		"    ClassLoader" : function() {
 			var context = fisceTests.context();
 
-			var names = [ FiScEConst.FY_BASE_STRING,
-					"[[[L" + FiScEConst.FY_BASE_STRING + ";", "[[[I", "int",
-					"double", FiScEConst.FY_BASE_DOUBLE,
-					FiScEConst.FY_BASE_MATH ];
+			var names = [ FyConst.FY_BASE_STRING,
+					"[[[L" + FyConst.FY_BASE_STRING + ";", "[[[I", "int",
+					"double", FyConst.FY_BASE_DOUBLE,
+					FyConst.FY_BASE_MATH ];
 
 			var classes = [];
 
 			for ( var i = 0, max = names.length; i < max; i++) {
 				classes[i] = context.lookupClass(names[i]);
 			}
-			var clStr = context.lookupClass(FiScEConst.FY_BASE_STRING);
-			var clObj = context.lookupClass(FiScEConst.FY_BASE_OBJECT);
-			var clazz = context.lookupClass(FiScEConst.FY_BASE_INT);
+			var clStr = context.lookupClass(FyConst.FY_BASE_STRING);
+			var clObj = context.lookupClass(FyConst.FY_BASE_OBJECT);
+			var clazz = context.lookupClass(FyConst.FY_BASE_INT);
 
 			strictEqual(context.classLoader.canCast(clStr, clObj), true,
 					"String can cast to Object");

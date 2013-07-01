@@ -1,4 +1,4 @@
-var FiScEPortable = {};
+var FyPortable = {};
 
 // We use ArrayBuffer for converting floats from/to ieee754 integers by default
 (function() {
@@ -9,7 +9,7 @@ var FiScEPortable = {};
 	 * @param {Number} floatValue
 	 * @returns {Number} ieee754 int
 	 */
-	FiScEPortable.floatToInt = function(floatValue) {
+	FyPortable.floatToInt = function(floatValue) {
 		arrayView.setFloat32(0, floatValue);
 		return arrayView.getInt32(0);
 	};
@@ -19,7 +19,7 @@ var FiScEPortable = {};
 	 * @param {Number} intValue
 	 * @returns {Number} floatValue
 	 */
-	FiScEPortable.intToFloat = function(intValue) {
+	FyPortable.intToFloat = function(intValue) {
 		arrayView.setInt32(0, floatValue);
 		return arrayView.getFloat32(0);
 	};
@@ -30,7 +30,7 @@ var FiScEPortable = {};
 	 * @param {Array} container int pair container, if null/undefined,will create a new one
 	 * @returns {Array} int pair
 	 */
-	FiScEPortable.doubleToLong = function(doubleValue,container){
+	FyPortable.doubleToLong = function(doubleValue,container){
 		if(!container){
 			container=new Array(2);
 		}
@@ -45,7 +45,7 @@ var FiScEPortable = {};
 	 * @param {Array} container int pair container
 	 * @returns {Number} doubleValue
 	 */
-	FiScEPortable.longToDouble = function(container){
+	FyPortable.longToDouble = function(container){
 		arrayView.setInt32(0,container[0]);
 		arrayView.setInt32(4,container[1]);
 		return arrayView.getFloat64(0);
