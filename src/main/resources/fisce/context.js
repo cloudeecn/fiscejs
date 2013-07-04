@@ -18,6 +18,7 @@
 var FyContext;
 
 (function() {
+	"use strict";
 
 	/**
 	 * lookup constant from constant pool
@@ -111,6 +112,7 @@ var FyContext;
 		this.nativeHandlers = {};
 
 		this.classLoader = new FyClassLoader(this);
+		this.heap = new FyHeap(this);
 
 		/** Special types* */
 		/**
@@ -386,8 +388,7 @@ var FyContext;
 			if (resolvedField) {
 				constant.resolvedField = resolvedField;
 			} else {
-				throw new FyException(
-						FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+				throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 						constant.className + "." + constant.nameAndType
 								+ " not found");
 			}
@@ -492,13 +493,12 @@ var FyContext;
 			ret = this.lookupMethodVirtual(clazz, method.fullName);
 			if (ret === undefined
 					|| (ret.accessFlags & FyConst.FY_ACC_ABSTRACT)) {
-				throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,
-						clazz.name + method.fullName);
+				throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT, clazz.name
+						+ method.fullName);
 			}
 			if (ret.accessFlags & FyConst.FY_ACC_STATIC) {
-				throw new FyException(
-						FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, "Method "
-								+ clazz.name + method.fullName
+				throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+						"Method " + clazz.name + method.fullName
 								+ " changed to static");
 			}
 			clazz.virtualTable[mid] = ret;
@@ -567,8 +567,7 @@ var FyContext;
 			if (resolvedMethod) {
 				constant.resolvedMethod = resolvedMethod;
 			} else {
-				throw new FyException(
-						FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+				throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 						constant.className + "." + constant.nameAndType
 								+ " not found");
 			}

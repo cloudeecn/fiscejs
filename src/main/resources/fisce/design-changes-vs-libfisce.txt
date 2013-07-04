@@ -1,0 +1,19 @@
+1. Load class from prepared json data
+2. Static area of classes moved to Heap
+3. Getter/Setters in Heap
+### = Array Field Static
+get###Raw get raw data from ### (don't support long[] double[])
+get###RawLongTo get long/double raw data to array
+get###Boolean get boolean data from ###
+get###Int get int data from ### (byte[] char[] short[] int[] Object[])
+get###Float get float data
+get###Double get double data
+
+put###Raw put raw data to ### (don't support long[] double[])
+put###RawLongFrom put raw long/double data to ###
+put###Boolean put boolean data to ###
+put###Int put int data to ###(byte[] char[] short[] int[] Object[])
+put###Float put float data to ###
+put###Double put double data to ###
+
+4. Use JavaScript's native new object/gc instead of a heap memory pool
