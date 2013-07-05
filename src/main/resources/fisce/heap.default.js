@@ -305,4 +305,79 @@
 		var rawData = this.statics[clazz.classId];
 		FyPortable.doubleToLong(value, rawData, pos);
 	};
+
+	FyHeap.prototype.arrayCopy = function(sHandle, sPos, dHandle, dPos, len) {
+		var sObj = this.getObject(sHandle);
+		var dObj = this.getObject(dHandle);
+		/**
+		 * @returns {FyClass}
+		 */
+		var sClass = sObj.clazz;
+		/**
+		 * @returns {FyClass}
+		 */
+		var dClass = dObj.clazz;
+		var i;
+		if (sClass.type != FyConst.TYPE_ARRAY) {
+			throw new FyException(FyConst.FY_EXCEPTION_STORE,
+					"src is not array");
+		}
+		if (dClass.type != FyConst.TYPE_ARRAY) {
+			throw new FyException(FyConst.FY_EXCEPTION_STORE,
+					"dest is not array");
+		}
+		if (!this.context.classLoader.canCast(sClass.contentClass,
+				dClass.contentClass)) {
+			throw new FyException(FyConst.FY_EXCEPTION_STORE, "Can't cast "
+					+ sClass.contentClass.name + " to "
+					+ dClass.contentClass.name);
+		}
+		if (sPos < 0 || dPos < 0 || (sPos + len > this.arrayLength(sHandle))
+				|| (dPos + len > this.arrayLength(dHandle))) {
+			throw new FyException(FyConst.FY_EXCEPTION_AIOOB, sPos + "/"
+					+ this.arrayLength(sHandle) + " => " + dPos + "/"
+					+ this.arrayLength(dHandle) + " len=" + len);
+		}
+		if (sClass.name === "[J") {
+			len <<= 1;
+			sPos <<= 1;
+			dPos <<= 1;
+		}
+		for (i = 0; i < len; i++) {
+			dObj.data[dPos + i] = sObj.data[sPos + i];
+		}
+	};
+
+	FyHeap.prototype.clone = function(src) {
+		var obj = this.getObject(src);
+		/**
+		 * @returns {FyClass}
+		 */
+		var clazz = obj.clazz;
+		/**
+		 * @returns {Number}
+		 */
+		var ret;
+		/**
+		 * @returns {FyObject}
+		 */
+		var rObj;
+		var len;
+		var i;
+		if (clazz.type === FyConst.TYPE_OBJECT) {
+			ret = this.allocate(clazz);
+			rObj = this.getObject(ret);
+			for (i = 0; i < clazz.sizeAbs; i++) {
+				rObj.rawData[i] = obj.rawData[i];
+			}
+		} else if (clazz.type === FyConst.TYPE_Array) {
+			ret = this.allocateArray(clazz, len);
+			len = this.arrayLength(src);
+			this.arrayCopy(src, 0, ret, 0, len);
+		} else {
+			throw "Illegal object type " + clazz.type + " for class to clone: "
+					+ clazz.name;
+		}
+		return ret;
+	};
 })();

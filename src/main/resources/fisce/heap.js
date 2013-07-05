@@ -248,6 +248,12 @@ var FyObject;
 		 * @returns {FyField}
 		 */
 		var countField;
+		var len;
+		var ofs;
+		var cah;
+		var i;
+		var ret = "";
+
 		if (!handle) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
@@ -259,6 +265,73 @@ var FyObject;
 		offsetField = this.context.getField(FyConst.stringOffset);
 		countField = this.context.getField(FyConst.stringCount);
 
+		ofs = this.getFieldInt(handle, offsetField.posAbs);
+		len = this.getFieldInt(handle, countField.posAbs);
+		cah = this.getFieldInt(handle, valueField.posAbs);
+
+		for (i = 0; i < len; i++) {
+			ret += String.fromCharCode(this.getArrayInt(cah, i + ofs) & 0xffff);
+		}
+		return ret;
 	};
 
+	/**
+	 * 
+	 * @param {String}
+	 *            str
+	 * @returns {Number} handle
+	 */
+	FyHeap.prototype.makeString = function(str) {
+		/**
+		 * @returns {FyField}
+		 */
+		var valueField;
+		/**
+		 * @returns {FyField}
+		 */
+		var offsetField;
+		/**
+		 * @returns {FyField}
+		 */
+		var countField;
+		var cah;
+		var i;
+		var ret;
+
+		if (this.context.lookupClass(FyConst.FY_BASE_STRING) === undefined) {
+			throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
+					FyConst.FY_BASE_STRING);
+		}
+		valueField = this.context.getField(FyConst.stringValue);
+		offsetField = this.context.getField(FyConst.stringOffset);
+		countField = this.context.getField(FyConst.stringCount);
+
+		cah = this.allocateArray(this.context.lookupClass("[C"), str.length);
+		ret = this.allocate(this.context.lookupClass(FyConst.FY_BASE_STRING));
+		this.putFieldInt(ret, valueField.posAbs, cah);
+		this.putFieldInt(ret, offsetField.posAbs, 0);
+		this.putFieldInt(ret, countField.posAbs, str.length);
+
+		for (i = 0; i < str.length; i++) {
+			this.putArrayInt(cah, i, str.charCodeAt(i) & 0xffff);
+		}
+		return ret;
+	};
+
+	/**
+	 * 
+	 * @param {String}
+	 *            str
+	 * @returns {Number} handle
+	 */
+	FyHeap.prototype.literal = function(str) {
+		var handle = this.literials[str];
+		if (handle === undefined) {
+			handle = this.makeString(str);
+			this.literials[str] = handle;
+		}
+		return handle;
+	};
+	
+	
 })();
