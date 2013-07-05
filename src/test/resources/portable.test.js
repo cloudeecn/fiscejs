@@ -1,8 +1,10 @@
 (function() {
 	"use strict";
 	fisceTests.extend({
-		"    Performance" : function() {
-			var i, j, ROUNDS = 1024, TIMES = 4096;
+		"     Performance" : function() {
+			var i, j, ROUNDS = 256, TIMES = 16384;
+			var array = new Array(TIMES);
+			var farray = new Array(TIMES);
 			var intArray = new Uint32Array(TIMES);
 			var floatArray = new Float32Array(TIMES);
 			var arrayBuffer = new ArrayBuffer(TIMES << 2);
@@ -10,6 +12,30 @@
 			var bufferBackedFloatArray = new Float32Array(arrayBuffer);
 			var dataView = new DataView(arrayBuffer);
 			var begin, end;
+
+			console.log("Testing " + ROUNDS + " rounds of int->array");
+			begin = performance.now();
+			for (j = 0; j < ROUNDS; j++) {
+				for (i = 0; i < TIMES; i++) {
+					array[i] = i;
+				}
+			}
+			end = performance.now();
+			console.log("done. time=" + (end - begin));
+			ok(true, ROUNDS + " rounds " + (TIMES / 256)
+					+ "kB ints writes to array: " + (end - begin));
+
+			console.log("Testing " + ROUNDS + " rounds of float->array");
+			begin = performance.now();
+			for (j = 0; j < ROUNDS; j++) {
+				for (i = 0; i < TIMES; i++) {
+					farray[i] = i + 0.1;
+				}
+			}
+			end = performance.now();
+			console.log("done. time=" + (end - begin));
+			ok(true, ROUNDS + " rounds " + (TIMES / 256)
+					+ "kB floats writes to array: " + (end - begin));
 
 			console.log("Testing " + ROUNDS + " rounds of Uint32Array");
 			begin = performance.now();
