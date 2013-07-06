@@ -71,49 +71,50 @@
 			switch (clazz.name.charAt(1)) {
 			case 'Z':
 			case 'B':
-				object.data = new Int8Array(rawData);
+				object.data = new Int8Array(buf);
 				break;
 			case 'S':
-				object.data = new Int16Array(rawData);
+				object.data = new Int16Array(buf);
 				break;
 			case 'C':
-				object.data = new Uint16Array(rawData);
+				object.data = new Uint16Array(buf);
 				break;
 			case 'L':
 			case 'I':
-				object.data = new Int32Array(rawData);
+				object.data = new Int32Array(buf);
 				break;
 			case 'F':
-				object.data = new Float32Array(rawData);
+				object.data = new Float32Array(buf);
 				break;
 			case 'J':
-				object.data = new Uint32Array(rawData);
+				object.data = new Uint32Array(buf);
 				break;
 			case 'D':
-				object.data = new Float64Array(rawData);
+				object.data = new Float64Array(buf);
 				break;
 			default:
 				throw "Illegal array class: " + clazz.name;
 			}
 		} else {
-			object.data = new Int32Array(size);
+			object.data = object.rawData;
 		}
 
 		if (this.protectMode) {
 			this.protectedObjects[handle] = true;
 		}
 		this.totalObjects++;
+		return handle;
 	};
 
 	FyHeap.prototype.getArrayRaw = function(handle, index) {
 		var arr = this.getObject(handle);
-		this.checkLength(arr, idx);
+		this.checkLength(arr, index);
 		return arr.rawData[index];
 	};
 
-	FyHeap.prototype.getArrayRowLongTo = function(handle, index, tarray, tindex) {
+	FyHeap.prototype.getArrayRawLongTo = function(handle, index, tarray, tindex) {
 		var arr = this.getObject(handle);
-		this.checkLength(arr, idx);
+		this.checkLength(arr, index);
 		var rawData = arr.rawData;
 		tarray[tindex] = rawData[index << 1];
 		tarray[tindex + 1] = rawData[(index << 1) + 1];
@@ -121,63 +122,114 @@
 
 	FyHeap.prototype.getArrayBoolean = function(handle, index) {
 		var arr = this.getObject(handle);
-		this.checkLength(arr, idx);
+		this.checkLength(arr, index);
+		return arr.data[index] ? true : false;
+	};
+
+	FyHeap.prototype.getArrayByte = function(handle, index) {
+		var arr = this.getObject(handle);
+		this.checkLength(arr, index);
+		return arr.data[index];
+	};
+
+	FyHeap.prototype.getArrayShort = function(handle, index) {
+		var arr = this.getObject(handle);
+		this.checkLength(arr, index);
+		return arr.data[index];
+	};
+
+	FyHeap.prototype.getArrayChar = function(handle, index) {
+		var arr = this.getObject(handle);
+		this.checkLength(arr, index);
 		return arr.data[index];
 	};
 
 	FyHeap.prototype.getArrayInt = function(handle, index) {
 		var arr = this.getObject(handle);
-		this.checkLength(arr, idx);
+		this.checkLength(arr, index);
 		return arr.data[index];
 	};
 
 	FyHeap.prototype.getArrayFloat = function(handle, index) {
 		var arr = this.getObject(handle);
-		this.checkLength(arr, idx);
+		this.checkLength(arr, index);
 		return arr.data[index];
+	};
+
+	FyHeap.prototype.getArrayLongTo = function(handle, index, tarray, tindex) {
+		var arr = this.getObject(handle);
+		this.checkLength(arr, index);
+		var data = arr.data;
+		tarray[tindex] = data[index << 1];
+		tarray[tindex + 1] = data[(index << 1) + 1];
 	};
 
 	FyHeap.prototype.getArrayDouble = function(handle, index) {
 		var arr = this.getObject(handle);
-		this.checkLength(arr, idx);
+		this.checkLength(arr, index);
 		return arr.data[index];
 	};
 
 	FyHeap.prototype.putArrayRaw = function(handle, index, value) {
 		var arr = this.getObject(handle);
-		this.checkLength(arr, idx);
+		this.checkLength(arr, index);
 		arr.rawData[index] = value;
 	};
 
 	FyHeap.prototype.putArrayRawLongFrom = function(handle, index, varray,
 			vindex) {
 		var arr = this.getObject(handle);
-		this.checkLength(arr, idx);
+		this.checkLength(arr, index);
 		arr.rawData[index << 1] = varray[vindex];
 		arr.rawData[(index << 1) + 1] = varray[vindex + 1];
 	};
 
 	FyHeap.prototype.putArrayBoolean = function(handle, index, value) {
 		var arr = this.getObject(handle);
-		this.checkLength(arr, idx);
+		this.checkLength(arr, index);
 		arr.data[index] = value ? 1 : 0;
+	};
+
+	FyHeap.prototype.putArrayByte = function(handle, index, value) {
+		var arr = this.getObject(handle);
+		this.checkLength(arr, index);
+		arr.data[index] = value;
+	};
+
+	FyHeap.prototype.putArrayShort = function(handle, index, value) {
+		var arr = this.getObject(handle);
+		this.checkLength(arr, index);
+		arr.data[index] = value;
+	};
+
+	FyHeap.prototype.putArrayChar = function(handle, index, value) {
+		var arr = this.getObject(handle);
+		this.checkLength(arr, index);
+		arr.data[index] = value;
 	};
 
 	FyHeap.prototype.putArrayInt = function(handle, index, value) {
 		var arr = this.getObject(handle);
-		this.checkLength(arr, idx);
+		this.checkLength(arr, index);
 		arr.data[index] = value;
 	};
 
 	FyHeap.prototype.putArrayFloat = function(handle, index, value) {
 		var arr = this.getObject(handle);
-		this.checkLength(arr, idx);
+		this.checkLength(arr, index);
 		arr.data[index] = value;
+	};
+
+	FyHeap.prototype.putArrayLongFrom = function(handle, index, varray, vindex) {
+		var arr = this.getObject(handle);
+		this.checkLength(arr, index);
+		arr.data[index << 1] = varray[vindex];
+		arr.data[(index << 1) + 1] = varray[vindex + 1];
 	};
 
 	FyHeap.prototype.putArrayDouble = function(handle, index, value) {
 		var arr = this.getObject(handle);
-		this.checkLength(arr, idx);
+		this.checkLength(arr, index);
 		arr.data[index] = value;
 	};
 
