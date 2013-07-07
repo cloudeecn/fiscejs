@@ -162,6 +162,7 @@
 		var data = arr.data;
 		tarray[tindex] = data[index << 1];
 		tarray[tindex + 1] = data[(index << 1) + 1];
+		return tarray;
 	};
 
 	FyHeap.prototype.getArrayDouble = function(handle, index) {
