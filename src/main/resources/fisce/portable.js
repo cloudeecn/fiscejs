@@ -44,7 +44,11 @@ var FyPortable;
 // We use ArrayBuffer for converting floats from/to ieee754 integers by default
 (function() {
 	"use strict";
-	var arrayView = new DataView(new ArrayBuffer(8), 0, 8);
+
+	var buffer = new ArrayBuffer(8);
+	var intView = new Int32Array(buffer);
+	var floatView = new Float32Array(buffer);
+	var doubleView = new Float64Array(buffer);
 
 	var __FyPortable = function() {
 	};
@@ -59,8 +63,8 @@ var FyPortable;
 	 * @returns {Number} ieee754 int
 	 */
 	__FyPortable.prototype.floatToInt = function(floatValue) {
-		arrayView.setFloat32(0, floatValue);
-		return arrayView.getInt32(0);
+		floatView[0] = floatValue;
+		return intView[0];
 	};
 
 	/**
@@ -71,8 +75,8 @@ var FyPortable;
 	 * @returns {Number} floatValue
 	 */
 	__FyPortable.prototype.intToFloat = function(intValue) {
-		arrayView.setInt32(0, floatValue);
-		return arrayView.getFloat32(0);
+		intView[0] = intValue;
+		return floatView[0];
 	};
 
 	/**
@@ -89,9 +93,9 @@ var FyPortable;
 		if (!container) {
 			container = new Array(2);
 		}
-		arrayView.setFloat64(0, doubleValue);
-		container[ofs] = arrayView.getInt32(0);
-		container[ofs + 1] = arrayView.getInt32(4);
+		doubleView[0] = doubleValue;
+		container[ofs] = intView[0];
+		container[ofs + 1] = intView[1];
 		return container;
 	};
 
@@ -103,9 +107,9 @@ var FyPortable;
 	 * @returns {Number} doubleValue
 	 */
 	__FyPortable.prototype.longToDouble = function(container, ofs) {
-		arrayView.setInt32(0, container[ofs]);
-		arrayView.setInt32(4, container[ofs + 1]);
-		return arrayView.getFloat64(0);
+		intView[0] = container[ofs];
+		intView[1] = container[ofs + 1];
+		return doubleView[0];
 	};
 
 	FyPortable = new __FyPortable();

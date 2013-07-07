@@ -161,26 +161,26 @@ var FyClassLoader;
 				delete clazz.superClassData;
 			}
 
-			if (!this.context.TOP_CLASS && clazz.name == FyConst.FY_BASE_OBJECT) {
+			if (!this.context.TOP_CLASS && clazz.name === FyConst.FY_BASE_OBJECT) {
 				this.context.TOP_CLASS = clazz;
 			} else if (!this.context.TOP_THROWABLE
-					&& clazz.name == FyConst.FY_BASE_THROWABLE) {
+					&& clazz.name === FyConst.FY_BASE_THROWABLE) {
 				this.context.TOP_THROWABLE = clazz;
 			} else if (!this.context.TOP_ENUM
-					&& clazz.name == FyConst.FY_BASE_ENUM) {
+					&& clazz.name === FyConst.FY_BASE_ENUM) {
 				this.context.TOP_ENUM = clazz;
 			} else if (!this.context.TOP_ANNOTATION
-					&& clazz.name == FyConst.FY_BASE_ANNOTATION) {
+					&& clazz.name === FyConst.FY_BASE_ANNOTATION) {
 				this.context.TOP_ANNOTATION = clazz;
 			} else if (!this.context.TOP_SOFT_REF
-					&& clazz.name == FyConst.FY_REF_SOFT) {
+					&& clazz.name === FyConst.FY_REF_SOFT) {
 				this.context.TOP_SOFT_REF = clazz;
 			} else if (!this.context.TOP_WEAK_REF
-					&& clazz.name == FyConst.FY_REF_WEAK) {
+					&& clazz.name === FyConst.FY_REF_WEAK) {
 				this.context.TOP_WEAK_REF = clazz;
 			} else if (!this.context.TOP_PHANTOM_REF
-					&& clazz.name == FyConst.FY_REF_PHANTOM) {
-				this.context.TOP_PHANTOM_REF = clazz;
+					&& clazz.name === FyConst.FY_REF_PHANTOM) {
+				this.context.TOP_PHA3NTOM_REF = clazz;
 			}
 		}
 		clazz.phase = 1;
