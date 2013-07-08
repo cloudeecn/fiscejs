@@ -86,6 +86,69 @@
 									+ data[i * 2] + "," + data[i * 2 + 1] + "]");
 						}
 					}
+				},
+				"   Heap.field" : function() {
+					var context = fisceTests.context();
+					var heap = context.heap;
+					var clazz = context
+							.lookupClass("EXCLUDE/fisce/test/FieldHolder3");
+					var booleanField = context.lookupFieldVirtual(clazz,
+							".booleanField.Z");
+					var byteField = context.lookupFieldVirtual(clazz,
+							".byteField.B");
+
+					var charField = context.lookupFieldVirtual(clazz,
+							".charField.C");
+					var shortField = context.lookupFieldVirtual(clazz,
+							".shortField.S");
+
+					var intField = context.lookupFieldVirtual(clazz,
+							".intField.I");
+					var floatField = context.lookupFieldVirtual(clazz,
+							".floatField.F");
+
+					var longField = context.lookupFieldVirtual(clazz,
+							".longField.J");
+					var doubleField = context.lookupFieldVirtual(clazz,
+							".doubleField.D");
+
+					ok(booleanField, "boolean field loaded");
+					ok(byteField, "byte field loaded");
+
+					ok(charField, "char field loaded");
+					ok(shortField, "short field loaded");
+
+					ok(intField, "int field loaded");
+					ok(floatField, "float field loaded");
+
+					ok(longField, "long field loaded");
+					ok(doubleField, "double field loaded");
+
+					var handle = heap.allocate(clazz);
+					ok(handle > 0, "Test object got " + handle);
+
+					heap.putFieldBoolean(handle, booleanField.posAbs, true);
+					heap.putFieldByte(handle, byteField.posAbs, -3);
+
+					heap.putFieldChar(handle, charField.posAbs, 0x5678);
+					heap.putFieldShort(handle, shortField.posAbs, -5566);
+
+					heap.putFieldInt(handle, intField.posAbs, 0x12345678);
+					heap.putFieldFloat(handle, floatField, 8.75766E10);
+
+					heap.putFieldLongFrom(handle, longField, [ 0x12345678,
+							0x90abcdef ], 1);
+					heap.putFieldDouble(handle, doubleField.posAbs,
+							1.2345678901E98);
+
+					equal(true, heap.getFieldBoolean(handle,
+							booleanField.posAbs), "boolean field operation");
+					equal(1, heap.getFieldRaw(handle, booleanField.posAbs),
+							"boolean field raw operation");
+					
+					
+					// heap.putFieldBoolean(handle, , value)
+
 				}
 			});
 })();

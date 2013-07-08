@@ -144,7 +144,7 @@ var FyObject;
 		if (clazz.type != FyConst.TYPE_OBJECT) {
 			throw "Please use allocateArray to allocate arrays";
 		}
-		this._allocate(clazz.sizeAbs, clazz, 0, 0);
+		return this._allocate(clazz.sizeAbs, clazz, 0, 0);
 	};
 
 	/**

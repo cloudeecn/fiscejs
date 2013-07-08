@@ -244,11 +244,29 @@
 		var data = obj.rawData;
 		tarray[tindex] = data[pos];
 		tarray[tindex + 1] = data[pos + 1];
+		return tarray;
 	};
 
 	FyHeap.prototype.getFieldBoolean = function(handle, pos) {
 		var obj = this.getObject(handle);
 		return obj.rawData[pos] ? true : false;
+	};
+
+	FyHeap.prototype.getFieldByte = function(handle, pos) {
+		var obj = this.getObject(handle);
+		var ret = obj.rawData[pos] & 0xff;
+		return (ret >>> 7) ? (ret - 256) : ret;
+	};
+
+	FyHeap.prototype.getFieldShort = function(handle, pos) {
+		var obj = this.getObject(handle);
+		var ret = obj.rawData[pos];
+		return (ret >>> 15) ? (ret - 65536) : ret;
+	};
+
+	FyHeap.prototype.getFieldChar = function(handle, pos) {
+		var obj = this.getObject(handle);
+		return obj.rawData[pos];
 	};
 
 	FyHeap.prototype.getFieldInt = function(handle, pos) {
@@ -259,6 +277,10 @@
 	FyHeap.prototype.getFieldFloat = function(handle, pos) {
 		var obj = this.getObject(handle);
 		return FyPortable.intToFloat(obj.rawData[pos]);
+	};
+
+	FyHeap.prototype.getFieldLongTo = function(handle, pos, tarray, tindex) {
+		return this.getFieldRawLongTo(handle, pos, tarray, tindex);
 	};
 
 	FyHeap.prototype.getFieldDouble = function(handle, pos) {
@@ -282,6 +304,21 @@
 		obj.rawData[pos] = value ? 1 : 0;
 	};
 
+	FyHeap.prototype.putFieldByte = function(handle, pos, value) {
+		var obj = this.getObject(handle);
+		obj.rawData[pos] = value & 0xff;
+	};
+
+	FyHeap.prototype.putFieldShort = function(handle, pos, value) {
+		var obj = this.getObject(handle);
+		obj.rawData[pos] = value & 0xffff;
+	};
+
+	FyHeap.prototype.putFieldChar = function(handle, pos, value) {
+		var obj = this.getObject(handle);
+		obj.rawData[pos] = value & 0xffff;
+	};
+
 	FyHeap.prototype.putFieldInt = function(handle, pos, value) {
 		var obj = this.getObject(handle);
 		obj.rawData[pos] = value;
@@ -292,6 +329,10 @@
 		obj.rawData[pos] = FyPortable.floatToInt(value);
 	};
 
+	FyHeap.prototype.putFieldLongFrom = function(handle, pos, tarray, tindex) {
+		this.putFieldRawLongFrom(handle, pos, tarray, tindex);
+	};
+	
 	FyHeap.prototype.putFieldDouble = function(handle, pos, value) {
 		var obj = this.getObject(handle);
 		FyPortable.doubleToLong(value, obj.rawData, pos);

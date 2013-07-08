@@ -213,8 +213,8 @@ public class ClassConverter {
 						method.getParameterCount());
 
 				// Parameter class names
-				SimpleJSONUtil.add(sb, 3, "\"parameterClassNames\"", "[",
-						false);
+				SimpleJSONUtil
+						.add(sb, 3, "\"parameterClassNames\"", "[", false);
 				{
 					String[] pcns = method.getParameterTypeClassNames();
 					for (int j = 0, maxj = pcns.length; j < maxj; j++) {
@@ -321,7 +321,8 @@ public class ClassConverter {
 			ps.close();
 		} else {
 			cc.convertJar(// "(function(context){context.addClassDef(",
-					new FileInputStream("rt.jar"),
+					new FileInputStream(
+							"../fiscevm/fiscevm-runtime/target/fiscevm-runtime-2.0.0-SNAPSHOT.jar"),
 					// ");})(fisceContext);",
 					new OutputStreamWriter(new FileOutputStream(
 							"src/test/resources/rt.json"), "ISO8859-1"));
