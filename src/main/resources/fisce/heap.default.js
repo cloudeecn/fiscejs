@@ -32,7 +32,7 @@
 	 */
 	FyHeap.prototype.allocateStatic = function(clazz) {
 		var id = clazz.classId;
-		this.statics[id] = new Uint32Array(clazz.staticSize);
+		this.statics[id] = new Int32Array(clazz.staticSize);
 	};
 
 	/**
@@ -332,7 +332,7 @@
 	FyHeap.prototype.putFieldLongFrom = function(handle, pos, tarray, tindex) {
 		this.putFieldRawLongFrom(handle, pos, tarray, tindex);
 	};
-	
+
 	FyHeap.prototype.putFieldDouble = function(handle, pos, value) {
 		var obj = this.getObject(handle);
 		FyPortable.doubleToLong(value, obj.rawData, pos);
@@ -347,9 +347,27 @@
 		var rawData = this.statics[clazz.classId];
 		tarray[tindex] = rawData[pos];
 		tarray[tindex + 1] = rawData[pos + 1];
+		return tarray;
 	};
 
 	FyHeap.prototype.getStaticBoolean = function(clazz, pos) {
+		var rawData = this.statics[clazz.classId];
+		return rawData[pos] ? true : false;
+	};
+
+	FyHeap.prototype.getStaticByte = function(clazz, pos) {
+		var rawData = this.statics[clazz.classId];
+		var ret = rawData[pos] & 0xff;
+		return (ret >>> 7) ? (ret - 256) : ret;
+	};
+
+	FyHeap.prototype.getStaticShort = function(clazz, pos) {
+		var rawData = this.statics[clazz.classId];
+		var ret = rawData[pos] & 0xffff;
+		return (ret >>> 15) ? (ret - 65536) : ret;
+	};
+
+	FyHeap.prototype.getStaticChar = function(clazz, pos) {
 		var rawData = this.statics[clazz.classId];
 		return rawData[pos];
 	};
@@ -362,6 +380,10 @@
 	FyHeap.prototype.getStaticFloat = function(clazz, pos) {
 		var rawData = this.statics[clazz.classId];
 		return FyPortable.intToFloat(rawData[pos]);
+	};
+
+	FyHeap.prototype.getStaticLongTo = function(clazz, pos, tarray, tindex) {
+		return this.getStaticRawLongTo(clazz, pos, tarray, tindex);
 	};
 
 	FyHeap.prototype.getStaticDouble = function(clazz, pos) {
@@ -385,6 +407,21 @@
 		rawData[pos] = value ? 1 : 0;
 	};
 
+	FyHeap.prototype.putStaticByte = function(clazz, pos, value) {
+		var rawData = this.statics[clazz.classId];
+		rawData[pos] = value & 0xff;
+	};
+
+	FyHeap.prototype.putStaticChar = function(clazz, pos, value) {
+		var rawData = this.statics[clazz.classId];
+		rawData[pos] = value & 0xffff;
+	};
+
+	FyHeap.prototype.putStaticShort = function(clazz, pos, value) {
+		var rawData = this.statics[clazz.classId];
+		rawData[pos] = value & 0xffff;
+	};
+
 	FyHeap.prototype.putStaticInt = function(clazz, pos, value) {
 		var rawData = this.statics[clazz.classId];
 		rawData[pos] = value;
@@ -393,6 +430,10 @@
 	FyHeap.prototype.putStaticFloat = function(clazz, pos, value) {
 		var rawData = this.statics[clazz.classId];
 		rawData[pos] = FyPortable.floatToInt(value);
+	};
+
+	FyHeap.prototype.putStaticLongFrom = function(clazz, pos, varray, vindex) {
+		this.putStaticRawLongFrom(clazz, pos, varray, vindex);
 	};
 
 	FyHeap.prototype.putStaticDouble = function(clazz, pos, value) {
@@ -464,9 +505,9 @@
 			for (i = 0; i < clazz.sizeAbs; i++) {
 				rObj.rawData[i] = obj.rawData[i];
 			}
-		} else if (clazz.type === FyConst.TYPE_Array) {
-			ret = this.allocateArray(clazz, len);
+		} else if (clazz.type === FyConst.TYPE_ARRAY) {
 			len = this.arrayLength(src);
+			ret = this.allocateArray(clazz, len);
 			this.arrayCopy(src, 0, ret, 0, len);
 		} else {
 			throw "Illegal object type " + clazz.type + " for class to clone: "
