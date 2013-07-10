@@ -14,6 +14,8 @@
 					 */
 					function test(type, func) {
 						var handle;
+						var handle2;
+						var handle3;
 						var arrayName = "[" + FyContext.mapPrimitivesRev[type];
 						var typeName = type.charAt(0).toUpperCase()
 								+ type.substring(1);
@@ -37,6 +39,44 @@
 						} else {
 							ok(false, type + "[" + i + "]="
 									+ getter.call(heap, handle, i)
+									+ " expects " + eval(func));
+						}
+
+						handle2 = heap.clone(handle);
+						ok(handle2, type + " clone returns");
+						notEqual(handle, handle2,
+								"Cloned array has different handles");
+						equal(heap.arrayLength(handle), heap
+								.arrayLength(handle2),
+								"cloned array has same length");
+						for (i = 0; i < length; i++) {
+							if (getter.call(heap, handle2, i) !== eval(func)) {
+								break;
+							}
+						}
+						if (i === length) {
+							ok(true, "cloned " + type + "[] values");
+						} else {
+							ok(false, "cloned " + type + "[" + i + "]="
+									+ getter.call(heap, handle2, i)
+									+ " expects " + eval(func));
+						}
+
+						handle3 = heap.allocateArray(context
+								.lookupClass(arrayName), heap
+								.arrayLength(handle) + 10);
+						heap.arrayCopy(handle, 1, handle3, 6, heap
+								.arrayLength(handle) - 1);
+						for (i = 1; i < length; i++) {
+							if (getter.call(heap, handle3, i + 5) !== eval(func)) {
+								break;
+							}
+						}
+						if (i === length) {
+							ok(true, "copied " + type + "[] values");
+						} else {
+							ok(false, "copyied " + type + "[" + (i + 5) + "]="
+									+ getter.call(heap, handle3, i + 5)
 									+ " expects " + eval(func));
 						}
 					}
@@ -84,6 +124,53 @@
 							ok(false, "long[" + i + "]=[" + data1[i * 2] + ","
 									+ data1[i * 2 + 1] + "] expects ["
 									+ data[i * 2] + "," + data[i * 2 + 1] + "]");
+						}
+
+						handle2 = heap.clone(handle);
+						ok(handle2, "long clone returns");
+						notEqual(handle, handle2,
+								"Cloned array has different handles");
+						equal(heap.arrayLength(handle), heap
+								.arrayLength(handle2),
+								"cloned array has same length");
+						for (i = 0; i < length; i++) {
+							heap.getArrayLongTo(handle2, i, data1, i * 2);
+						}
+						for (i = 0; i < length; i++) {
+							if (data1[i * 2] !== data[i * 2]
+									|| data1[i * 2 + 1] !== data[i * 2 + 1]) {
+								break;
+							}
+						}
+						if (i === length) {
+							ok(true, "cloned long[] values");
+						} else {
+							ok(false, "cloned long[" + i + "]=[" + data1[i * 2]
+									+ "," + data1[i * 2 + 1] + "] expects ["
+									+ data[i * 2] + "," + data[i * 2 + 1] + "]");
+						}
+
+						handle3 = heap.allocateArray(context
+								.lookupClass("[J"), heap
+								.arrayLength(handle) + 10);
+						heap.arrayCopy(handle, 1, handle3, 6, heap
+								.arrayLength(handle) - 1);
+						for (i = 1; i < length; i++) {
+							heap.getArrayLongTo(handle3, i + 5, data1, i * 2);
+						}
+						for (i = 1; i < length; i++) {
+							if (data1[i * 2] !== data[i * 2]
+									|| data1[i * 2 + 1] !== data[i * 2 + 1]) {
+								break;
+							}
+						}
+						if (i === length) {
+							ok(true, "copied long[] values");
+						} else {
+							ok(false, "copied long[" + (i + 5) + "]=["
+									+ data1[i * 2] + "," + data1[i * 2 + 1]
+									+ "] expects [" + data[i * 2] + ","
+									+ data[i * 2 + 1] + "]");
 						}
 					}
 				},
@@ -177,6 +264,48 @@
 					ok(
 							heap.getFieldLongTo(handle, doubleField.posAbs, [],
 									1)[2], "double raw value low");
+
+					var handle2 = heap.clone(handle);
+					ok(handle2, "object cloned");
+					notEqual(handle, handle2,
+							"Cloned object has different handles");
+					equal(true, heap.getFieldBoolean(handle2,
+							booleanField.posAbs), "boolean field operation");
+					equal(1, heap.getFieldRaw(handle2, booleanField.posAbs),
+							"boolean field raw operation");
+
+					equal(-3, heap.getFieldByte(handle2, byteField.posAbs),
+							"byte field operation");
+					equal(-3 & 0xff,
+							heap.getFieldRaw(handle2, byteField.posAbs),
+							"byte field raw operation");
+
+					equal(0x5678, heap.getFieldChar(handle2, charField.posAbs),
+							"char field operation");
+					equal(0x5678, heap.getFieldRaw(handle2, charField.posAbs),
+							"char field raw operation");
+
+					equal(-5566, heap.getFieldShort(handle2, shortField.posAbs),
+							"short field operation");
+					equal(-5566 & 0xffff, heap.getFieldRaw(handle2,
+							shortField.posAbs), "short field raw operation");
+
+					var longPair = [ 0, 0, 0 ];
+					var longResult = heap.getFieldLongTo(handle2,
+							longField.posAbs, longPair, 1);
+					ok(longResult, "long returns");
+					equal(0x12345678 >> 0, longPair[1], "long high part");
+					equal(0x90abcdef >> 0, longPair[2], "long low part");
+
+					equal(1.2345678901E98, heap.getFieldDouble(handle2,
+							doubleField.posAbs), "double value");
+					ok(
+							heap.getFieldLongTo(handle2, doubleField.posAbs, [],
+									1)[1], "double raw value high");
+					ok(
+							heap.getFieldLongTo(handle2, doubleField.posAbs, [],
+									1)[2], "double raw value low");
+
 				},
 				"   Heap.static" : function() {
 					var context = fisceTests.context();
@@ -271,9 +400,10 @@
 							doubleStatic.posAbs, [], 1)[2],
 							"double raw value low");
 				},
-				"   Heap.advanced" : function() {
+				"   Heap.string" : function() {
 					var context = fisceTests.context();
 					var heap = context.heap;
+
 					var str = "asdfghjkl";
 					var handle = heap.makeString(str);
 					ok(handle, "String made handle=" + handle);
@@ -284,7 +414,6 @@
 					equal(heap.getString(handle), str, "Literal content");
 					equal(heap.literal(str), handle,
 							"Same handle returned for two literal calls");
-
 				}
 			});
 })();
