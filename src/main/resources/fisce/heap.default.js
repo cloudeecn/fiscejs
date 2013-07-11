@@ -22,6 +22,7 @@
  */
 
 (function() {
+	"use strict";
 	/**
 	 * Allocate a static storage area for clazz
 	 * 
