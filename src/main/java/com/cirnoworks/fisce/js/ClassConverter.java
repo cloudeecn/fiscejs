@@ -7,17 +7,26 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintStream;
 import java.io.Writer;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import com.cirnoworks.fisce.classloader.utils.Phase0ClassLoader;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.tree.analysis.BasicValue;
+import org.objectweb.asm.tree.analysis.Frame;
+
 import com.cirnoworks.fisce.classloader.utils.SimpleJSONUtil;
 import com.cirnoworks.fisce.classloader.utils.StringPool;
 import com.cirnoworks.fisce.data.ClassData;
 import com.cirnoworks.fisce.data.FieldData;
+import com.cirnoworks.fisce.data.LookupSwitchTarget;
 import com.cirnoworks.fisce.data.MethodData;
+import com.cirnoworks.fisce.data.TableSwitchTarget;
 import com.cirnoworks.fisce.data.constants.ConstantData;
 import com.cirnoworks.fisce.data.constants.JSONExportableConstantData;
 import com.cirnoworks.fisce.vm.data.attributes.ExceptionHandler;
@@ -59,13 +68,15 @@ public class ClassConverter {
 	};
 
 	private void convert(InputStream is) throws IOException {
-		ClassData clazz = Phase0ClassLoader.loadClassFromStream(is);
+		ClassReader cr = new ClassReader(is);
+		ClassData clazz = new ClassData(cr);
+		cr.accept(clazz, ClassReader.EXPAND_FRAMES);
 
 		sb.append("{\n");
 		SimpleJSONUtil.add(sb, 1, "\"name\"",
 				stringPool.poolString(clazz.getName()), true);
 
-		if (clazz.getSourceFile() != null) {
+		if (clazz.sourceFile != null) {
 			SimpleJSONUtil.add(sb, 1, "\"sourceFile\"",
 					stringPool.poolString(clazz.getSourceFile()), true);
 		}
@@ -177,7 +188,7 @@ public class ClassConverter {
 					SimpleJSONUtil.add(sb, 3, "]", true);
 				}
 
-				byte[] code = method.getCode();
+				int[] code = method.getCode();
 				if (code != null) {
 
 					SimpleJSONUtil.add(sb, 3, "\"maxStack\"",
@@ -199,7 +210,107 @@ public class ClassConverter {
 					}
 					sb.append('\n');
 					SimpleJSONUtil.add(sb, 3, "]", true);
+					{
+						SimpleJSONUtil.add(sb, 3, "\"opsCheck\"", "{", false);
+						boolean[] check = method.getCheckOps();
+						boolean checked = false;
+						for (int j = 0, maxj = check.length; j < maxj; j++) {
+							if (check[j]) {
+								SimpleJSONUtil.add(sb, 4,
+										"\"" + String.valueOf(j) + "\"", true,
+										true);
+								checked = true;
+							}
+						}
+						if (checked) {
+							sb.setLength(sb.length() - 2);
+							sb.append('\n');
+						}
+						SimpleJSONUtil.add(sb, 3, "}", true);
+					}
+					{
+						SimpleJSONUtil.add(sb, 3, "\"frames\"", "{", false);
+						boolean[] hints = method.getHintFrame();
+						boolean hinted = false;
+						for (int j = 0, maxj = hints.length; j < maxj; j++) {
+							if (hints[j]) {
+								hinted = true;
+								SimpleJSONUtil.addIndent(sb, 4);
+								sb.append('"');
+								sb.append(j);
+								sb.append('"');
+								sb.append(" : [");
+								Frame<BasicValue> frame = method.getRawFrames()[j];
+								for (int k = 0, maxk = frame.getLocals(); k < maxk; k++) {
+									BasicValue v = frame.getLocal(k);
+									sb.append(v.isReference() ? '1' : '0');
+									sb.append(',');
+								}
+								for (int k = 0, maxk = frame.getStackSize(); k < maxk; k++) {
+									BasicValue v = frame.getStack(k);
+									sb.append(v.isReference() ? '1' : '0');
+									sb.append(',');
+								}
+								if (frame.getLocals() + frame.getStackSize() > 0) {
+									sb.setLength(sb.length() - 1);
+								}
+								sb.append("],\n");
+							}
+						}
+						if (hinted) {
+							sb.setLength(sb.length() - 2);
+							sb.append('\n');
+						}
+						SimpleJSONUtil.add(sb, 3, "}", true);
+					}
 				}
+
+				ArrayList<TableSwitchTarget> tableSwitchTargets = method
+						.getTableSwitchTargets();
+				if (tableSwitchTargets.size() > 0) {
+					SimpleJSONUtil.add(sb, 3, "\"tableSwitchTargets\"", "[",
+							false);
+					for (int j = 0, maxj = tableSwitchTargets.size(); j < maxj; j++) {
+						TableSwitchTarget target = tableSwitchTargets.get(j);
+						SimpleJSONUtil.add(sb, 4, "{", false);
+						SimpleJSONUtil.add(sb, 5, "\"dflt\"",
+								target.getDefaultTarget(), true);
+						SimpleJSONUtil.add(sb, 5, "\"min\"", target.getMin(),
+								true);
+						SimpleJSONUtil.add(sb, 5, "\"max\"", target.getMax(),
+								true);
+						SimpleJSONUtil.add(sb, 5, "\"targets\"",
+								Arrays.toString(target.getTargets()), false);
+						SimpleJSONUtil.add(sb, 4, "}", j < maxj - 1);
+					}
+					SimpleJSONUtil.add(sb, 3, "]", true);
+				}
+
+				ArrayList<LookupSwitchTarget> lookupSwitchTargets = method
+						.getLookupSwitchTargets();
+				if (lookupSwitchTargets.size() > 0) {
+					SimpleJSONUtil.add(sb, 3, "\"lookupSwitchTargets\"", "[",
+							false);
+					for (int j = 0, maxj = lookupSwitchTargets.size(); j < maxj; j++) {
+						LookupSwitchTarget target = lookupSwitchTargets.get(j);
+						SimpleJSONUtil.add(sb, 4, "{", false);
+						SimpleJSONUtil.add(sb, 5, "\"dflt\"",
+								target.getDefaultTarget(), true);
+						SimpleJSONUtil.add(sb, 5, "\"targets\"", "{", false);
+
+						for (int k = 0, maxk = target.getKeys().length; k < maxk; k++) {
+							SimpleJSONUtil.add(sb, 6,
+									"\"" + String.valueOf(target.getKeys()[k])
+											+ "\"", target.getTargets()[k],
+									k < maxk - 1);
+						}
+
+						SimpleJSONUtil.add(sb, 5, "}", false);
+						SimpleJSONUtil.add(sb, 4, "}", j < maxj - 1);
+					}
+					SimpleJSONUtil.add(sb, 3, "]", true);
+				}
+
 				SimpleJSONUtil.add(sb, 3, "\"paramStackUsage\"",
 						method.getParamCount());
 				SimpleJSONUtil.add(sb, 3, "\"paramType\"", stringPool
