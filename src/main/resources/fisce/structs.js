@@ -27,20 +27,26 @@ var FyMethod;
 var FyField;
 var FyClass;
 var FyException;
+var FyGlobal;
+var FyMessage;
 (function() {
 	"use strict";
 
-	FyUtils = {
-		/**
-		 * copy all attributes from src into dest
-		 * 
-		 * @param src
-		 * @param dest
-		 */
-		shallowClone : function(src, dest) {
-			for ( var key in src) {
-				dest[key] = src[key];
-			}
+	FyGlobal = {
+		STRICT_CHECK : true
+	};
+
+	FyUtils = function() {
+	};
+	/**
+	 * copy all attributes from src into dest
+	 * 
+	 * @param src
+	 * @param dest
+	 */
+	FyUtils.shallowClone = function(src, dest) {
+		for ( var key in src) {
+			dest[key] = src[key];
 		}
 	};
 
@@ -264,15 +270,11 @@ var FyException;
 	FyExceptionHandler = function() {
 		this.start = 0;
 		this.end = 0;
-		this.exceptionClassName = "";
-		this.handler = 0;
-
-		/***********************************************************************
-		 * Filled in by class loader /**
-		 * 
-		 * @type {FyClass}
+		/**
+		 * constant class data
 		 */
-		this.exceptionClass = undefined;
+		this.catchClassData = undefined;
+		this.handler = 0;
 	};
 
 	FyMethod = function() {
@@ -404,5 +406,21 @@ var FyException;
 		this.clazz = clazz;
 		this.message = message;
 	};
-})();
 
+	/**
+	 * Message method <-> thread <-> threadManager <-> outer
+	 */
+	FyMessage = function() {
+		this.type = 0;
+		this.param = undefined;
+	};
+
+	FyMessage.message_continue = 0; // In thread
+	FyMessage.message_none = 1; // Thread Only
+	FyMessage.message_thread_dead = 2; // Thread Only
+	FyMessage.message_invoke_native = 3;// Thread And TM pass thread
+	FyMessage.message_exception = 4;// Thread And TM pass thread
+	FyMessage.message_sleep = 5;// TM Only
+	FyMessage.message_vm_dead = 6;
+
+})();

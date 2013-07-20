@@ -89,7 +89,7 @@
 
 					test("int", "((i&1)?1:-1)*((i*0x1010101)&0x7fffffff)");
 					test("float",
-							"FyPortable.intToFloat(FyPortable.floatToInt(((i&1)?1:-1)*i*1.234*1000000))");
+							"FyPortable.ieee32ToFloat(FyPortable.floatToIeee32(((i&1)?1:-1)*i*1.234*1000000))");
 
 					test("double", "((i&1)?1:-1)*i*1.234*1000000");
 

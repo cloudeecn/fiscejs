@@ -277,7 +277,7 @@
 
 	FyHeap.prototype.getFieldFloat = function(handle, pos) {
 		var obj = this.getObject(handle);
-		return FyPortable.intToFloat(obj.rawData[pos]);
+		return FyPortable.ieee32ToFloat(obj.rawData[pos]);
 	};
 
 	FyHeap.prototype.getFieldLongTo = function(handle, pos, tarray, tindex) {
@@ -286,7 +286,7 @@
 
 	FyHeap.prototype.getFieldDouble = function(handle, pos) {
 		var obj = this.getObject(handle);
-		return FyPortable.longToDouble(obj.rawData, pos);
+		return FyPortable.ieee64ToDouble(obj.rawData, pos);
 	};
 
 	FyHeap.prototype.putFieldRaw = function(handle, pos, value) {
@@ -327,7 +327,7 @@
 
 	FyHeap.prototype.putFieldFloat = function(handle, pos, value) {
 		var obj = this.getObject(handle);
-		obj.rawData[pos] = FyPortable.floatToInt(value);
+		obj.rawData[pos] = FyPortable.floatToIeee32(value);
 	};
 
 	FyHeap.prototype.putFieldLongFrom = function(handle, pos, tarray, tindex) {
@@ -336,7 +336,7 @@
 
 	FyHeap.prototype.putFieldDouble = function(handle, pos, value) {
 		var obj = this.getObject(handle);
-		FyPortable.doubleToLong(value, obj.rawData, pos);
+		FyPortable.doubleToIeee64(value, obj.rawData, pos);
 	};
 
 	FyHeap.prototype.getStaticRaw = function(clazz, pos) {
@@ -380,7 +380,7 @@
 
 	FyHeap.prototype.getStaticFloat = function(clazz, pos) {
 		var rawData = this.statics[clazz.classId];
-		return FyPortable.intToFloat(rawData[pos]);
+		return FyPortable.ieee32ToFloat(rawData[pos]);
 	};
 
 	FyHeap.prototype.getStaticLongTo = function(clazz, pos, tarray, tindex) {
@@ -389,7 +389,7 @@
 
 	FyHeap.prototype.getStaticDouble = function(clazz, pos) {
 		var rawData = this.statics[clazz.classId];
-		return FyPortable.longToDouble(rawData, pos);
+		return FyPortable.ieee64ToDouble(rawData, pos);
 	};
 
 	FyHeap.prototype.putStaticRaw = function(clazz, pos, value) {
@@ -430,7 +430,7 @@
 
 	FyHeap.prototype.putStaticFloat = function(clazz, pos, value) {
 		var rawData = this.statics[clazz.classId];
-		rawData[pos] = FyPortable.floatToInt(value);
+		rawData[pos] = FyPortable.floatToIeee32(value);
 	};
 
 	FyHeap.prototype.putStaticLongFrom = function(clazz, pos, varray, vindex) {
@@ -439,7 +439,7 @@
 
 	FyHeap.prototype.putStaticDouble = function(clazz, pos, value) {
 		var rawData = this.statics[clazz.classId];
-		FyPortable.doubleToLong(value, rawData, pos);
+		FyPortable.doubleToIeee64(value, rawData, pos);
 	};
 
 	FyHeap.prototype.arrayCopy = function(sHandle, sPos, dHandle, dPos, len) {

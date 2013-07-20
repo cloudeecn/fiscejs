@@ -62,7 +62,7 @@ var FyPortable;
 	 *            floatValue
 	 * @returns {Number} ieee754 int
 	 */
-	__FyPortable.prototype.floatToInt = function(floatValue) {
+	__FyPortable.prototype.floatToIeee32 = function(floatValue) {
 		floatView[0] = floatValue;
 		return intView[0];
 	};
@@ -74,7 +74,7 @@ var FyPortable;
 	 *            intValue
 	 * @returns {Number} floatValue
 	 */
-	__FyPortable.prototype.intToFloat = function(intValue) {
+	__FyPortable.prototype.ieee32ToFloat = function(intValue) {
 		intView[0] = intValue;
 		return floatView[0];
 	};
@@ -89,7 +89,8 @@ var FyPortable;
 	 *            new one
 	 * @returns {Array} int pair
 	 */
-	__FyPortable.prototype.doubleToLong = function(doubleValue, container, ofs) {
+	__FyPortable.prototype.doubleToIeee64 = function(doubleValue, container,
+			ofs) {
 		if (!container) {
 			container = new Array(2);
 		}
@@ -106,11 +107,41 @@ var FyPortable;
 	 *            container int pair container
 	 * @returns {Number} doubleValue
 	 */
-	__FyPortable.prototype.longToDouble = function(container, ofs) {
+	__FyPortable.prototype.ieee64ToDouble = function(container, ofs) {
 		intView[0] = container[ofs];
 		intView[1] = container[ofs + 1];
 		return doubleView[0];
 	};
 
+	/**
+	 * convert double to int pair
+	 * 
+	 * @param doubleValue
+	 * @param container
+	 * @param ofs
+	 */
+	__FyPortable.prototype.doubleToLong = function(doubleValue, container, ofs) {
+		container[ofs] = (doubleValue / 4294967296) >> 0;// Higher
+		container[ofs + 1] = doubleValue >> 0; // Lower
+	};
+
+	__FyPortable.prototype.dcmpg = function(value1, value2) {
+		var result = value1 - value2;
+		if (result !== result) { // NaN
+			return 1;
+		} else {
+			return result > 0 ? 1 : (result === 0 ? 0 : -1);
+		}
+	};
+
+	__FyPortable.prototype.dcmpl = function(value1, value2) {
+		var result = value1 - value2;
+		if (result !== result) { // NaN
+			return -1;
+		} else {
+			return result > 0 ? 1 : (result === 0 ? 0 : -1);
+		}
+	};
+	
 	FyPortable = new __FyPortable();
 })();

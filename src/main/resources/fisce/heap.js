@@ -333,5 +333,11 @@ var FyObject;
 		return handle;
 	};
 	
-	
+	FyHeap.prototype.getClassFromHandle = function(handle){
+		/**
+		 * @returns {FyObject}
+		 */
+		var obj=this.objects[handle];
+		return obj.clazz;
+	};
 })();

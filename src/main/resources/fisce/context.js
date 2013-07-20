@@ -95,19 +95,23 @@ var FyContext;
 	}
 
 	FyContext = function() {
+		this.settings = {};
 		this.classDef = {};
 
 		/* Classes begins from 1 */
 		this.classes = [ undefined ];
 		this.mapClassNameToId = {};
+		this.mapClassIdToHandle = {};
 
 		/* Methods begins from 0 */
 		this.methods = [];
 		this.mapMethodNameToId = {};
+		this.mapMethodIdToHandle = {};
 
 		/* Fields begins from 0 */
 		this.fields = [];
 		this.mapFieldNameToId = {};
+		this.mapFieldIdToHandle = {};
 
 		this.nativeHandlers = {};
 
@@ -169,6 +173,15 @@ var FyContext;
 			FyContext.stringPool[string] = string;
 		}
 		return ret;
+	};
+
+	FyContext.prototype.getSetting = function(key, defaultValue) {
+		var result = settings[key];
+		if (result === undefined) {
+			return defaultValue;
+		} else {
+			return result;
+		}
 	};
 
 	FyContext.prototype.addClassDef = function(data) {
@@ -630,11 +643,26 @@ var FyContext;
 	};
 
 	/**
+	 * Get a class as clazz[]
+	 * 
+	 * @param {FyObject}
+	 *            clazz
+	 * @returns {FyObject}
+	 */
+	FyContext.prototype.lookupArrayClass = function(clazz) {
+		if (clazz.type === FyConst.TYPE_OBJECT) {
+			return context.lookupClass("[L" + clazz1.name + ";");
+		} else {
+			return context.lookupClass("[" + clazz1.name);
+		}
+	};
+
+	/**
 	 * Lookup class from constant
 	 * 
 	 * @param constant
 	 *            the constant entry
-	 * @returns
+	 * @returns {FyClass}
 	 */
 	FyContext.prototype.lookupClassFromConstant = function(constant) {
 		if (!constant.resolvedClass) {
@@ -646,5 +674,61 @@ var FyContext;
 			delete constant.name;
 		}
 		return constant.resolvedClass;
+	};
+
+	/**
+	 * @param {FyClass}
+	 *            clazz
+	 * @returns {Number} handle of this class's class object handle
+	 */
+	FyContext.prototype.getClassObjectHandle = function(clazz) {
+		var handle = this.mapClassIdToHandle[clazz.classId];
+		if (handle === undefined) {
+			var clcl = this.lookupClass(FyConst.FY_BASE_CLASS);
+			this.heap.beginProtect();
+			handle = this.heap.allocate(clcl);
+			this.heap.getObject(handle).multiUsageData = clazz.classId;
+			this.mapClassIdToHandle[clazz.classId] = handle;
+		}
+		return handle;
+	};
+
+	/**
+	 * @param {FyMethod}
+	 *            method
+	 * @returns {Number}
+	 */
+	FyContext.prototype.getMethodObjectHandle = function(method) {
+		var handle = this.mapMethodIdToHandle[method.methodId];
+		if (handle === undefined) {
+			this.heap.beginProtect();
+			if (method.accessFlags & FyConst.FY_ACC_CONSTRUCTOR) {
+				handle = this.heap.allocate(this
+						.lookupClass(FyConst.FY_REFLECT_CONSTRUCTOR));
+			} else {
+				handle = this.heap.allocate(this
+						.lookupClass(FyConst.FY_REFLECT_METHOD));
+			}
+			this.heap.getObject(handle).multiUsageData = method.methodId;
+			this.mapMethodIdToHandle[method.methodId] = handle;
+		}
+		return handle;
+	};
+
+	/**
+	 * @param {FyField}
+	 *            field
+	 * @returns {Number}
+	 */
+	FyContext.prototype.getFieldObjectHandle = function(field) {
+		var handle = this.mapFieldIdToHandle[field.fieldId];
+		if (handle === undefined) {
+			this.heap.beginProtect();
+			handle = this.heap.allocate(this
+					.lookupClass(FyConst.FY_REFLECT_FIELD));
+			this.heap.getObject(handle).multiUsageData = field.fieldId;
+			this.mapFieldIdToHandle[field.fieldId] = handle;
+		}
+		return handle;
 	};
 })();
