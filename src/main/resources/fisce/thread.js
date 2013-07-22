@@ -267,7 +267,7 @@ var FyFrame;
 
 	var frame_sb = 0;
 	var frame_method_id = 1;
-	var frame_pc = 2;
+	var frame_ip = 2;
 
 	/**
 	 * Thread
@@ -303,7 +303,8 @@ var FyFrame;
 
 	FyThread.frame_methodId = 0;
 	FyThread.frame_sb = 1;
-	FyThread.frame_pc = 2;
+	FyThread.frame_ip = 2;
+	FyThread.frame_lip = 3;
 
 	/**
 	 * 
@@ -317,25 +318,45 @@ var FyFrame;
 			throw new FyException(undefined, "stack overflow for thread "
 					+ this.threadId);
 		}
-		this.framePos -= 3;
+		this.framePos -= 4;
 		stack[this.framePos + FyThread.frame_methodId] = method.methodId;
 		stack[this.framePos + FyThread.frame_sb] = sp;
-		stack[this.framePos + FyThread.pc] = 0;
+		stack[this.framePos + FyThread.ip] = 0;
+		stack[this.framePos + FyThread.lip] = 0;
 		this.sp += method.maxLocals;
 		return this.framePos;
 	};
 
-	FyThread.prototype.popFrame = function() {
-		this.sp = this.stack[this.framePos + FyThread.frame_sb];
-		this.framePos += 3;
+	/**
+	 * similar with pushFrame, but consider locks
+	 * @param {FyMethod}
+	 *            method
+	 * @returns {Number}
+	 */
+	FyThread.prototype.pushMethod = function(method) {
+		var ret = this.pushFrame(method);
+		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
+			this
+					.monitorEnter((method.accessFlags & FyConst.FY_ACC_STATIC) ? this.context
+							.getClassObjectHandle(method.owner)
+							: this.stack[ret + FyThread.frame_sb]);
+		}
+		return ret;
 	};
-	
-	
+
+	FyThread.prototype.popFrame = function(pushes) {
+		this.sp = this.stack[this.framePos + FyThread.frame_sb];
+		this.framePos += 4;
+		if (pushes !== undefined) {
+			this.sp += pushes;
+		}
+	};
+
 	FyThread.prototype.getCurrentFramePos = function() {
 		return this.framePos;
 	};
 
-	FyThread.prototype.getExceptionHandlerPC = function(framePos, handle, lpc,
+	FyThread.prototype.getExceptionHandlerIp = function(framePos, handle, ip,
 			exception) {
 		var methodId = this.stack[framePos + frame_method_id];
 
@@ -352,7 +373,7 @@ var FyFrame;
 			 * @returns {FyObject}
 			 */
 			var obj = this.context.heap.objects[handler];
-			if (lpc >= handler.start && lpc < handler.end) {
+			if (ip >= handler.start && ip < handler.end) {
 				if (handler.catchClassData) {
 					/**
 					 * @returns {FyClass}
@@ -371,6 +392,106 @@ var FyFrame;
 		return -1;
 	};
 
+	/**
+	 * check whether access for a class need to be clinit ed
+	 * 
+	 * @param {FyClass}
+	 *            clazz to check
+	 * @returns {FyClass} class to be clinited or undefined for no need to
+	 *          clinit
+	 */
+	FyThread.prototype.clinit = function(clazz) {
+		var ret;
+		if (clazz === undefined) {
+			ret = undefined;
+		} else if (clazz.clinitThreadId === -1
+				|| clazz.clinitThreadId === this.threadId) {
+			ret = undefined;
+		} else if (clazz.clinit === undefined) {
+			ret = this.clinit(clazz.superClass);
+			if (ret === undefined) {
+				clazz.clinitThreadId = -1;
+			}
+			return ret;
+		} else {
+			return clazz;
+		}
+		return NULL;
+	};
+
+	/**
+	 * Initialize a thread with main method
+	 * 
+	 * @param {Number}
+	 *            threadHandle thread handle
+	 * @param {FyMethod}
+	 *            method method
+	 */
+	FyThread.prototype.initWithMethod = function(threadHandle, method) {
+		if (method.fullName !== FyConst.FY_METHODF_MAIN
+				|| !(method.accessFlags & FyConst.FY_ACC_STATIC)) {
+			throw new FyException(
+					"The boot method must be static void main(String[] )");
+		}
+		this.context.lookupClass("[L" + FyConst.FY_BASE_STRING + ";");
+		this.handle = threadHandle;
+		this.context.heap.getObject(threadHandle).multiUsageData = this.threadId;
+		this.pushFrame(method);
+		this.stack[0] = 0;
+		this.typeStack[0] = 0;
+	};
+
+	/**
+	 * Initialize a thread with a Thread.run.()V method
+	 * 
+	 * @param {Number}
+	 *            threadHandle
+	 * @param {FyMethod}
+	 *            method
+	 */
+	FyThread.prototype.initWithRun = function(threadHandle) {
+		/**
+		 * @returns {FyObject}
+		 */
+		var handlerObj = this.context.heap.getObject(threadHandle);
+		/**
+		 * @returns {FyClass}
+		 */
+		var handlerClass = handlerObj.clazz;
+		if (!this.context.classLoader.canCast(handlerClass, this.context
+				.lookupClass(FyConst.FY_BASE_THREAD))) {
+			throw new FyException("The create(int) is used to start a "
+					+ FyConst.FY_BASE_THREAD + "!");
+		}
+		var runner = this.context.lookupMethodVirtual(handlerClass,
+				FyConst.FY_METHODF_RUN);
+		handlerObj.multiUsageData = this.threadId;
+		this.handle = threadHandle;
+		this.pushFrame(runner);
+		this.stack[0] = threadHandle;
+		this.typeStack[0] = 1;
+	};
+
+	/**
+	 * Run this thread
+	 * 
+	 * @param {FyMessage}
+	 *            message
+	 * @param {Number}
+	 *            ops instructions to run
+	 */
+	FyThread.prototype.run = function(message, ops) {
+		/**
+		 * @returns {FyMethod}
+		 */
+		var method;
+		while (ops > 0) {
+			method = this.context.methods[this.stack[this.framePos
+					+ FyThread.frame_methodId]];
+			ops = method.invoke(this.context, this, message, ops);
+		}
+	};
+
 	FyThread.prototype.monitorEnter = function(handle) {
 		// TODO
 		console.log("monitor enter stub");
@@ -381,7 +502,4 @@ var FyFrame;
 		console.log("monitor exit stub");
 	};
 
-	FyThread.prototype.popFrame = function(handle) {
-
-	};
 })();

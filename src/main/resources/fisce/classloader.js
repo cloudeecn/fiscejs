@@ -161,7 +161,8 @@ var FyClassLoader;
 				delete clazz.superClassData;
 			}
 
-			if (!this.context.TOP_CLASS && clazz.name === FyConst.FY_BASE_OBJECT) {
+			if (!this.context.TOP_CLASS
+					&& clazz.name === FyConst.FY_BASE_OBJECT) {
 				this.context.TOP_CLASS = clazz;
 			} else if (!this.context.TOP_THROWABLE
 					&& clazz.name === FyConst.FY_BASE_THROWABLE) {
@@ -398,6 +399,22 @@ var FyClassLoader;
 			}
 		}
 		return false;
+	};
+
+	/**
+	 * returns whether <b>from</b> is super class of <b>to</b>
+	 * 
+	 * @param {FyClass}
+	 *            from
+	 * @param {FyClass}
+	 *            to
+	 * @returns {Boolean}
+	 */
+	FyClassLoader.prototype.isSuperClassOf = function(from, to) {
+		if (from === to) {
+			return false;
+		}
+		return this.canCast(to, from);
 	};
 	/**
 	 * 

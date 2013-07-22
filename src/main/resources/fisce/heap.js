@@ -57,6 +57,8 @@ var FyObject;
 		this.toEnqueue = [];
 		this.nextHandle = 1;
 		this.totalObjects = 0;
+		
+		this.usePreservedArea = false;
 
 	};
 

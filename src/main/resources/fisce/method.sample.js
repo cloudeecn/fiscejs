@@ -31,43 +31,78 @@ FyMethod.prototype.invoke = //
  *            ops instructions left to run
  */
 // ##MACRO-HEADER
-function(context, thread, message, ops) {
+function(thread, message, ops) {
+	/**
+	 * @returns {FyClass}
+	 */
+	var clazz = this.owner;
+	/**
+	 * @returns {FyHeap}
+	 */
 	var heap = context.heap;
+	/**
+	 * @returns {FyContext}
+	 */
+	var context = thread.context;
 	var constants = clazz.constants;
 	var stack = thread.stack;
-	var framePos = thread.getCurrentFramePos();
-	var pc = stack[framePos + FyThread.frame_pc];
-	var sp = thread.sp;
-	var sb = stack[framePos + FyThread.frame_sb];
+	var framePos = thread.getCurrentFramePos() | 0;
+	var ip = stack[framePos + FyThread.frame_ip] | 0;
+	var lip = stack[framePos + FyThread.frame_lip] | 0;
+	var sp = thread.sp | 0;
+	var sb = stack[framePos + FyThread.frame_sb] | 0;
+
+	/**
+	 * @returns {FyField}
+	 */
+	var tmpField;
+
+	/**
+	 * @returns {FyClass}
+	 */
+	var tmpClass;
+
+	/**
+	 * @returns {FyMethod}
+	 */
+	var tmpMethod;
+
+	var tmpInt1 = 0 | 0;
 
 	// /*
-	var $1 = undefined;
-	var $2 = undefined;
-	function $checksp(movement) {
-
-	}
+	var $1 = 0 | 0;
+	var $2 = 0 | 0;
+	var $ip = 0 | 0;
 	// */
 	__fy_outer: while (true) {
 		try {
-			__fy_inner: switch (pc) {
+			__fy_inner: switch (ip) {
 			// ###
 			case 0:
-				// ##OP-AALOAD 1 -2A
-				sp--;
-				stack[sp - 1] = heap.getArrayInt(stack[sp], stack[sp - 1]);
-				// ###
 				// ##MACRO-OPS
 				if (ops < 0) {
+					lip = -1;
+					ip = $ip;
 					break __fy_outer;
 				}
 				// ###
+				// ##OP-AALOAD -2 1
+				lip = $ip;
+				ops--;
+				sp--;
+				stack[sp - 1] = heap.getArrayInt(stack[sp], stack[sp - 1]);
+				// ###
 			case 1:
-				// ##OP-FALOAD|IALOAD 1 -2I
+				// ##OP-FALOAD|IALOAD -2 1
+				lip = $ip;
+				ops--;
 				sp--;
 				stack[sp - 1] = heap.getArrayInt(stack[sp], stack[sp - 1]);
 				// ###
 			case 2:
-				// ##OP-AASTORE 1 -3
+				// ##OP-AASTORE -3 0
+				lip = $ip;
+				ops--;
 				sp -= 3;
 				// 2[1]=0
 				if (stack[sp] !== 0
@@ -83,79 +118,41 @@ function(context, thread, message, ops) {
 				heap.putArrayInt(stack[2], stack[1], stack[0]);
 				// ###
 			case 3:
-				// ##OP-FASTORE|IASTORE 1 -3
+				// ##OP-FASTORE|IASTORE -3 0
+				lip = $ip;
+				ops--;
 				sp -= 3;
 				heap.putArrayInt(stack[2], stack[1], stack[0]);
 				// ###
 			case 4:
-				// ##OP-ACONST_NULL 1 1A
+				// ##OP-ACONST_NULL 0 1
+				ops--;
 				stack[sp] = 0;
 				sp++;
 				// ###
 			case 5:
-				// ##OP-ILOAD|FLOAD 2 1I
-				stack[sp] = stack[sb + $u1[1]];
-				sp++;
-				// ###
-			case 7:
-				// ##OP-ALOAD 2 1A
-				stack[sp] = stack[sb + $u1[1]];
-				sp++;
-				// ###
-			case 9:
-				// ##OP-ILOAD_0|FLOAD_0 1 1I
-				stack[sp] = stack[sb + 0];
-				sp++;
-				// ###
-			case 10:
-				// ##OP-ALOAD_0 1 1A
-				stack[sp] = stack[sb + 0];
-				sp++;
-				// ###
-			case 11:
-				// ##OP-ILOAD_1|FLOAD_1 1 1I
-				stack[sp] = stack[sb + 1];
-				sp++;
-				// ###
-			case 12:
-				// ##OP-ALOAD_1 1 1A
-				stack[sp] = stack[sb + 1];
-				sp++;
-				// ###
-			case 13:
-				// ##OP-ILOAD_2|FLOAD_2 1 1I
-				stack[sp] = stack[sb + 2];
-				sp++;
-				// ###
-			case 14:
-				// ##OP-ALOAD_2 1 1A
-				stack[sp] = stack[sb + 2];
-				sp++;
-				// ###
-			case 15:
-				// ##OP-ILOAD_3|FLOAD_3 1 1I
-				stack[sp] = stack[sb + 3];
-				sp++;
-				// ###
-			case 16:
-				// ##OP-ALOAD_0 1 1A
-				stack[sp] = stack[sb + 3];
+				// ##OP-ILOAD|FLOAD|ALOAD 0 1
+				ops--;
+				stack[sp] = stack[sb + $1];
 				sp++;
 				// ###
 			case 17:
-				// ##OP-ANEWARRAY 3 -1A
-				"##ALLOCATE";
+				// ##OP-ANEWARRAY -1 1
+				lip = $ip;
+				ops--;
 				if (stack[sp - 1] < 0) {
 					throw new FyException(FyConst.FY_EXCEPTION_AIOOB, ""
 							+ stack[sp - 1]);
 				}
 				stack[sp - 1] = heap.allocateArray(context
 						.lookupArrayClass(context
-								.lookupClassFromConstant(constants[$u2[1]])),
+								.lookupClassFromConstant(constants[$1])),
 						stack[sp - 1]);
 				// ###
 			case 20:
-				// ##OP-IRETURN|FRETURN 1 -1
+				// ##OP-IRETURN|FRETURN|ARETURN -1 0
+				lip = $ip;
+				ops--;
 				if (this.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
 					if (this.accessFlags & FyConst.FY_ACC_STATIC) {
 						thread.monitorExit(context.getClassObjectHandle(clazz));
@@ -163,213 +160,191 @@ function(context, thread, message, ops) {
 						thread.monitorExit(stack[sb]);
 					}
 				}
-				stack[framePos + FyThread.frame_sb] = stack[sp - 1];
-				thread.popFrame();
-				thread.sp++;
-				// TODO message return?
-				break __fy_outer;
-			// ###
-			case 21:
-				// ##OP-ARETURN 1 -1
-				if (this.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
-					if (this.accessFlags & FyConst.FY_ACC_STATIC) {
-						thread.monitorExit(context.getClassObjectHandle(clazz));
-					} else {
-						thread.monitorExit(stack[sb]);
-					}
-				}
-				stack[framePos + FyThread.frame_sb] = stack[sp - 1];
-				thread.popFrame();
-				thread.sp++;
+				stack[sb] = stack[sp - 1];
+				thread.popFrame(1);
+				return ops;
 				// ###
 			case 22:
-				// ##OP-ARRAYLENGTH 1 -1I
+				// ##OP-ARRAYLENGTH -1 1
+				lip = $ip;
+				ops--;
 				stack[sp - 1] = heap.arrayLength(stack[sp - 1]);
 				// ###
 			case 23:
-				// ##OP-ISTORE|FSTORE 2 -1 X-ISTORE
+				// ##OP-ISTORE|FSTORE|ASTORE -1 0
+				ops--;
 				sp--;
-				stack[sb + $u1[1]] = stack[sp];
-				// ###
-			case 25:
-				// ##OP-ASTORE 2 -1 X-ASTORE
-				sp--;
-				stack[sb + $u1[1]] = stack[sp];
-				// ###
-			case 27:
-				// ##OP-ISTORE_0|FSTORE_0 1 -1 0I
-				sp--;
-				stack[sb + 0] = stack[sp];
-				// ###
-			case 28:
-				// ##OP-ASTORE_0 1 -1 0A
-				sp--;
-				stack[sb + 0] = stack[sp];
-				// ###
-			case 29:
-				// ##OP-ISTORE_1|FSTORE_1 1 -1 1I
-				sp--;
-				stack[sb + 1] = stack[sp];
-				// ###
-			case 30:
-				// ##OP-ASTORE_1 1 -1 1A
-				sp--;
-				stack[sb + 1] = stack[sp];
-				// ###
-			case 31:
-				// ##OP-ISTORE_2|FSTORE_2 1 -1 2I
-				sp--;
-				stack[sb + 2] = stack[sp];
-				// ###
-			case 32:
-				// ##OP-ASTORE_2 1 -1 2A
-				sp--;
-				stack[sb + 2] = stack[sp];
-				// ###
-			case 33:
-				// ##OP-ISTORE_3|FSTORE_3 1 -1 3I
-				sp--;
-				stack[sb + 3] = stack[sp];
-				// ###
-			case 34:
-				// ##OP-ASTORE_3 1 -1 3A
-				sp--;
-				stack[sb + 3] = stack[sp];
+				stack[sb + $1] = stack[sp];
 				// ###
 			case 35:
-				// ##OP-ATHROW 1 -1
-				// TODO
-				// ###
+				// ##OP-ATHROW -1 0
+				ops--;
+				sp--;
+				thread.currentThrowable = stack[sp];
+
+				lip = $ip;
+				ip = -1;
+				break __fy_inner;
+			// ###
 			case 36:
-				// ##OP-BALOAD 1 -2I
+				// ##OP-BALOAD -2 1
+				lip = $ip;
+				ops--;
 				sp--;
 				stack[sp - 1] = heap.getArrayByte(stack[sp - 1], stack[sp]);
 				// ###
 			case 37:
-				// ##OP-BASTORE 1 -3
+				// ##OP-BASTORE -3 0
+				lip = $ip;
+				ops--;
 				sp -= 3;
 				heap.putArrayByte(stack[sp], stack[sp + 1],
 						stack[sp + 2] & 0xff);
 				// ###
 			case 38:
-				// ##OP-BIPUSH 3 1I
-				stack[sp] = $s2[1];
+				// ##OP-BIPUSH 0 1
+				ops--;
+				stack[sp] = $1;
 				sp++;
 				// ###
 			case 41:
-				// ##OP-CALOAD 1 -2I
+				// ##OP-CALOAD -2 1
+				lip = $ip;
+				ops--;
 				sp--;
 				stack[sp - 1] = heap.getArrayChar(stack[sp - 1], stack[sp]);
 				// ###
 			case 42:
-				// ##OP-CASTORE 1 -3
+				// ##OP-CASTORE -3 0
+				lip = $ip;
+				ops--;
 				sp -= 3;
 				heap.putArrayChar(stack[sp], stack[sp + 1],
 						stack[sp + 2] & 0xff);
 				// ###
 			case 43:
-				// ##OP-CHECKCAST 3 -1
+				// ##OP-CHECKCAST -1 0
+				lip = $ip;
+				ops--;
 				sp--;
 				if (stack[sp] !== 0) {
-					if (!context.classLoader
-							.canCast(heap.getObject(stack[sp]).clazz, context
-									.lookupClassFromConstant(constants[$u2[1]]))) {
+					if (!context.classLoader.canCast(
+							heap.getObject(stack[sp]).clazz, context
+									.lookupClassFromConstant(constants[$1]))) {
 						throw new FyException(
 								FyConst.FY_EXCEPTION_CAST,
 								"Can't case "
 										+ heap.getObject(stack[sp]).clazz.name
 										+ " to "
 										+ context
-												.lookupClassFromConstant(constants[$u2[1]]).name);
+												.lookupClassFromConstant(constants[$1]).name);
 					}
 				}
 				// ###
 			case 46:
-				// ##OP-D2F 1 -2I
+				// ##OP-D2F -2 1
+				ops--;
 				sp--;
 				stack[sp - 1] = FyPortable.floatToIeee32(FyPortable
 						.ieee64ToDouble(stack, sp - 1));
 				// ###
 			case 47:
-				// ##OP-D2I 1 -2I
+				// ##OP-D2I -2 1
+				ops--;
 				sp--;
 				stack[sp - 1] = FyPortable.ieee64ToDouble(stack, sp - 1) >> 0;
 				// ###
 			case 48:
-				// ##OP-D2L 1 -2II
+				// ##OP-D2L -2 2
+				ops--;
 				FyPortable.doubleToLong(FyPortable
 						.ieee64ToDouble(stack, sp - 2), stack, sp - 2);
 				// ###
 			case 49:
-				// ##OP-DADD 1 -4II
+				// ##OP-DADD -4 2
+				ops--;
 				sp -= 2;
 				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack,
 						sp - 2)
 						+ FyPortable.ieee64ToDouble(stack, sp), stack, sp - 2);
 				// ###
 			case 50:
-				// ##OP-LALOAD|DALOAD 1 -2II
+				// ##OP-LALOAD|DALOAD -2 2
+				lip = $ip;
+				ops--;
 				heap.getArrayRawLongTo(stack[sp - 2], stack[sp - 1], stack,
 						sp - 2);
 				// ###
 			case 51:
-				// ##OP-LASTORE|DASTORE 1 -4
+				// ##OP-LASTORE|DASTORE -4 0
+				lip = $ip;
+				ops--;
 				sp -= 4;
 				heap.putArrayRawLongFrom(stack[sp], stack[sp + 1], stack,
 						sp + 2);
 				// ###
 			case 52:
-				// ##OP-DCMPG 1 -4I
+				// ##OP-DCMPG -4 1
+				ops--;
 				sp -= 3;
 				stack[sp - 1] = FyPortable.dcmpg(FyPortable.ieee64ToDouble(
 						stack, sp - 1), FyPortable
 						.ieee64ToDouble(stack, sp + 1));
 				// ###
 			case 53:
-				// ##OP-DCMPL 1 -4I
+				// ##OP-DCMPL -4 1
+				ops--;
 				sp -= 3;
 				stack[sp - 1] = FyPortable.dcmpl(FyPortable.ieee64ToDouble(
 						stack, sp - 1), FyPortable
 						.ieee64ToDouble(stack, sp + 1));
 				// ###
 			case 54:
-				// ##OP-DCONST_0 1 2I
+				// ##OP-DCONST_0 0 2
+				ops--;
 				FyPortable.doubleToIeee64(0.0, stack, sp);
 				sp += 2;
 				// ###
 			case 55:
-				// ##OP-DCONST_1 1 2I
+				// ##OP-DCONST_1 0 2
+				ops--;
 				FyPortable.doubleToIeee64(1.0, stack, sp);
 				sp += 2;
 				// ###
 			case 56:
-				// ##OP-DDIV 1 -4II
+				// ##OP-DDIV -4 2
+				ops--;
 				sp -= 2;
 				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack,
 						sp - 2)
 						/ FyPortable.ieee64ToDouble(stack, sp), stack, sp - 2);
 				// ###
 			case 57:
-				// ##OP-DMUL 1 -4II
+				// ##OP-DMUL -4 2
+				ops--;
 				sp -= 2;
 				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack,
 						sp - 2)
 						* FyPortable.ieee64ToDouble(stack, sp), stack, sp - 2);
 				// ###
 			case 58:
-				// ##OP-DNEG 1 -2II
+				// ##OP-DNEG -2 2
+				ops--;
 				FyPortable.doubleToIeee64(-FyPortable.ieee64ToDouble(stack,
 						sp - 2), stack, sp - 2);
 				// ###
 			case 59:
-				// ##OP-DREM 1 -4II
+				// ##OP-DREM -4 2
+				ops--;
 				sp -= 2;
 				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack,
 						sp - 2)
 						% FyPortable.ieee64ToDouble(stack, sp), stack, sp - 2);
 				// ###
 			case 60:
-				// ##OP-DRETURN|LRETURN 1 -2
+				// ##OP-DRETURN|LRETURN -2 0
+				lip = $ip;
+				ops--;
 				if (this.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
 					if (this.accessFlags & FyConst.FY_ACC_STATIC) {
 						thread.monitorExit(context.getClassObjectHandle(clazz));
@@ -377,34 +352,36 @@ function(context, thread, message, ops) {
 						thread.monitorExit(stack[sb]);
 					}
 				}
-				stack[framePos + FyThread.frame_sb] = stack[sp - 2];
-				stack[framePos + FyThread.frame_sb + 1] = stack[sp - 1];
-				thread.popFrame();
-				thread.sp += 2;
-				// TODO message return?
-				break __fy_outer;
-			// ###
+				stack[sb] = stack[sp - 2];
+				stack[sb + 1] = stack[sp - 1];
+				thread.popFrame(2);
+				return ops;
+				// ###
 			case 61:
-				// ##OP-DSUB 1 -4II
+				// ##OP-DSUB -4 2
+				ops--;
 				sp -= 2;
 				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack,
 						sp - 2)
 						- FyPortable.ieee64ToDouble(stack, sp), stack, sp - 2);
 				// ###
 			case 62:
-				// ##OP-DUP 1 X-DUP
+				// ##OP-DUP -1 2
+				ops--;
 				stack[sp] = stack[sp - 1];
 				sp++;
 				// ###
 			case 63:
-				// ##OP-DUP_X1 1 X-DUP_X1
+				// ##OP-DUP_X1 -2 3
+				ops--;
 				stack[sp] = stack[sp - 1];
 				stack[sp - 1] = stack[sp - 2];
 				stack[sp - 2] = stack[sp];
 				sp++;
 				// ###
 			case 64:
-				// ##OP-DUP_X2 1 X-DUP_X2
+				// ##OP-DUP_X2 -3 4
+				ops--;
 				stack[sp] = stack[sp - 1];
 				stack[sp - 1] = stack[sp - 2];
 				stack[sp - 2] = stack[sp - 3];
@@ -412,14 +389,16 @@ function(context, thread, message, ops) {
 				sp++;
 				// ###
 			case 65:
-				// ##OP-DUP2 1 X-DUP2
+				// ##OP-DUP2 -2 4
+				ops--;
 				stack[sp + 1] = stack[sp - 1];
 				stack[sp] = stack[sp - 2];
 				sp += 2;
 				// ###
 			case 66:
 				// 321 -> 21321
-				// ##OP-DUP2_X1 1 X-DUP2_X1
+				// ##OP-DUP2_X1 -3 5
+				ops--;
 				stack[sp + 1] = stack[sp - 1];
 				stack[sp] = stack[sp - 2];
 				stack[sp - 1] = stack[sp - 3];
@@ -429,7 +408,8 @@ function(context, thread, message, ops) {
 				// ###
 			case 67:
 				// 4321 -> 214321
-				// ##OP-DUP2_X2 1 X-DUP2_X2
+				// ##OP-DUP2_X2 -4 6
+				ops--;
 				stack[sp + 1] = stack[sp - 1];
 				stack[sp] = stack[sp - 2];
 				stack[sp - 1] = stack[sp - 3];
@@ -439,104 +419,838 @@ function(context, thread, message, ops) {
 				sp += 2;
 				// ###
 			case 68:
-				// ##OP-F2D 1 -1II
+				// ##OP-F2D -1 2
+				ops--;
 				FyPortable.doubleToIeee64(FyPortable
 						.ieee32ToFloat(stack[sp - 1]), stack, sp - 1);
 				sp++;
 				// ###
 			case 69:
-				// ##OP-F2I 1 -1I
+				// ##OP-F2I -1 1
+				ops--;
 				stack[sp - 1] = FyPortable.ieee32ToFloat(stack[sp - 1]) | 0;
 				// ###
 			case 70:
-				// ##OP-F2L 1 -1II
+				// ##OP-F2L -1 2
+				ops--;
 				FyPortable.doubleToLong(
 						FyPortable.ieee32ToFloat(stack[sp - 1]), stack, sp - 1);
 				sp++;
 				// ###
 			case 71:
-				// ##OP-FADD 1 -2I
+				// ##OP-FADD -2 1
+				ops--;
 				sp--;
 				stack[sp - 1] = FyPortable.floatToIeee32(FyPortable
 						.ieee32ToFloat(stack[sp - 1])
 						+ FyPortable.ieee32ToFloat(stack[sp]));
 				// ###
 			case 72:
-				// ##OP-FCMPG 1 -2I
+				// ##OP-FCMPG -2 1
+				ops--;
 				sp--;
 				stack[sp - 1] = FyPortable.dcmpg(FyPortable
 						.ieee32ToFloat(stack[sp - 1]), FyPortable
 						.ieee32ToFloat(stack[sp]));
 				// ###
 			case 73:
-				// ##OP-FCMPL 1 -2I
+				// ##OP-FCMPL -2 1
+				ops--;
 				sp--;
 				stack[sp - 1] = FyPortable.dcmpg(FyPortable
 						.ieee32ToFloat(stack[sp - 1]), FyPortable
 						.ieee32ToFloat(stack[sp]));
 				// ###
 			case 74:
-				// ##OP-FCONST_0 1 1I
+				// ##OP-FCONST_0 0 1
+				ops--;
 				stack[sp] = FyPortable.floatToIeee32(0);
 				sp++;
 				// ###
 			case 75:
-				// ##OP-FCONST_1 1 1I
+				// ##OP-FCONST_1 0 1
+				ops--;
 				stack[sp] = FyPortable.floatToIeee32(1);
 				sp++;
 				// ###
 			case 76:
-				// ##OP-FCONST_2 1 1I
+				// ##OP-FCONST_2 0 1
+				ops--;
 				stack[sp] = FyPortable.floatToIeee32(2);
 				sp++;
 				// ###
 			case 77:
-				// ##OP-FDIV 1 -2I
+				// ##OP-FDIV -2 1
+				ops--;
 				sp--;
 				stack[sp - 1] = FyPortable.floatToIeee32(FyPortable
 						.ieee32ToFloat(stack[sp - 1])
 						/ FyPortable.ieee32ToFloat(stack[sp]));
 				// ###
 			case 78:
-				// ##OP-FMUL 1 -2I
+				// ##OP-FMUL -2 1
+				ops--;
 				sp--;
 				stack[sp - 1] = FyPortable.floatToIeee32(FyPortable
 						.ieee32ToFloat(stack[sp - 1])
 						* FyPortable.ieee32ToFloat(stack[sp]));
 				// ###
 			case 79:
-				// ##OP-FNEG 1 -1I
-				sp--;
+				// ##OP-FNEG -1 1
+				ops--;
 				stack[sp - 1] = FyPortable.floatToIeee32(-FyPortable
 						.ieee32ToFloat(stack[sp - 1]));
 				// ###
 			case 80:
-				// ##OP-FREM 1 -2I
+				// ##OP-FREM -2 1
+				ops--;
 				sp--;
 				stack[sp - 1] = FyPortable.floatToIeee32(FyPortable
 						.ieee32ToFloat(stack[sp - 1])
 						% FyPortable.ieee32ToFloat(stack[sp]));
 				// ###
 			case 81:
-				// ##OP-FSUB 1 -2I
+				// ##OP-FSUB -2 1
+				ops--;
 				sp--;
 				stack[sp - 1] = FyPortable.floatToIeee32(FyPortable
 						.ieee32ToFloat(stack[sp - 1])
 						- FyPortable.ieee32ToFloat(stack[sp]));
 				// ###
 			case 82:
-				// ##OP-GETFIELD 3 X-GETFIELD
-				
+				// ##OP-GETFIELD -1 X-GETFIELD
+				lip = $ip;
+				ops--;
+				tmpField = context.lookupFieldVirtualFromConstant(constant[$1]);
+				if (tmpField.accessFlags & FyConst.FY_ACC_STATIC) {
+					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+							"Field " + tmpField.uniqueName + " is static");
+				}
+				switch (tmpField.descriptor.charCodeAt(0)) {
+				case FyConst.D:
+				case FyConst.J:
+					heap.getFieldRawLongTo(stack[sp - 1], tmpField.posAbs,
+							stack, sp - 1);
+					sp++;
+					break;
+				default:
+					stack[sp - 1] = heap.getFieldRaw(stack[sp - 1],
+							tmpField.posAbs);
+					break;
+				}
 				// ###
+			case 83:
+				// ##OP-GETSTATIC -1 X-GETSTATIC
+				lip = $ip;
+				ops--;
+				tmpField = context.lookupFieldVirtualFromConstant(constant[$1]);
+
+				if (!(tmpField.accessFlags & FyConst.FY_ACC_STATIC)) {
+					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+							"Field " + tmpField.uniqueName + " is not static");
+				}
+
+				tmpClass = thread.clinit(tmpField.owner);
+				if (tmpClass !== undefined) {
+					// invoke clinit
+					if (tmpClass.clinitThreadId == 0) {
+						// no thread is running it, so let this run
+						// Local to frame
+						thread.sp = sp;
+						stack[framePos + FyThread.frame_lip] = $ip;
+						stack[framePos + FyThread.frame_ip] = $ip;
+						thread.pushFrame(tmpClass.clinit);
+						return ops;
+					} else {
+						// wait for other thread clinit
+						ops = 0;
+						ip = $ip;
+						break __fy_outer;
+					}
+				}
+
+				switch (tmpField.descriptor.charCodeAt(0)) {
+				case FyConst.D:
+				case FyConst.J:
+					heap.getStaticRawLongTo(stack[sp - 1], tmpField.posAbs,
+							stack, sp - 1);
+					sp++;
+					break;
+				default:
+					stack[sp - 1] = heap.getStaticRaw(stack[sp - 1],
+							tmpField.posAbs);
+					break;
+				}
+				// ###
+			case 84:
+				// ##OP-GOTO 0 0
+				ops--;
+				ip = $1;
+				break __fy_inner;
+			// ###
+			case 85:
+				// ##OP-I2B -1 1
+				ops--;
+				stack[sp - 1] &= 0xff;
+				// ###
+			case 86:
+				// ##OP-I2C -1 1
+				ops--;
+				stack[sp - 1] &= 0xffff;
+				// ###
+			case 87:
+				// ##OP-I2D -1 2
+				ops--;
+				FyPortable.doubleToIeee64(stack[sp - 1], stack, sp - 1);
+				sp++;
+				// ###
+			case 88:
+				// ##OP-I2F -1 1
+				ops--;
+				stack[sp - 1] = FyPortable.floatToIeee32(stack[sp - 1]);
+				// ###
+			case 89:
+				// ##OP-I2L -1 2
+				ops--;
+				stack[sp] = stack[sp - 1];
+				stack[sp - 1] = stack[sp] >= 0 ? (0 | 0) : (-1 | 0);
+				sp++;
+				// ###
+			case 90:
+				// ##OP-I2S -1 1
+				ops--;
+				stack[sp - 1] = stack[sp - 1] << 16 >> 16;
+				// ###
+			case 100:
+				// ##OP-IADD -2 1
+				ops--;
+				sp--;
+				stack[sp - 1] -= stack[sp];
+				// ###
+			case 101:
+				// ##OP-IAND -2 1
+				ops--;
+				sp--;
+				stack[sp - 1] &= stack[sp];
+				// ###
+			case 102:
+				// ##OP-ICONST_M1 0 1
+				ops--;
+				stack[sp] = -1;
+				sp++;
+				// ###
+			case 103:
+				// ##OP-ICONST_0 0 1
+				ops--;
+				stack[sp] = 0;
+				sp++;
+				// ###
+			case 104:
+				// ##OP-ICONST_1 0 1
+				ops--;
+				stack[sp] = 1;
+				sp++;
+				// ###
+			case 105:
+				// ##OP-ICONST_2 0 1
+				ops--;
+				stack[sp] = 2;
+				sp++;
+				// ###
+			case 106:
+				// ##OP-ICONST_3 0 1
+				ops--;
+				stack[sp] = 3;
+				sp++;
+				// ###
+			case 107:
+				// ##OP-ICONST_4 0 1
+				ops--;
+				stack[sp] = 4;
+				sp++;
+				// ###
+			case 108:
+				// ##OP-ICONST_5 0 1
+				ops--;
+				stack[sp] = 5;
+				sp++;
+				// ###
+			case 109:
+				// ##OP-IDIV -2 1
+				ops--;
+				sp--;
+				if (stack[sp] === 0) {
+					lip = $ip;
+					throw new FyException(FyConst.FY_EXCEPTION_ARITHMETIC,
+							"Devided by zero!");
+				}
+				stack[sp - 1] = (stack[sp - 1] / stack[sp]) | 0;
+				// ###
+			case 110:
+				// ##OP-IF_ICMPEQ -2 0
+				ops--;
+				sp -= 2;
+				if (stack[sp] === stack[sp + 1]) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 111:
+				// ##OP-IF_ACMPEQ -2 0
+				ops--;
+				sp -= 2;
+				if (stack[sp] === stack[sp + 1]) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 112:
+				// ##OP-IF_ICMPNE -2 0
+				ops--;
+				sp -= 2;
+				if (stack[sp] !== stack[sp + 1]) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 113:
+				// ##OP-IF_ACMPNE -2 0
+				ops--;
+				sp -= 2;
+				if (stack[sp] !== stack[sp + 1]) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 114:
+				// ##OP-IF_ICMPLT -2 0
+				ops--;
+				sp -= 2;
+				if (stack[sp] < stack[sp + 1]) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 115:
+				// ##OP-IF_ICMPLE -2 0
+				ops--;
+				sp -= 2;
+				if (stack[sp] <= stack[sp + 1]) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 116:
+				// ##OP-IF_ICMPGT -2 0
+				ops--;
+				sp -= 2;
+				if (stack[sp] > stack[sp + 1]) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 117:
+				// ##OP-IF_ICMPGE -2 0
+				ops--;
+				sp -= 2;
+				if (stack[sp] >= stack[sp + 1]) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 118:
+				// ##OP-IFEQ -1 0
+				ops--;
+				sp--;
+				if (stack[sp] === 0) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 119:
+				// ##OP-IFNULL -1 0
+				ops--;
+				sp--;
+				if (stack[sp] === 0) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 120:
+				// ##OP-IFNE -1 0
+				ops--;
+				sp--;
+				if (stack[sp] !== 0) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 121:
+				// ##OP-IFNONNULL -1 0
+				ops--;
+				sp--;
+				if (stack[sp] !== 0) {
+					ip = $1;
+					break __fy_inner;
+				}
+			case 122:
+				// ##OP-IFLT -1 0
+				ops--;
+				sp--;
+				if (stack[sp] < 0) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 123:
+				// ##OP-IFLE -1 0
+				ops--;
+				sp--;
+				if (stack[sp] <= 0) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 124:
+				// ##OP-IFGT -1 0
+				ops--;
+				sp--;
+				if (stack[sp] > 0) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 125:
+				// ##OP-IFGE -1 0
+				ops--;
+				sp--;
+				if (stack[sp] >= 0) {
+					ip = $1;
+					break __fy_inner;
+				}
+				// ###
+			case 126:
+				// ##OP-IINC 0 0
+				ops--;
+				stack[sb + $1] += $2;
+				// ###
+			case 127:
+				// ##OP-IMUL -2 1
+				ops--;
+				sp -= 1;
+				stack[sp - 1] *= stack[sp];
+				// ###
+			case 128:
+				// ##OP-INEG -1 1
+				ops--;
+				stack[sp - 1] *= -1;
+				// ###
+			case 129:
+				// ##OP-INSTANCEOF -1 1
+				lip = $ip;
+				ops--;
+				if (stack[sp - 1] !== 0) {
+					stack[sp - 1] = context.classLoader.canCast(heap
+							.getObject(stack[sp - 1]).clazz, context
+							.lookupClassFromConstant(constants[$1]));
+				}
+				// ###
+			case 130:
+				// ##OP-INVOKESPECIAL X-INVOKESPECIAL 0
+				lip = $ip;
+				ops--;
+				tmpMethod = context
+						.lookupMethodVirtualFromConstant(constants[$1]);
+
+				sp -= tmpMethod.paramStackUsage + 1;
+
+				tmpClass = tmpMethod.owner;
+				if ((clazz.accessFlags & FyConst.FY_ACC_SUPER)
+						&& context.classLoader.isSuperClassOf(tmpClass, clazz)
+						&& tmpMethod.name === FyConst.FY_METHOD_INIT) {
+					tmpMethod = context.lookupMethodVirtualByMethod(
+							clazz.superClass, tmpMethod);
+				}
+				if (tmpMethod === undefined) {
+					throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT, "");
+				}
+				if (tmpMethod.name !== FyConst.FY_METHOD_INIT
+						&& tmpMethod.owner !== tmpClass) {
+					throw new FyException(FyConst.FY_EXCEPTION_NO_METHOD,
+							tmpMethod.uniqueName);
+				}
+				if (tmpMethod.accessFlags & FyConst.FY_ACC_STATIC) {
+					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+							tmpMethod.uniqueName);
+				}
+				if (tmpMethod.accessFlags & FyConst.FY_ACC_ABSTRACT) {
+					throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,
+							tmpMethod.uniqueName);
+				}
+
+				// Local to frame
+				thread.sp = sp;
+				stack[framePos + FyThread.frame_lip] = $ip;
+				stack[framePos + FyThread.frame_ip] = $ip + 1;
+				thread.pushMethod(tmpMethod);
+				return ops;
+				// ###
+			case 131:
+				// ##OP-INVOKESTATIC X-INVOKESTATIC 0
+				lip = $ip;
+				ops--;
+				tmpMethod = context
+						.lookupMethodVirtualFromConstant(constants[$1]);
+
+				sp -= tmpMethod.paramStackUsage;
+
+				if (!(tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
+					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+							tmpMethod.uniqueName + " is not static");
+				}
+				tmpClass = thread.clinit(tmpMethod.owner);
+				if (tmpClass !== undefined) {
+					// invoke clinit
+					if (tmpClass.clinitThreadId == 0) {
+						// no thread is running it, so let this run
+						// Local to frame
+						thread.sp = sp;
+						stack[framePos + FyThread.frame_lip] = $ip;
+						stack[framePos + FyThread.frame_ip] = $ip;
+						thread.pushFrame(tmpClass.clinit);
+						return ops;
+					} else {
+						// wait for other thread clinit
+						ops = 0;
+						ip = $ip;
+						break __fy_outer;
+					}
+				}
+
+				// Local to frame
+				thread.sp = sp;
+				stack[framePos + FyThread.frame_lip] = $ip;
+				stack[framePos + FyThread.frame_ip] = $ip + 1;
+				thread.pushMethod(tmpMethod);
+				return ops;
+				// ###
+			case 132:
+				// ##OP-INVOKEINTERFACE|INVOKEVIRTUAL X-INVOKEVIRTUAL 0
+				lip = $ip;
+				ops--;
+				tmpMethod = context
+						.lookupMethodVirtualFromConstant(constants[$1]);
+
+				sp -= tmpMethod.paramStackUsage + 1;
+
+				if (!(tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
+					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+							tmpMethod.uniqueName + " is static");
+				}
+
+				if (stack[sp] === 0) {
+					// this = null!!!
+					throw new FyException(FyConst.FY_EXCEPTION_NPT,
+							"FATAL ERROR HERE!!");
+				}
+				if (!(tmpMethod.accessFlags & FyConst.FY_ACC_FINAL)) {
+					// Virtual lookup
+					tmpClass = heap.getObject(stack[sp]).clazz;
+					tmpMethod = context.lookupMethodVirtualByMethod(clazz,
+							tmpMethod);
+				}
+
+				// Local to frame
+				thread.sp = sp;
+				stack[framePos + FyThread.frame_lip] = $ip;
+				stack[framePos + FyThread.frame_ip] = $ip + 1;
+				thread.pushMethod(tmpMethod);
+				return ops;
+				// ###
+			case 134:
+				// ##OP-IOR -2 1
+				ops--;
+				sp--;
+				stack[sp - 1] |= stack[sp];
+				// ###
+			case 135:
+				// ##OP-IREM -2 1
+				lip = $ip;
+				ops--;
+				sp--;
+				if (stack[sp] === 0) {
+					throw new FyException(FyConst.FY_EXCEPTION_ARITHMETIC,
+							"Devided by zero");
+				}
+				stack[sp - 1] %= stack[sp];
+				// ###
+			case 136:
+				// ##OP-ISHL -2 1
+				ops--;
+				sp--;
+				stack[sp - 1] <<= stack[sp];
+				// ###
+			case 137:
+				// ##OP-ISHR -2 1
+				ops--;
+				sp--;
+				stack[sp - 1] >>= stack[sp];
+				// ###
+			case 138:
+				// ##OP-ISUB -2 1
+				ops--;
+				sp--;
+				stack[sp - 1] -= stack[sp];
+				// ###
+			case 139:
+				// ##OP-IUSHR -2 1
+				ops--;
+				sp--;
+				stack[sp - 1] >>>= stack[sp];
+				// ###
+			case 140:
+				// ##OP-IXOR -2 1
+				ops--;
+				sp--;
+				stack[sp - 1] >>>= stack[sp];
+				// ###
+			case 143:
+				// ##OP-L2D -2 2
+				ops--;
+				FyPortable.doubleToIeee64(stack[sp - 2] * 4294967296.0
+						+ stack[sp - 1], stack, sp - 2);
+				// ###
+			case 144:
+				// ##OP-L2F -2 1
+				ops--;
+				sp--;
+				stack[sp - 1] = FyPortable.floatToIeee32(stack[sp - 2]
+						* 4294967296.0 + stack[sp - 1]);
+				// ###
+			case 145:
+				// ##OP-L2I -2 1
+				ops--;
+				sp--;
+				stack[sp - 1] = stack[sp];
+				// ###
+			case 146:
+				// ##OP-LADD -4 2
+				ops--;
+				sp -= 2;
+				FyPortable.ladd(stack, sp - 2, stack, sp, stack, sp - 2);
+				// ###
+			case 147:
+				// ##OP-LAND -4 2
+				ops--;
+				sp -= 2;
+				stack[sp - 2] &= stack[sp];
+				stack[sp - 1] &= stack[sp + 1];
+				// ###
+			case 148:
+				// ##OP-LCMP -4 1
+				ops--;
+				sp -= 3;
+				if (stack[sp - 1] !== stack[sp + 1]) {
+					// 高位相同，比较低位
+					if (stack[sp] === stack[sp + 2]) {
+						stack[sp - 1] = 0;
+					} else {
+						stack[sp - 1] = (stack[sp] > stack[sp + 2] ? 1 : -1)
+								* (stack[sp - 1] >= 0 ? 1 : -1);
+					}
+				} else {
+					// 直接比较高位
+					stack[sp - 1] = stack[sp - 1] > stack[sp + 1] ? 1 : -1;
+				}
+				// ###
+			case 149:
+				// ##OP-LCONST_0 0 2
+				ops--;
+				stack[sp] = 0;
+				stack[sp + 1] = 0;
+				sp += 2;
+				// ###
+			case 150:
+				// ##OP-LCONST_1 0 2
+				ops--;
+				stack[sp] = 0;
+				stack[sp + 1] = 1;
+				sp += 2;
+				// ###
+			case 151:
+				// ##OP-LDC 0 X-LDC
+				// TODO
+				// ###
+			case 152:
+				// ##OP-LDIV -4 2
+				// TODO
+				// ###
+			case 153:
+				// ##OP-DLOAD|LLOAD 0 2
+				ops--;
+				stack[sp] = stack[sb + $1];
+				stack[sp + 1] = stack[sb + $1 + 1];
+				sp += 2;
+				// ###
+			case 155:
+				// ##OP-LMUL -4 2
+				// TODO
+				// ###
+			case 156:
+				// ##OP-LNEG -2 2
+				// TODO
+				// ###
+			case 157:
+				// ##OP-LOOKUPSWITCH -1 0
+				// TODO
+				// ###
+			case 158:
+				// ##OP-LOR -4 2
+				ops--;
+				sp -= 2;
+				stack[sp - 2] |= stack[sp];
+				stack[sp - 1] |= stack[sp + 1];
+				// ###
+			case 159:
+				// ##OP-LREM -4 2
+				// TODO
+				// ###
+			case 160:
+				// ##OP-LSHL -4 2
+				// TODO
+				// ###
+			case 161:
+				// ##OP-LSHR -4 2
+				// TODO
+				// ###
+			case 162:
+				// ##OP=LUSHR -4 2
+				// TODO
+				// ###
+			case 163:
+				// ##OP-DSTORE|OP-LSTORE -2 0
+				ops--;
+				sp -= 2;
+				stack[sb + $1] = stack[sp];
+				stack[sb + $1 + 1] = stack[sp + 1];
+				// ###
+			case 164:
+				// ##OP-LSUB -4 2
+				// TODO
+				// ###
+			case 165:
+				// ##OP-LXOR -4 2
+				ops--;
+				sp -= 2;
+				stack[sp - 2] ^= stack[sp];
+				stack[sp - 1] ^= stack[sp + 1];
+				// ###
+			case 166:
+				// ##OP-MONITORENTER -1 0
+				// TODO
+				// ###
+			case 167:
+				// ##OP-MONITOREXIT -1 0
+				ops--;
+				sp--;
+				thread.monitorExit(stack[sp]);
+				// ###
+			case 168:
+				// ##OP-MULTIANEWARRAY X-MULTIANEWARRAY
+				// TODO
+				// ###
+			case 169:
+				// ##OP-NEW 0 1
+				// TODO
+				// ###
+			case 170:
+				// ##OP-NEWARRAY 0 1
+				// TODO
+				// ###
+			case 171:
+				// ##OP-NOP
+				ops--;
+				// ###
+			case 172:
+				// ##OP-POP
+				ops--;
+				sp--;
+				// ###
+			case 173:
+				// ##OP-POP2
+				ops--;
+				sp--;
+				sp--;
+				// ###
+			case 174:
+				// ##OP-PUTFIELD
+				// TODO
+				// ###
+			case 175:
+				// ##OP-PUTSTATIC
+				// TODO
+				// ###
+			case 177:
+				// ##OP-RETURN 0 0
+				lip = $ip;
+				ops--;
+				if (this.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
+					if (this.accessFlags & FyConst.FY_ACC_STATIC) {
+						thread.monitorExit(context.getClassObjectHandle(clazz));
+					} else {
+						thread.monitorExit(stack[sb]);
+					}
+				}
+				if (this.accessFlags & FyConst.FY_ACC_CLINIT) {
+					clazz.clinitThreadId = -1;
+				}
+				thread.popFrame();
+				break __fy_outer;
+			// ###
+			case 178:
+				// ##OP-SALOAD -2 1
+				lip = $ip;
+				ops--;
+				sp--;
+				stack[sp - 1] = heap.getArrayShort(stack[sp - 1], stack[sp]);
+				// ###
+			case 179:
+				// ##OP-SASTORE -3 0
+				lip = $ip;
+				ops--;
+				sp -= 3;
+				heap.putArrayShort(stack[sp], stack[sp + 1], stack[sp + 2]);
+				// ###
+			case 180:
+				// ##OP-SIPUSH 0 1
+				ops--;
+				stack[sp] = $1;
+				sp++;
+				// ###
+			case 181:
+				// ##OP-SWAP -2 2
+				ops--;
+				tmpInt1 = stack[sp - 1];
+				stack[sp - 1] = stack[sp - 2];
+				stack[sp - 2] = tmpInt1;
+				// ###
+			case 182:
+				// ##OP-TABLESWITCH -1 0
+				// TODO
+				// ###
+				break;
+			// ##MACRO-TAIL
 			default:
-				throw new FyException(undefined, "PC out of sync at "
-						+ this.uniqueName + "." + pc);
+				throw new FyException(undefined, "IP out of sync at "
+						+ this.uniqueName + "." + ip);
 			}
 		} catch (e) {
+			
 			if (e instanceof FyException) {
 
 			}
 		}
 	}
-
-};
+}
+// ###
+;

@@ -142,6 +142,21 @@ var FyPortable;
 			return result > 0 ? 1 : (result === 0 ? 0 : -1);
 		}
 	};
-	
+
+	__FyPortable.prototype.ladd = function(container1, ofs1, container2, ofs2,
+			output, ofsOutput) {
+		var tmpInt1 = (container1[ofs1 + 1] & 0xffff)
+				+ (container2[ofs2 + 1] & 0xffff);
+		var tmpInt2 = (container1[ofs1 + 1] >>> 16)
+				+ (container2[ofs2 + 1] >>> 16) + (tmpInt1 >>> 16);
+		output[ofsOutput + 1] = (tmpInt2 << 16) + (tmpInt1 & 0xffff);
+
+		tmpInt1 = (container1[ofs1] & 0xffff) + (container2[ofs2] & 0xffff)
+				+ (tmpInt2 >>> 16);
+		tmpInt2 = (container1[ofs1] >>> 16) + (container2[ofs2] >>> 16)
+				+ (tmpInt1 >>> 16);
+		output[ofsOutput] = (tmpInt2 << 16) + (tmpInt1 & 0xffff);
+	};
+
 	FyPortable = new __FyPortable();
 })();

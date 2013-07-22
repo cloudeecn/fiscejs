@@ -29,6 +29,8 @@ var FyClass;
 var FyException;
 var FyGlobal;
 var FyMessage;
+var FyTableSwitchTarget;
+var FyLookupSwitchTarget;
 (function() {
 	"use strict";
 
@@ -257,6 +259,18 @@ var FyMessage;
 				+ ".fileName.L" + this.FY_BASE_STRING + ";";
 		this.stackTraceElementLineNumber = this.FY_BASE_STACKTHREADELEMENT
 				+ ".lineNumber.I";
+		
+		this.Z = "Z".charCodeAt(0);
+		this.B = "B".charCodeAt(0);
+		this.C = "C".charCodeAt(0);
+		this.S = "S".charCodeAt(0);
+		this.I = "I".charCodeAt(0);
+		this.F = "F".charCodeAt(0);
+		this.J = "J".charCodeAt(0);
+		this.D = "D".charCodeAt(0);
+		this.L = "L".charCodeAt(0);
+		this.V = "V".charCodeAt(0);
+		this.ARR = "[".charCodeAt(0);
 
 	}
 
@@ -305,10 +319,24 @@ var FyMessage;
 		/** Filled in by class loader* */
 		this.methodId = 0;
 
-		this.nativeHandler = undefined;
-		this.compiledCode = undefined;
+		this.opsCheck = {};
+		this.frames = {};
+		this.tableSwitchTargets = [];
+		this.lookupSwitchTargets = [];
 
 		this.clinited = false;
+	};
+
+	FyTableSwitchTarget = function() {
+		this.dflt = 0;
+		this.min = 0;
+		this.max = 0;
+		this.targets = [];
+	};
+
+	FyLookupSwitchTarget = function() {
+		this.dflt = 0;
+		this.targets = {};
 	};
 
 	FyField = function() {
@@ -317,6 +345,7 @@ var FyMessage;
 		this.accessFlags = 0;
 		this.posRel = "";
 		this.size = "";
+		this.clinitThreadId = -1;
 
 		/** Filled in by class loader phase 1* */
 		this.fullName = "";
