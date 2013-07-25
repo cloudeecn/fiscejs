@@ -16,6 +16,9 @@ var __FyLongOpsAsmString;
  * @returns {__FyLongOps}
  */
 function FyCreateLongOps(global, mode, stack) {
+	if (!Function) {
+		mode = 0;
+	}
 	switch (mode) {
 	case 0:
 		return new __FyLongOps(global, stack);
@@ -23,6 +26,7 @@ function FyCreateLongOps(global, mode, stack) {
 		return new Function('a', 'b', 'c', 'return ('
 				+ __FyLongOpsAsmString.replace(/\#\#use asm\#\#/, 'use asm')
 				+ "(a,b,c))")(global, undefined, stack.buffer);
+
 	case 2:
 		return new Function('a', 'b', 'c', 'return ('
 				+ __FyLongOpsAsmString.replace(/\#\#use asm\#\#/, '')
@@ -30,16 +34,41 @@ function FyCreateLongOps(global, mode, stack) {
 
 	}
 }
-// asm.js报错的行号+9基本上是真实的行号
-__FyLongOpsAsmString = (function(global, env, buffer) {
+
+function __FyLongOpAsm(global, env, buffer) {
 	"##use asm##";
+	// var a={};
 	var stack = new global.Int32Array(buffer);
 	var imul = global.Math.imul;
+	var floor = global.Math.floor;
+	var ceil = global.Math.ceil;
+	var log = global.Math.log;
+	var pow = global.Math.pow;
+
+	var TWO_PWR_63_DBL_ = 9223372036854776000.0;
+
+	// tmp0 & tmp1在除法中当被除数是0x80000000 00000000的时候使用，不会递归
+	var ln2 = 0.0;
 
 	var tmp0 = 0;
 	var _tmp0 = 0;
 	var tmp1 = 2;
 	var _tmp1 = 8;
+
+	var tmp2 = 4;
+	var _tmp2 = 16;
+	var tmp3 = 6;
+	var _tmp3 = 24;
+
+	var tmp4 = 8;
+	var _tmp4 = 32;
+
+	function _fmax(value1, value2) {
+		value1 = +value1;
+		value2 = +value2;
+
+		return +((value1) > (value2) ? value1 : value2);
+	}
 
 	function _equals(internalPos, high, low) {
 		internalPos = internalPos | 0;
@@ -63,13 +92,58 @@ __FyLongOpsAsmString = (function(global, env, buffer) {
 		stack[(internalPos + 4) >> 2] = low;
 	}
 
+	function _toNumber(internalPos) {
+		internalPos = internalPos | 0;
+		var low = 0.0;
+
+		low = +(stack[(internalPos + 4) >> 2] | 0);
+		if (low < +0) {
+			low = (+low) + (+4294967296.0);
+		}
+		return +((+(stack[internalPos >> 2] | 0)) * (4294967296.0) + (low));
+	}
+
+	function _fromNumber(internalPos, value) {
+		internalPos = internalPos | 0;
+		value = +value;
+
+		if ((value != value) | (value == 1.0 / 0.0)) {
+			_set(internalPos, 0 | 0, 0 | 0);
+			return;
+		} else if (value <= (-TWO_PWR_63_DBL_)) {
+			_set(internalPos, 0x80000000 | 0, 0 | 0);
+			return;
+		} else if ((value + 1.0) >= TWO_PWR_63_DBL_) {
+			_set(internalPos, 0x7FFFFFFF | 0, 0xFFFFFFFF | 0);
+			return;
+		} else if (value < 0.0) {
+			_fromNumber(internalPos, -value);
+			neg(internalPos >> 2);
+			return;
+		} else {
+			_set(internalPos, (~~(value / 4294967296.0)),
+					~~(value % 4294967296.0));
+			return;
+		}
+	}
+
+	function toNumber(pos) {
+		pos = pos | 0;
+		return _toNumber((pos << 2) | 0);
+	}
+
+	function fromNumber(pos, value) {
+		pos = pos | 0;
+		value = +value;
+		_fromNumber((pos << 2) | 0, value);
+	}
+
 	function compare(pos1, pos2) {
 		pos1 = pos1 | 0;
 		pos2 = pos2 | 0;
 
 		var _pos1 = 0;
 		var _pos2 = 0;
-		var sign = 1;
 		_pos1 = (pos1 << 2) | 0;
 		_pos2 = (pos2 << 2) | 0;
 
@@ -83,11 +157,20 @@ __FyLongOpsAsmString = (function(global, env, buffer) {
 			return -1 | 0;
 		}
 		// 比较低位
-		sign = (sign | 0) - ((stack[_pos1 >> 2] >>> 31 << 1) | 0);
+		// 低位的最高位如果不同，最高位为1的大
+		if (((stack[(_pos1 + 4) >> 2] ^ stack[(_pos2 + 4) >> 2]) | 0) < (0 | 0)) {
+			if ((stack[(_pos1 + 4) >> 2] | 0) < (0 | 0)) {
+				return 1 | 0;
+			} else {
+				return -1 | 0;
+			}
+		}
 
-		if((stack[(_pos1+4)>>2]|0) - (stack[(_)]) )
-		
-		return 0 | 0;
+		// 比较剩下的31位（……）
+		if ((stack[(_pos1 + 4) >> 2] & 0x7fffffff | 0) > (stack[(_pos2 + 4) >> 2] & 0x7fffffff | 0)) {
+			return 1 | 0;
+		}
+		return -1 | 0;
 	}
 
 	function shl1(pos) {
@@ -131,6 +214,34 @@ __FyLongOpsAsmString = (function(global, env, buffer) {
 		pos = pos | 0;
 		stack[(pos + 1) << 2 >> 2] = ((stack[(pos + 1) << 2 >> 2] | 0) + (1 | 0)) | 0;
 		stack[(pos) << 2 >> 2] = ((stack[pos << 2 >> 2] | 0) + ((!(stack[(pos + 1) << 2 >> 2] | 0)) & 1)) | 0;
+	}
+
+	function cmp(pos1, pos2) {
+		pos1 = pos1 | 0;
+		pos2 = pos2 | 0;
+
+		var _pos1 = 0;
+		var ret = 0;
+		_pos1 = (pos1 << 2) | 0;
+		ret = compare(pos1, pos2) | 0;
+		switch (ret | 0) {
+		case -1:
+			stack[_pos1 >> 2] = -1 | 0;
+			stack[(_pos1 + 4) >> 2] = -1 | 0;
+			break;
+		case 0:
+			stack[_pos1 >> 2] = 0 | 0;
+			stack[(_pos1 + 4) >> 2] = 0 | 0;
+			break;
+		case 1:
+			stack[_pos1 >> 2] = 0 | 0;
+			stack[(_pos1 + 4) >> 2] = 1 | 0;
+			break;
+		default:
+			stack[_pos1 >> 2] = -1 | 0;
+			stack[(_pos1 + 4) >> 2] = 1 | 0;
+			break;
+		}
 	}
 
 	function add(pos1, pos2) {
@@ -264,9 +375,15 @@ __FyLongOpsAsmString = (function(global, env, buffer) {
 		var _pos2 = 0;
 		var neged = 0;
 		var pos2Neged = 0;
+		var approx = 0.0;
+		var log2 = 0.0;
+		var delta = 0.0;
 
 		_pos1 = (pos1 << 2) | 0;
 		_pos2 = (pos2 << 2) | 0;
+		if (+ln2 == +0.0) {
+			ln2 = +log(+2.0);
+		}
 
 		if (_equals(_pos2, 0 | 0, 0 | 0)) {
 			// Division by zero will be considered outside
@@ -281,7 +398,7 @@ __FyLongOpsAsmString = (function(global, env, buffer) {
 				_set(_pos1, 0 | 0, 1 | 0);
 				return;
 			} else {
-				stack[_pos1 >> 2] = 0x40000000 | 0;
+				stack[_pos1 >> 2] = 0xC0000000 | 0;
 				div(pos1, pos2);
 				shl1(pos1);
 				if (_equals(_pos1, 0 | 0, 0 | 0)) {
@@ -294,27 +411,54 @@ __FyLongOpsAsmString = (function(global, env, buffer) {
 				} else {
 					_set(_tmp0, 0x80000000 | 0, 0 | 0);
 					_copy(_pos1, _tmp1);
-					mul(tmp1, pos2);
-					sub(tmp0, tmp1);
-					// tmp0 = rem pos1 = approx pos2 = other
+					mul(pos1, pos2);
+					sub(tmp0, pos1);
 					div(tmp0, pos2);
-					add(pos1, tmp0);
+					add(tmp1, tmp0);
+					_copy(_tmp1, _pos1);
 					return;
 				}
 			}
-		} else if (_equals(pos2, 0x80000000 | 0, 0 | 0)) {
-			_set(pos1, 0 | 0, 0 | 0);
+		} else if (_equals(_pos2, 0x80000000 | 0, 0 | 0)) {
+			_set(_pos1, 0 | 0, 0 | 0);
 			return;
 		}
 
-		if (stack[_pos1 >> 2] >>> 31 == 1 | 0) {
+		if ((stack[_pos1 >> 2] | 0) < (0 | 0)) {
 			neged = (1 - neged) | 0;
 			neg(pos1);
 		}
-		if (stack[_pos2 >> 2] >>> 31 == 1 | 0) {
+		if ((stack[_pos2 >> 2] | 0) < (0 | 0)) {
 			neged = (1 - neged) | 0;
 			pos2Neged = 1 | 0;
 			neg(pos2);
+		}
+
+		// tmp2 -> rem
+		// pos1 res
+		_copy(_pos1, _tmp2);
+		_set(_pos1, 0 | 0, 0 | 0);
+
+		while (compare(tmp2, pos2) >= 0) {
+			approx = _fmax(1.0, floor(_toNumber(_tmp2) / _toNumber(_pos2)));
+			log2 = ceil(log(approx) / ln2);
+			delta = (log2 <= 48.0) ? 1.0 : pow(2.0, log2 - 48.0);
+			// tmp3 -> approxRes
+			// tmp4 -> approxRem
+			_fromNumber(_tmp3, approx);
+			_copy(_tmp3, _tmp4);
+			mul(tmp4, pos2);
+			while ((stack[_tmp4 >> 2] | 0) < (0 | 0) | compare(tmp4, tmp2) > 0) {
+				approx = approx - delta;
+				_fromNumber(_tmp3, approx);
+				_copy(_tmp3, _tmp4);
+				mul(tmp4, pos2);
+			}
+			if (_equals(_tmp3, 0 | 0, 0 | 0)) {
+				_set(_tmp3, 0 | 0, 1 | 0);
+			}
+			add(pos1, tmp3);
+			sub(tmp2, tmp4);
 		}
 
 		if (neged) {
@@ -326,12 +470,348 @@ __FyLongOpsAsmString = (function(global, env, buffer) {
 	}
 
 	return {
+		compare : compare,
+		cmp : cmp,
 		not : not,
 		neg : neg,
 		add1 : add1,
 		add : add,
 		sub : sub,
-		mul : mul
+		mul : mul,
+		div : div,
+		fromNumber : fromNumber,
+		toNumber : toNumber
 	};
-}).toString();
+}
+
+// asm.js报错的行号+9基本上是真实的行号
+__FyLongOpsAsmString = __FyLongOpAsm.toString();
+
+/**
+ * 
+ * @param global
+ * @param stack
+ * @returns
+ */
+function __FyLongOps(global, stack) {
+	this.global = global;
+	this.stack = stack;
+
+	this.TWO_PWR_63_DBL_ = 9223372036854776000.0;
+
+	this.tmp0 = 0;
+	this.tmp1 = 2;
+
+	this.tmp2 = 4;
+	this.tmp3 = 6;
+
+	this.tmp4 = 8;
+}
+
+__FyLongOps.prototype.fmax = function(value1, value2) {
+	return ((value1) > (value2) ? value1 : value2);
+};
+
+__FyLongOps.prototype.not = function(pos) {
+	var stack = this.stack;
+	stack[pos] = ~stack[pos];
+	stack[pos + 1] = ~stack[pos + 1];
+};
+
+__FyLongOps.prototype.neg = function(pos) {
+	var stack = this.stack;
+	stack[pos] = ~stack[pos];
+	stack[pos + 1] = ~stack[pos + 1];
+	this.add1(pos);
+};
+
+__FyLongOps.prototype.add1 = function(pos) {
+	var stack = this.stack;
+	if ((stack[pos + 1] | 0) === -1) {
+		stack[pos + 1] = 0;
+		stack[pos]++;
+	} else {
+		stack[pos + 1]++;
+	}
+};
+
+__FyLongOps.prototype.toNumber = function(pos) {
+	return stack[pos] * 4294967296 + (stack[pos + 1] >>> 0);
+};
+
+__FyLongOps.prototype.fromNumber = function(pos, value) {
+
+	if ((value != value) | (value == 1.0 / 0.0)) {
+		stack[pos] = stack[pos + 1] = 0;
+		return;
+	} else if (value <= (-this.TWO_PWR_63_DBL_)) {
+		stack[pos] = 0x80000000;
+		stack[pos + 1] = 0;
+		return;
+	} else if ((value + 1.0) >= this.TWO_PWR_63_DBL_) {
+		stack[pos] = 0x7fffffff;
+		stack[pos + 1] = 0xffffffff;
+		return;
+	} else if (value < 0.0) {
+		this.fromNumber(pos, -value);
+		this.neg(pos);
+		return;
+	} else {
+		stack[pos] = (value / 4294967296.0) >> 0;
+		stack[pos + 1] = (value % 4294967296.0) >> 0;
+		return;
+	}
+};
+
+__FyLongOps.prototype.compare = function(pos1, pos2) {
+	var stack = this.stack;
+	if (stack[pos1] > stack[pos2]) {
+		return 1;
+	} else if (stack[pos1] < stack[pos2]) {
+		return -1;
+	}
+	if (stack[pos1 + 1] == stack[pos2 + 1]) {
+		return 0;
+	}
+	if ((stack[pos1 + 1] >>> 0) > (stack[pos2 + 1] >>> 0)) {
+		return 1;
+	} else {
+		return -1;
+	}
+};
+
+__FyLongOps.prototype.cmp = function(pos1, pos2) {
+	var stack = this.stack;
+	var ret = this.compare(pos1, pos2);
+	switch (ret) {
+	case -1:
+		stack[pos1] = -1;
+		stack[pos1 + 1] = -1;
+		break;
+	case 0:
+		stack[pos1] = 0;
+		stack[pos1 + 1] = 0;
+		break;
+	case 1:
+		stack[pos1] = 0;
+		stack[pos1 + 1] = 1;
+		break;
+	default:
+		throw ("err! " + ret);
+	}
+};
+
+/**
+ * Add two longs
+ * 
+ * @param pos1
+ * @param pos2
+ * @param pos1
+ */
+__FyLongOps.prototype.add = function(pos1, pos2) {
+	var stack = this.stack;
+	var tmp = (stack[pos1 + 1] >>> 0) + (stack[pos2 + 1] >>> 0);
+	stack[pos1 + 1] = tmp | 0;
+	stack[pos1] = (((tmp / 4294967296) >> 0) + (stack[pos1]) + (stack[pos2])) | 0;
+};
+
+/**
+ * Add two longs
+ * 
+ * @param pos1
+ * @param pos2
+ * @param pos1
+ */
+__FyLongOps.prototype.sub = function(pos1, pos2) {
+	this.neg(pos1);
+	this.add(pos1, pos2);
+	this.neg(pos1);
+};
+
+__FyLongOps.prototype.mul = function mul(pos1, pos2) {
+	var stack = this.stack;
+	var neged = 0;
+	var pos2Neged = 0;
+
+	if ((((stack[pos1 << 2 >> 2] | 0) == (0 | 0)) & ((stack[(pos1 + 1) << 2 >> 2] | 0) == (0 | 0)))
+			| (((stack[pos2 << 2 >> 2] | 0) == (0 | 0)) & ((stack[(pos2 + 1) << 2 >> 2] | 0) == (0 | 0)))) {
+		stack[pos1 << 2 >> 2] = 0 | 0;
+		stack[(pos1 + 1) << 2 >> 2] = 0 | 0;
+	}
+	if (((stack[(pos1) << 2 >> 2] | 0) == (0x80000000 | 0))
+			& ((stack[(pos1 + 1) << 2 >> 2] | 0) == (0 | 0))) {
+		if ((stack[(pos2 + 1) << 2 >> 2] & 1 | 0) == (0 | 0)) {
+			stack[pos1 << 2 >> 2] = 0;
+			stack[(pos1 + 1) << 2 >> 2] = 0;
+		}
+		return;
+	} else if (((stack[(pos2) << 2 >> 2] | 0) == (0x80000000 | 0))
+			& ((stack[(pos2 + 1) << 2 >> 2] | 0) == (0 | 0))) {
+		if ((stack[(pos1 + 1) << 2 >> 2] & 1 | 0) == (0 | 0)) {
+			stack[pos1 << 2 >> 2] = 0 | 0;
+		} else {
+			stack[pos1 << 2 >> 2] = 0x80000000;
+		}
+		stack[(pos1 + 1) << 2 >> 2] = 0;
+		return;
+	}
+	if (stack[pos1 << 2 >> 2] >>> 31 == 1 | 0) {
+		neged = (1 - neged) | 0;
+		this.neg(pos1);
+	}
+	if (stack[pos2 << 2 >> 2] >>> 31 == 1 | 0) {
+		neged = (1 - neged) | 0;
+		pos2Neged = 1 | 0;
+		this.neg(pos2);
+	}
+
+	var a48 = stack[pos1 << 2 >> 2] >>> 16;
+	var a32 = stack[pos1 << 2 >> 2] & 0xFFFF;
+	var a16 = stack[(pos1 + 1) << 2 >> 2] >>> 16;
+	var a00 = stack[(pos1 + 1) << 2 >> 2] & 0xFFFF;
+	var b48 = stack[(pos2) << 2 >> 2] >>> 16;
+	var b32 = stack[(pos2) << 2 >> 2] & 0xFFFF;
+	var b16 = stack[(pos2 + 1) << 2 >> 2] >>> 16;
+	var b00 = stack[(pos2 + 1) << 2 >> 2] & 0xFFFF;
+	var c48 = 0, c32 = 0, c16 = 0, c00 = 0;
+	c00 += a00 * b00;
+	c16 += c00 >>> 16;
+	c00 &= 0xFFFF;
+	c16 += a16 * b00;
+	c32 += c16 >>> 16;
+	c16 &= 0xFFFF;
+	c16 += a00 * b16;
+	c32 += c16 >>> 16;
+	c16 &= 0xFFFF;
+	c32 += a32 * b00;
+	c48 += c32 >>> 16;
+	c32 &= 0xFFFF;
+	c32 += a16 * b16;
+	c48 += c32 >>> 16;
+	c32 &= 0xFFFF;
+	c32 += a00 * b32;
+	c48 += c32 >>> 16;
+	c32 &= 0xFFFF;
+	c48 += a48 * b00 + a32 * b16 + a16 * b32 + a00 * b48;
+	c48 &= 0xFFFF;
+	stack[pos1 << 2 >> 2] = ((c48 << 16) | c32) | 0;
+	stack[(pos1 + 1) << 2 >> 2] = (c16 << 16) | c00 | 0;
+	if (neged) {
+		this.neg(pos1);
+	}
+	if (pos2Neged) {
+		this.neg(pos2);
+	}
+};
+
+__FyLongOps.prototype.div = function(pos1, pos2) {
+	var stack = this.stack;
+	var neged = 0;
+	var pos2Neged = 0;
+	var approx = 0.0;
+	var log2 = 0.0;
+	var delta = 0.0;
+
+	if (stack[pos2] == 0 && stack[pos2 + 1] == 0) {
+		// Division by zero will be considered outside
+		stack[pos1] = -1;
+		stack[pos2] = -1;
+		return;
+	}
+
+	if (stack[pos1] == 0x80000000 && stack[pos1 + 1] == 0) {
+		if ((stack[pos2] == 0 && stack[pos2 + 1] == 1)
+				| (stack[pos2] == -1 && stack[pos2 + 1] == -1)) {
+			return;
+		} else if (stack[pos2] == 0x80000000 && stack[pos2 + 1] == 0) {
+			stack[pos1] = 0;
+			stack[pos1 + 1] = 1;
+			return;
+		} else {
+			stack[pos1] = 0xc0000000;
+			div(pos1, pos2);
+			stack[pos1] = (stack[pos1] << 1) + (stack[pos1 + 1] >>> 31);
+			stack[pos1 + 1] <<= 1;
+			if (stack[pos1] == 0 && stack[pos1 + 1] == 0) {
+				if (stack[pos2] < 0) {
+					stack[pos1] = 0;
+					stack[pos1 + 1] = 1;
+					return;
+				} else {
+					stack[pos1] = -1;
+					stack[pos1 + 1] = -1;
+					return;
+				}
+			} else {
+				stack[this.tmp0] = 0x80000000;
+				stack[this.tmp0 + 1] = 0;
+				stack[this.tmp1] = stack[pos1];
+				stack[this.tmp1 + 1] = stack[pos1 + 1];
+				this.mul(pos1, pos2);
+				this.sub(this.tmp0, pos1);
+				this.div(this.tmp0, pos2);
+				this.add(this.tmp1, this.tmp0);
+				stack[pos1] = stack[this.tmp1];
+				stack[pos1 + 1] = stack[this.tmp1 + 1];
+				return;
+			}
+		}
+	} else if (stack[pos2] == 0x80000000 && stack[pos2 + 1] == 0) {
+		stack[pos1] = 0;
+		stack[pos1 + 1] = 0;
+		return;
+	}
+
+	if (stack[pos1] < 0) {
+		neged = 1 - neged;
+		this.neg(pos1);
+	}
+
+	if (stack[pos2] < 0) {
+		neged = 1 - neged;
+		pos2Neged = true;
+		this.neg(pos2);
+	}
+	// tmp2 -> rem
+	// pos1 res
+	stack[this.tmp2] = stack[pos1];
+	stack[this.tmp2 + 1] = stack[pos1 + 1];
+
+	stack[pos1] = 0;
+	stack[pos1 + 1] = 0;
+
+	while (this.compare(this.tmp2, pos2) >= 0) {
+		approx = this.fmax(1.0, Math.floor(this.toNumber(this.tmp2)
+				/ this.toNumber(this.pos2)));
+		log2 = Math.ceil(Math.log(approx) / Math.LN2);
+		delta = (log2 <= 48.0) ? 1.0 : Math.pow(2.0, log2 - 48.0);
+		// tmp3 -> approxRes
+		// tmp4 -> approxRem
+		this.fromNumber(this.tmp3, approx);
+		stack[this.tmp4] = stack[this.tmp3];
+		stack[this.tmp4 + 1] = stack[this.tmp3 + 1];
+
+		this.mul(tmp4, pos2);
+
+		while (stack[this.tmp4] < 0 || this.compare(this.tmp4, this.tmp2) > 0) {
+			approx = approx - delta;
+			this.fromNumber(this.tmp3, approx);
+			stack[this.tmp4] = stack[this.tmp3];
+			stack[this.tmp4 + 1] = stack[this.tmp3 + 1];
+			this.mul(this.tmp4, pos2);
+		}
+		if (stack[this.tmp3] == 0 && stack[this.tmp3 + 1] == 0) {
+			stack[this.tmp3 + 1] = 1;
+		}
+		this.add(pos1, this.tmp3);
+		this.sub(this.tmp2, this.tmp4);
+	}
+
+	if (neged) {
+		neg(pos1);
+	}
+	if (pos2Neged) {
+		neg(pos2);
+	}
+};
 
