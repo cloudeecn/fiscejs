@@ -92,7 +92,7 @@ function __FyLongOpAsm(global, env, buffer) {
 		stack[(internalPos + 4) >> 2] = low;
 	}
 
-	function _toNumber(internalPos) {
+	function _longToNumber(internalPos) {
 		internalPos = internalPos | 0;
 		var low = 0.0;
 
@@ -103,7 +103,7 @@ function __FyLongOpAsm(global, env, buffer) {
 		return +((+(stack[internalPos >> 2] | 0)) * (4294967296.0) + (low));
 	}
 
-	function _fromNumber(internalPos, value) {
+	function _longFromNumber(internalPos, value) {
 		internalPos = internalPos | 0;
 		value = +value;
 
@@ -117,7 +117,7 @@ function __FyLongOpAsm(global, env, buffer) {
 			_set(internalPos, 0x7FFFFFFF | 0, 0xFFFFFFFF | 0);
 			return;
 		} else if (value < 0.0) {
-			_fromNumber(internalPos, -value);
+			_longFromNumber(internalPos, -value);
 			neg(internalPos >> 2);
 			return;
 		} else {
@@ -127,15 +127,15 @@ function __FyLongOpAsm(global, env, buffer) {
 		}
 	}
 
-	function toNumber(pos) {
+	function longToNumber(pos) {
 		pos = pos | 0;
-		return _toNumber((pos << 2) | 0);
+		return +_longToNumber((pos << 2) | 0);
 	}
 
-	function fromNumber(pos, value) {
+	function longFromNumber(pos, value) {
 		pos = pos | 0;
 		value = +value;
-		_fromNumber((pos << 2) | 0, value);
+		_longFromNumber((pos << 2) | 0, value);
 	}
 
 	function compare(pos1, pos2) {
@@ -440,17 +440,18 @@ function __FyLongOpAsm(global, env, buffer) {
 		_set(_pos1, 0 | 0, 0 | 0);
 
 		while (compare(tmp2, pos2) >= 0) {
-			approx = _fmax(1.0, floor(_toNumber(_tmp2) / _toNumber(_pos2)));
+			approx = _fmax(1.0, floor(_longToNumber(_tmp2)
+					/ _longToNumber(_pos2)));
 			log2 = ceil(log(approx) / ln2);
 			delta = (log2 <= 48.0) ? 1.0 : pow(2.0, log2 - 48.0);
 			// tmp3 -> approxRes
 			// tmp4 -> approxRem
-			_fromNumber(_tmp3, approx);
+			_longFromNumber(_tmp3, approx);
 			_copy(_tmp3, _tmp4);
 			mul(tmp4, pos2);
 			while ((stack[_tmp4 >> 2] | 0) < (0 | 0) | compare(tmp4, tmp2) > 0) {
 				approx = approx - delta;
-				_fromNumber(_tmp3, approx);
+				_longFromNumber(_tmp3, approx);
 				_copy(_tmp3, _tmp4);
 				mul(tmp4, pos2);
 			}
@@ -479,8 +480,8 @@ function __FyLongOpAsm(global, env, buffer) {
 		sub : sub,
 		mul : mul,
 		div : div,
-		fromNumber : fromNumber,
-		toNumber : toNumber
+		longFromNumber : longFromNumber,
+		longToNumber : longToNumber
 	};
 }
 
@@ -509,7 +510,7 @@ function __FyLongOps(global, stack) {
 }
 
 __FyLongOps.prototype.fmax = function(value1, value2) {
-	return ((value1) > (value2) ? value1 : value2);
+	return (value1 > value2) ? value1 : value2;
 };
 
 __FyLongOps.prototype.not = function(pos) {
@@ -535,12 +536,12 @@ __FyLongOps.prototype.add1 = function(pos) {
 	}
 };
 
-__FyLongOps.prototype.toNumber = function(pos) {
-	return stack[pos] * 4294967296 + (stack[pos + 1] >>> 0);
+__FyLongOps.prototype.longToNumber = function(pos) {
+	return this.stack[pos] * 4294967296 + (this.stack[pos + 1] >>> 0);
 };
 
-__FyLongOps.prototype.fromNumber = function(pos, value) {
-
+__FyLongOps.prototype.longFromNumber = function(pos, value) {
+	var stack = this.stack;
 	if ((value != value) | (value == 1.0 / 0.0)) {
 		stack[pos] = stack[pos + 1] = 0;
 		return;
@@ -553,7 +554,7 @@ __FyLongOps.prototype.fromNumber = function(pos, value) {
 		stack[pos + 1] = 0xffffffff;
 		return;
 	} else if (value < 0.0) {
-		this.fromNumber(pos, -value);
+		this.longFromNumber(pos, -value);
 		this.neg(pos);
 		return;
 	} else {
@@ -715,21 +716,21 @@ __FyLongOps.prototype.div = function(pos1, pos2) {
 	if (stack[pos2] == 0 && stack[pos2 + 1] == 0) {
 		// Division by zero will be considered outside
 		stack[pos1] = -1;
-		stack[pos2] = -1;
+		stack[pos1 + 1] = -1;
 		return;
 	}
 
-	if (stack[pos1] == 0x80000000 && stack[pos1 + 1] == 0) {
+	if (stack[pos1] == (0x80000000 | 0) && stack[pos1 + 1] == 0) {
 		if ((stack[pos2] == 0 && stack[pos2 + 1] == 1)
-				| (stack[pos2] == -1 && stack[pos2 + 1] == -1)) {
+				|| (stack[pos2] == -1 && stack[pos2 + 1] == -1)) {
 			return;
-		} else if (stack[pos2] == 0x80000000 && stack[pos2 + 1] == 0) {
+		} else if (stack[pos2] == (0x80000000 | 0) && stack[pos2 + 1] == 0) {
 			stack[pos1] = 0;
 			stack[pos1 + 1] = 1;
 			return;
 		} else {
-			stack[pos1] = 0xc0000000;
-			div(pos1, pos2);
+			stack[pos1] = (0xC0000000 | 0);
+			this.div(pos1, pos2);
 			stack[pos1] = (stack[pos1] << 1) + (stack[pos1 + 1] >>> 31);
 			stack[pos1 + 1] <<= 1;
 			if (stack[pos1] == 0 && stack[pos1 + 1] == 0) {
@@ -743,7 +744,7 @@ __FyLongOps.prototype.div = function(pos1, pos2) {
 					return;
 				}
 			} else {
-				stack[this.tmp0] = 0x80000000;
+				stack[this.tmp0] = (0x80000000 | 0);
 				stack[this.tmp0 + 1] = 0;
 				stack[this.tmp1] = stack[pos1];
 				stack[this.tmp1 + 1] = stack[pos1 + 1];
@@ -756,7 +757,7 @@ __FyLongOps.prototype.div = function(pos1, pos2) {
 				return;
 			}
 		}
-	} else if (stack[pos2] == 0x80000000 && stack[pos2 + 1] == 0) {
+	} else if (stack[pos2] == (0x80000000 | 0) && stack[pos2 + 1] == 0) {
 		stack[pos1] = 0;
 		stack[pos1 + 1] = 0;
 		return;
@@ -781,21 +782,22 @@ __FyLongOps.prototype.div = function(pos1, pos2) {
 	stack[pos1 + 1] = 0;
 
 	while (this.compare(this.tmp2, pos2) >= 0) {
-		approx = this.fmax(1.0, Math.floor(this.toNumber(this.tmp2)
-				/ this.toNumber(this.pos2)));
+		approx = this.fmax(1.0, Math.floor(this.longToNumber(this.tmp2)
+				/ this.longToNumber(pos2)));
 		log2 = Math.ceil(Math.log(approx) / Math.LN2);
 		delta = (log2 <= 48.0) ? 1.0 : Math.pow(2.0, log2 - 48.0);
+
 		// tmp3 -> approxRes
 		// tmp4 -> approxRem
-		this.fromNumber(this.tmp3, approx);
+		this.longFromNumber(this.tmp3, approx);
 		stack[this.tmp4] = stack[this.tmp3];
 		stack[this.tmp4 + 1] = stack[this.tmp3 + 1];
 
-		this.mul(tmp4, pos2);
+		this.mul(this.tmp4, pos2);
 
 		while (stack[this.tmp4] < 0 || this.compare(this.tmp4, this.tmp2) > 0) {
 			approx = approx - delta;
-			this.fromNumber(this.tmp3, approx);
+			this.longFromNumber(this.tmp3, approx);
 			stack[this.tmp4] = stack[this.tmp3];
 			stack[this.tmp4 + 1] = stack[this.tmp3 + 1];
 			this.mul(this.tmp4, pos2);
@@ -808,10 +810,9 @@ __FyLongOps.prototype.div = function(pos1, pos2) {
 	}
 
 	if (neged) {
-		neg(pos1);
+		this.neg(pos1);
 	}
 	if (pos2Neged) {
-		neg(pos2);
+		this.neg(pos2);
 	}
 };
-
