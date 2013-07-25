@@ -20,6 +20,10 @@
  */
 var FyPortable;
 
+var FyConfig = {
+	littleEndian : undefined
+};
+
 // now
 (function(window) {
 	if (!Date.now) {
@@ -36,13 +40,37 @@ var FyPortable;
 					return new Date().getTime();
 				};
 	})();
-	console.log(performance);
+
+	if (!window.Math.imul) {
+		// @see
+		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/imul
+		window.Math.imul = function(a, b) {
+			var ah = (a >>> 16) & 0xffff;
+			var al = a & 0xffff;
+			var bh = (b >>> 16) & 0xffff;
+			var bl = b & 0xffff;
+			// the shift by 0 fixes the sign on the high part
+			// the final |0 converts the unsigned value into a signed value
+			return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+		};
+	}
+
+	var darr = new Float64Array(1);
+	var iarr = new Int32Array(darr.buffer);
+
+	if (iarr[0]) {
+		// Big Endian
+		FyConfig.littleEndian = false;
+	} else {
+		// Little Endian
+		FyConfig.littleEndian = true;
+	}
 }((function() {
 	return this;
 }.call())));
 
 // We use ArrayBuffer for converting floats from/to ieee754 integers by default
-(function() {
+(function(global) {
 	"use strict";
 
 	var buffer = new ArrayBuffer(8);
@@ -79,40 +107,53 @@ var FyPortable;
 		return floatView[0];
 	};
 
-	/**
-	 * convert double to ieee754 int pair
-	 * 
-	 * @param {Number}
-	 *            doubleValue
-	 * @param {Array}
-	 *            container int pair container, if null/undefined,will create a
-	 *            new one
-	 * @returns {Array} int pair
-	 */
-	__FyPortable.prototype.doubleToIeee64 = function(doubleValue, container,
-			ofs) {
-		if (!container) {
-			container = new Array(2);
-		}
-		doubleView[0] = doubleValue;
-		container[ofs] = intView[0];
-		container[ofs + 1] = intView[1];
-		return container;
-	};
+	if (FyConfig.littleEndian) {
+		/**
+		 * convert double to ieee754 int pair
+		 * 
+		 * @param {Number}
+		 *            doubleValue
+		 * @param {Int32Array}
+		 *            container int pair container, if null/undefined,will
+		 *            create a new one
+		 * @returns {Array} int pair
+		 */
+		__FyPortable.prototype.doubleToIeee64 = function(doubleValue,
+				container, ofs) {
+			doubleView[0] = doubleValue;
+			container[ofs] = intView[1];
+			container[ofs + 1] = intView[0];
+			return container;
+		};
 
-	/**
-	 * convert int pair to double
-	 * 
-	 * @param {Array}
-	 *            container int pair container
-	 * @returns {Number} doubleValue
-	 */
-	__FyPortable.prototype.ieee64ToDouble = function(container, ofs) {
-		intView[0] = container[ofs];
-		intView[1] = container[ofs + 1];
-		return doubleView[0];
-	};
+		/**
+		 * convert int pair to double
+		 * 
+		 * @param {Int32Array}
+		 *            container int pair container
+		 * @returns {Number} doubleValue
+		 */
+		__FyPortable.prototype.ieee64ToDouble = function(container, ofs) {
+			intView[1] = container[ofs];
+			intView[0] = container[ofs + 1];
+			return doubleView[0];
+		};
+	} else {
 
+		__FyPortable.prototype.doubleToIeee64 = function(doubleValue,
+				container, ofs) {
+			doubleView[0] = doubleValue;
+			container[ofs] = intView[0];
+			container[ofs + 1] = intView[1];
+			return container;
+		};
+
+		__FyPortable.prototype.ieee64ToDouble = function(container, ofs) {
+			intView[0] = container[ofs];
+			intView[1] = container[ofs + 1];
+			return doubleView[0];
+		};
+	}
 	/**
 	 * convert double to int pair
 	 * 
@@ -143,20 +184,12 @@ var FyPortable;
 		}
 	};
 
-	__FyPortable.prototype.ladd = function(container1, ofs1, container2, ofs2,
-			output, ofsOutput) {
-		var tmpInt1 = (container1[ofs1 + 1] & 0xffff)
-				+ (container2[ofs2 + 1] & 0xffff);
-		var tmpInt2 = (container1[ofs1 + 1] >>> 16)
-				+ (container2[ofs2 + 1] >>> 16) + (tmpInt1 >>> 16);
-		output[ofsOutput + 1] = (tmpInt2 << 16) + (tmpInt1 & 0xffff);
-
-		tmpInt1 = (container1[ofs1] & 0xffff) + (container2[ofs2] & 0xffff)
-				+ (tmpInt2 >>> 16);
-		tmpInt2 = (container1[ofs1] >>> 16) + (container2[ofs2] >>> 16)
-				+ (tmpInt1 >>> 16);
-		output[ofsOutput] = (tmpInt2 << 16) + (tmpInt1 & 0xffff);
+	__FyPortable.prototype.getLongOps = function(stack) {
+		return FyCreateLongOps(this, 0, stack);
 	};
 
 	FyPortable = new __FyPortable();
-})();
+	
+})((function() {
+	return this;
+}.call()));
