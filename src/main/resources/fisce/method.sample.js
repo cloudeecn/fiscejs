@@ -1079,7 +1079,30 @@ function(thread, message, ops) {
 				// ###
 			case 151:
 				// ##OP-LDC 0 X-LDC
-				// TODO
+				ops--;
+				switch ($2) {
+				case 0:
+					// int/float
+					stack[sp] = constants[$1].value;
+					sp++;
+					break;
+				case 1:
+					stack[sp] = constants[$1].value[0];
+					stack[sp + 1] = constants[$1].value[1];
+					sp += 2;
+					break;
+				case 2:
+					lip = $ip;
+					stack[sp] = heap.literalWithConstant(constants[$1]);
+					sp++;
+					break;
+				case 3:
+					lip = $ip;
+					stack[sp] = context.getClassObjectHandle(context
+							.lookupClassFromConstant(constants[$1]));
+					sp++;
+					break;
+				}
 				// ###
 			case 152:
 				// ##OP-LDIV -4 2
@@ -1245,7 +1268,7 @@ function(thread, message, ops) {
 						+ this.uniqueName + "." + ip);
 			}
 		} catch (e) {
-			
+
 			if (e instanceof FyException) {
 
 			}

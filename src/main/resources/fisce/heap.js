@@ -57,7 +57,7 @@ var FyObject;
 		this.toEnqueue = [];
 		this.nextHandle = 1;
 		this.totalObjects = 0;
-		
+
 		this.usePreservedArea = false;
 
 	};
@@ -334,12 +334,20 @@ var FyObject;
 		}
 		return handle;
 	};
-	
-	FyHeap.prototype.getClassFromHandle = function(handle){
+
+	FyHeap.prototype.literalWithConstant = function(constant) {
+		var ret = constant.value;
+		if (ret !== undefined) {
+			ret = constant.value = this.literal(constant.string);
+		}
+		return ret;
+	};
+
+	FyHeap.prototype.getClassFromHandle = function(handle) {
 		/**
 		 * @returns {FyObject}
 		 */
-		var obj=this.objects[handle];
+		var obj = this.objects[handle];
 		return obj.clazz;
 	};
 })();
