@@ -44,8 +44,19 @@ function(thread, message, ops) {
 	 * @returns {FyContext}
 	 */
 	var context = thread.context;
+	/**
+	 * @returns {__FyLongOps}
+	 */
+	var longOps = thread.longOps;
 	var constants = clazz.constants;
+	/**
+	 * @returns {Int32Array}
+	 */
 	var stack = thread.stack;
+	/**
+	 * @returns {Float32Array}
+	 */
+	var floatStack = thread.floatStack;
 	var framePos = thread.getCurrentFramePos() | 0;
 	var ip = stack[framePos + FyThread.frame_ip] | 0;
 	var lip = stack[framePos + FyThread.frame_lip] | 0;
@@ -421,101 +432,86 @@ function(thread, message, ops) {
 			case 68:
 				// ##OP-F2D -1 2
 				ops--;
-				FyPortable.doubleToIeee64(FyPortable
-						.ieee32ToFloat(stack[sp - 1]), stack, sp - 1);
+				FyPortable.doubleToIeee64(floatStack[sp - 1], stack, sp - 1);
 				sp++;
 				// ###
 			case 69:
 				// ##OP-F2I -1 1
 				ops--;
-				stack[sp - 1] = FyPortable.ieee32ToFloat(stack[sp - 1]) | 0;
+				stack[sp - 1] = floatStack[sp - 1] | 0;
 				// ###
 			case 70:
 				// ##OP-F2L -1 2
 				ops--;
-				FyPortable.doubleToLong(
-						FyPortable.ieee32ToFloat(stack[sp - 1]), stack, sp - 1);
+				FyPortable.doubleToLong(floatStack[sp - 1], stack, sp - 1);
 				sp++;
 				// ###
 			case 71:
 				// ##OP-FADD -2 1
 				ops--;
 				sp--;
-				stack[sp - 1] = FyPortable.floatToIeee32(FyPortable
-						.ieee32ToFloat(stack[sp - 1])
-						+ FyPortable.ieee32ToFloat(stack[sp]));
+				floatStack[sp - 1] += floatStack[sp];
 				// ###
 			case 72:
 				// ##OP-FCMPG -2 1
 				ops--;
 				sp--;
-				stack[sp - 1] = FyPortable.dcmpg(FyPortable
-						.ieee32ToFloat(stack[sp - 1]), FyPortable
-						.ieee32ToFloat(stack[sp]));
+				stack[sp - 1] = FyPortable.dcmpg(floatStack[sp - 1],
+						floatStack[sp]);
 				// ###
 			case 73:
 				// ##OP-FCMPL -2 1
 				ops--;
 				sp--;
-				stack[sp - 1] = FyPortable.dcmpg(FyPortable
-						.ieee32ToFloat(stack[sp - 1]), FyPortable
-						.ieee32ToFloat(stack[sp]));
+				stack[sp - 1] = FyPortable.dcmpl(floatStack[sp - 1],
+						floatStack[sp]);
 				// ###
 			case 74:
 				// ##OP-FCONST_0 0 1
 				ops--;
-				stack[sp] = FyPortable.floatToIeee32(0);
+				floatStack[sp] = 0;
 				sp++;
 				// ###
 			case 75:
 				// ##OP-FCONST_1 0 1
 				ops--;
-				stack[sp] = FyPortable.floatToIeee32(1);
+				floatStack[sp] = 1;
 				sp++;
 				// ###
 			case 76:
 				// ##OP-FCONST_2 0 1
 				ops--;
-				stack[sp] = FyPortable.floatToIeee32(2);
+				floatStack[sp] = 2;
 				sp++;
 				// ###
 			case 77:
 				// ##OP-FDIV -2 1
 				ops--;
 				sp--;
-				stack[sp - 1] = FyPortable.floatToIeee32(FyPortable
-						.ieee32ToFloat(stack[sp - 1])
-						/ FyPortable.ieee32ToFloat(stack[sp]));
+				floatStack[sp - 1] /= floatStack[sp];
 				// ###
 			case 78:
 				// ##OP-FMUL -2 1
 				ops--;
 				sp--;
-				stack[sp - 1] = FyPortable.floatToIeee32(FyPortable
-						.ieee32ToFloat(stack[sp - 1])
-						* FyPortable.ieee32ToFloat(stack[sp]));
+				floatStack[sp - 1] *= floatStack[sp];
 				// ###
 			case 79:
 				// ##OP-FNEG -1 1
 				ops--;
-				stack[sp - 1] = FyPortable.floatToIeee32(-FyPortable
-						.ieee32ToFloat(stack[sp - 1]));
+				floatStack[sp - 1] = -floatStack[sp - 1];
 				// ###
 			case 80:
 				// ##OP-FREM -2 1
 				ops--;
 				sp--;
-				stack[sp - 1] = FyPortable.floatToIeee32(FyPortable
-						.ieee32ToFloat(stack[sp - 1])
-						% FyPortable.ieee32ToFloat(stack[sp]));
+				floatStack[sp - 1] %= floatStack[sp];
 				// ###
 			case 81:
 				// ##OP-FSUB -2 1
 				ops--;
 				sp--;
-				stack[sp - 1] = FyPortable.floatToIeee32(FyPortable
-						.ieee32ToFloat(stack[sp - 1])
-						- FyPortable.ieee32ToFloat(stack[sp]));
+				floatStack[sp - 1] -= floatStack[sp];
 				// ###
 			case 82:
 				// ##OP-GETFIELD -1 X-GETFIELD
@@ -838,7 +834,7 @@ function(thread, message, ops) {
 				// ##OP-IMUL -2 1
 				ops--;
 				sp -= 1;
-				stack[sp - 1] *= stack[sp];
+				stack[sp - 1] = Math.imul(stack[sp - 1], stack[sp]);
 				// ###
 			case 128:
 				// ##OP-INEG -1 1
@@ -1037,7 +1033,7 @@ function(thread, message, ops) {
 				// ##OP-LADD -4 2
 				ops--;
 				sp -= 2;
-				FyPortable.ladd(stack, sp - 2, stack, sp, stack, sp - 2);
+				longOps.add(sp + 16 - 2, sp + 16);
 				// ###
 			case 147:
 				// ##OP-LAND -4 2
@@ -1050,18 +1046,7 @@ function(thread, message, ops) {
 				// ##OP-LCMP -4 1
 				ops--;
 				sp -= 3;
-				if (stack[sp - 1] !== stack[sp + 1]) {
-					// 高位相同，比较低位
-					if (stack[sp] === stack[sp + 2]) {
-						stack[sp - 1] = 0;
-					} else {
-						stack[sp - 1] = (stack[sp] > stack[sp + 2] ? 1 : -1)
-								* (stack[sp - 1] >= 0 ? 1 : -1);
-					}
-				} else {
-					// 直接比较高位
-					stack[sp - 1] = stack[sp - 1] > stack[sp + 1] ? 1 : -1;
-				}
+				longOps.cmp(sp + 15, sp + 17);
 				// ###
 			case 149:
 				// ##OP-LCONST_0 0 2
@@ -1106,7 +1091,14 @@ function(thread, message, ops) {
 				// ###
 			case 152:
 				// ##OP-LDIV -4 2
-				// TODO
+				ops--;
+				sp -= 2;
+				if (stack[sp] === 0 && stack[sp + 1] === 0) {
+					lip = $ip;
+					throw new FyException(FyConst.FY_EXCEPTION_ARITHMETIC,
+							"Devided by zero!");
+				}
+				longOps.div(sp + 14, sp + 16);
 				// ###
 			case 153:
 				// ##OP-DLOAD|LLOAD 0 2
@@ -1117,11 +1109,14 @@ function(thread, message, ops) {
 				// ###
 			case 155:
 				// ##OP-LMUL -4 2
-				// TODO
+				ops--;
+				sp -= 2;
+				longOps.mul(sp + 14, sp + 16);
 				// ###
 			case 156:
 				// ##OP-LNEG -2 2
-				// TODO
+				ops--;
+				longOps.neg(sp + 14);
 				// ###
 			case 157:
 				// ##OP-LOOKUPSWITCH -1 0
@@ -1136,19 +1131,28 @@ function(thread, message, ops) {
 				// ###
 			case 159:
 				// ##OP-LREM -4 2
+				ops--;
+				sp -= 2;
+				longOps.rem(sp + 14, sp + 16);
 				// TODO
 				// ###
 			case 160:
-				// ##OP-LSHL -4 2
-				// TODO
+				// ##OP-LSHL -3 2
+				ops--;
+				sp--;
+				longOps.shl(sp + 14, stack[sp]);
 				// ###
 			case 161:
-				// ##OP-LSHR -4 2
-				// TODO
+				// ##OP-LSHR -3 2
+				ops--;
+				sp--;
+				longOps.shr(sp + 14, stack[sp]);
 				// ###
 			case 162:
-				// ##OP=LUSHR -4 2
-				// TODO
+				// ##OP=LUSHR -3 2
+				ops--;
+				sp--;
+				longOps.ushr(sp + 14, stack[sp]);
 				// ###
 			case 163:
 				// ##OP-DSTORE|OP-LSTORE -2 0
@@ -1159,7 +1163,9 @@ function(thread, message, ops) {
 				// ###
 			case 164:
 				// ##OP-LSUB -4 2
-				// TODO
+				ops--;
+				sp -= 2;
+				longOps.sub(sp + 14, sp + 16);
 				// ###
 			case 165:
 				// ##OP-LXOR -4 2
@@ -1228,8 +1234,8 @@ function(thread, message, ops) {
 					clazz.clinitThreadId = -1;
 				}
 				thread.popFrame();
-				break __fy_outer;
-			// ###
+				return ops;
+				// ###
 			case 178:
 				// ##OP-SALOAD -2 1
 				lip = $ip;
@@ -1274,6 +1280,10 @@ function(thread, message, ops) {
 			}
 		}
 	}
+	// Local to frame
+	thread.sp = sp;
+	stack[framePos + FyThread.frame_lip] = $ip;
+	stack[framePos + FyThread.frame_ip] = $ip;
 }
 // ###
 ;

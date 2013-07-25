@@ -54,14 +54,14 @@ function __FyLongOpAsm(global, env, buffer) {
 	var _tmp0 = 0;
 	var tmp1 = 2;
 	var _tmp1 = 8;
-
 	var tmp2 = 4;
 	var _tmp2 = 16;
 	var tmp3 = 6;
 	var _tmp3 = 24;
-
 	var tmp4 = 8;
 	var _tmp4 = 32;
+	var tmp5 = 10;
+	var _tmp5 = 40;
 
 	function _fmax(value1, value2) {
 		value1 = +value1;
@@ -195,6 +195,62 @@ function __FyLongOpAsm(global, env, buffer) {
 		_pos = (pos << 2) | 0;
 		stack[(_pos + 4) >> 2] = ((stack[(_pos + 4) >> 2] >> 1) + (stack[pos >> 2] >>> 31 << 31)) | 0;
 		stack[_pos >> 2] = (stack[_pos >> 2] >> 1) | 0;
+	}
+
+	function shl(pos, ofs) {
+		pos = pos | 0;
+		ofs = ofs | 0;
+
+		var _pos = 0;
+		_pos = pos << 2;
+
+		if ((ofs | 0) >= (64 | 0)) {
+			_set(_pos, 0 | 0, 0 | 0);
+		} else if ((ofs | 0) >= (32 | 0)) {
+			stack[_pos >> 2] = (stack[_pos >> 2]) << (ofs - 32);
+			stack[(_pos + 4) >> 2] = 0;
+		} else {
+			stack[_pos >> 2] = ((stack[_pos >> 2] << ofs) | (stack[(_pos + 4) >> 2] >>> (32 - ofs)));
+			stack[(_pos + 4) >> 2] = (stack[(_pos + 4) >> 2] << ofs);
+		}
+	}
+
+	function shr(pos, ofs) {
+		pos = pos | 0;
+		ofs = ofs | 0;
+
+		var _pos = 0;
+		_pos = pos << 2;
+
+		if ((ofs | 0) >= (64 | 0)) {
+			stack[(_pos + 4) >> 2] = stack[_pos >> 2] = stack[_pos >> 2] >> 31;
+		} else if ((ofs | 0) >= (32 | 0)) {
+			stack[(_pos + 4) >> 2] = (stack[(_pos) >> 2]) >> (ofs - 32);
+			stack[(_pos) >> 2] = stack[_pos >> 2] >> 31;
+		} else {
+			stack[(_pos + 4) >> 2] = ((stack[(_pos + 4) >> 2]) >>> ofs)
+					| (stack[_pos >> 2] << (32 - pos));
+			stack[_pos >> 2] = stack[_pos >> 2] >> ofs;
+		}
+	}
+
+	function ushr(pos, ofs) {
+		pos = pos | 0;
+		ofs = ofs | 0;
+
+		var _pos = 0;
+		_pos = pos << 2;
+
+		if ((ofs | 0) >= (64 | 0)) {
+			_set(_pos, 0 | 0, 0 | 0);
+		} else if ((ofs | 0) >= (32 | 0)) {
+			stack[(_pos + 4) >> 2] = (stack[(_pos) >> 2]) >>> (ofs - 32);
+			stack[(_pos) >> 2] = 0;
+		} else {
+			stack[(_pos + 4) >> 2] = ((stack[(_pos + 4) >> 2]) >>> ofs)
+					| (stack[_pos >> 2] << (32 - pos));
+			stack[_pos >> 2] = stack[_pos >> 2] >>> ofs;
+		}
 	}
 
 	function not(pos) {
@@ -470,6 +526,21 @@ function __FyLongOpAsm(global, env, buffer) {
 		}
 	}
 
+	function rem(pos1, pos2) {
+		pos1 = pos1 | 0;
+		pos2 = pos2 | 0;
+
+		if (_equals(pos2 << 2, 0 | 0, 0 | 0)) {
+			_set(pos1 << 2, -1 | 0, -1 | 0);
+			return;
+		}
+
+		_copy(pos1 << 2, _tmp5);
+		div(tmp5, pos2);
+		mul(tmp5, pos2);
+		sub(pos1, tmp5);
+	}
+
 	return {
 		compare : compare,
 		cmp : cmp,
@@ -480,6 +551,10 @@ function __FyLongOpAsm(global, env, buffer) {
 		sub : sub,
 		mul : mul,
 		div : div,
+		rem : rem,
+		shl : shl,
+		shr : shr,
+		ushr : ushr,
 		longFromNumber : longFromNumber,
 		longToNumber : longToNumber
 	};
@@ -507,6 +582,7 @@ function __FyLongOps(global, stack) {
 	this.tmp3 = 6;
 
 	this.tmp4 = 8;
+	this.tmp5 = 10;
 }
 
 __FyLongOps.prototype.fmax = function(value1, value2) {
@@ -634,46 +710,46 @@ __FyLongOps.prototype.mul = function mul(pos1, pos2) {
 	var neged = 0;
 	var pos2Neged = 0;
 
-	if ((((stack[pos1 << 2 >> 2] | 0) == (0 | 0)) & ((stack[(pos1 + 1) << 2 >> 2] | 0) == (0 | 0)))
-			| (((stack[pos2 << 2 >> 2] | 0) == (0 | 0)) & ((stack[(pos2 + 1) << 2 >> 2] | 0) == (0 | 0)))) {
-		stack[pos1 << 2 >> 2] = 0 | 0;
-		stack[(pos1 + 1) << 2 >> 2] = 0 | 0;
+	if ((((stack[pos1] | 0) == (0 | 0)) & ((stack[(pos1 + 1)] | 0) == (0 | 0)))
+			| (((stack[pos2] | 0) == (0 | 0)) & ((stack[(pos2 + 1)] | 0) == (0 | 0)))) {
+		stack[pos1] = 0 | 0;
+		stack[(pos1 + 1)] = 0 | 0;
 	}
-	if (((stack[(pos1) << 2 >> 2] | 0) == (0x80000000 | 0))
-			& ((stack[(pos1 + 1) << 2 >> 2] | 0) == (0 | 0))) {
-		if ((stack[(pos2 + 1) << 2 >> 2] & 1 | 0) == (0 | 0)) {
-			stack[pos1 << 2 >> 2] = 0;
-			stack[(pos1 + 1) << 2 >> 2] = 0;
+	if (((stack[(pos1)] | 0) == (0x80000000 | 0))
+			& ((stack[(pos1 + 1)] | 0) == (0 | 0))) {
+		if ((stack[(pos2 + 1)] & 1 | 0) == (0 | 0)) {
+			stack[pos1] = 0;
+			stack[(pos1 + 1)] = 0;
 		}
 		return;
-	} else if (((stack[(pos2) << 2 >> 2] | 0) == (0x80000000 | 0))
-			& ((stack[(pos2 + 1) << 2 >> 2] | 0) == (0 | 0))) {
-		if ((stack[(pos1 + 1) << 2 >> 2] & 1 | 0) == (0 | 0)) {
-			stack[pos1 << 2 >> 2] = 0 | 0;
+	} else if (((stack[(pos2)] | 0) == (0x80000000 | 0))
+			& ((stack[(pos2 + 1)] | 0) == (0 | 0))) {
+		if ((stack[(pos1 + 1)] & 1 | 0) == (0 | 0)) {
+			stack[pos1] = 0 | 0;
 		} else {
-			stack[pos1 << 2 >> 2] = 0x80000000;
+			stack[pos1] = 0x80000000;
 		}
-		stack[(pos1 + 1) << 2 >> 2] = 0;
+		stack[(pos1 + 1)] = 0;
 		return;
 	}
-	if (stack[pos1 << 2 >> 2] >>> 31 == 1 | 0) {
+	if (stack[pos1] >>> 31 == 1 | 0) {
 		neged = (1 - neged) | 0;
 		this.neg(pos1);
 	}
-	if (stack[pos2 << 2 >> 2] >>> 31 == 1 | 0) {
+	if (stack[pos2] >>> 31 == 1 | 0) {
 		neged = (1 - neged) | 0;
 		pos2Neged = 1 | 0;
 		this.neg(pos2);
 	}
 
-	var a48 = stack[pos1 << 2 >> 2] >>> 16;
-	var a32 = stack[pos1 << 2 >> 2] & 0xFFFF;
-	var a16 = stack[(pos1 + 1) << 2 >> 2] >>> 16;
-	var a00 = stack[(pos1 + 1) << 2 >> 2] & 0xFFFF;
-	var b48 = stack[(pos2) << 2 >> 2] >>> 16;
-	var b32 = stack[(pos2) << 2 >> 2] & 0xFFFF;
-	var b16 = stack[(pos2 + 1) << 2 >> 2] >>> 16;
-	var b00 = stack[(pos2 + 1) << 2 >> 2] & 0xFFFF;
+	var a48 = stack[pos1] >>> 16;
+	var a32 = stack[pos1] & 0xFFFF;
+	var a16 = stack[(pos1 + 1)] >>> 16;
+	var a00 = stack[(pos1 + 1)] & 0xFFFF;
+	var b48 = stack[(pos2)] >>> 16;
+	var b32 = stack[(pos2)] & 0xFFFF;
+	var b16 = stack[(pos2 + 1)] >>> 16;
+	var b00 = stack[(pos2 + 1)] & 0xFFFF;
 	var c48 = 0, c32 = 0, c16 = 0, c00 = 0;
 	c00 += a00 * b00;
 	c16 += c00 >>> 16;
@@ -695,8 +771,8 @@ __FyLongOps.prototype.mul = function mul(pos1, pos2) {
 	c32 &= 0xFFFF;
 	c48 += a48 * b00 + a32 * b16 + a16 * b32 + a00 * b48;
 	c48 &= 0xFFFF;
-	stack[pos1 << 2 >> 2] = ((c48 << 16) | c32) | 0;
-	stack[(pos1 + 1) << 2 >> 2] = (c16 << 16) | c00 | 0;
+	stack[pos1] = ((c48 << 16) | c32) | 0;
+	stack[(pos1 + 1)] = (c16 << 16) | c00 | 0;
 	if (neged) {
 		this.neg(pos1);
 	}
@@ -814,5 +890,60 @@ __FyLongOps.prototype.div = function(pos1, pos2) {
 	}
 	if (pos2Neged) {
 		this.neg(pos2);
+	}
+};
+
+__FyLongOps.prototype.rem = function(pos1, pos2) {
+	this.stack[this.tmp5] = this.stack[pos1];
+	this.stack[this.tmp5 + 1] = this.stack[pos1 + 1];
+
+	if (this.stack[pos2] == 0 && this.stack[pos2 + 1] == 0) {
+		this.stack[pos1] = -1;
+		this.stack[pos1 + 1] = -1;
+	}
+
+	this.div(this.tmp5, pos2);
+	this.mul(this.tmp5, pos2);
+	this.sub(pos1, this.tmp5);
+};
+
+__FyLongOps.prototype.shl = function(pos, ofs) {
+	var stack = this.stack;
+	if (ofs >= 64) {
+		stack[pos] = stack[pos + 1] = 0;
+	} else if (ofs > 32) {
+		stack[pos] = stack[pos + 1] << (ofs - 32);
+		stack[pos + 1] = 0;
+	} else {
+		stack[pos] = (stack[pos] << ofs) | (stack[pos + 1] >>> (32 - ofs));
+		stack[pos + 1] <<= ofs;
+	}
+};
+
+__FyLongOps.prototype.shr = function(pos, ofs) {
+	var stack = this.stack;
+	if (ofs >= 64) {
+		stack[pos + 1] = stack[pos] = stack[pos] >> 31;
+	} else if (ofs >= 32) {
+		stack[pos + 1] = stack[pos] >> (ofs - 32);
+		stack[pos] >>= 31;
+	} else {
+		stack[pos + 1] = ((stack[pos + 1]) >>> ofs)
+				| (stack[pos] << (32 - pos));
+		stack[pos] >>= ofs;
+	}
+};
+
+__FyLongOps.prototype.ushr = function(pos, ofs) {
+	var stack = this.stack;
+
+	if (ofs >= 64) {
+		stack[pos] = stack[pos + 1] = 0;
+	} else if (ofs >= 32) {
+		stack[pos + 1] = stack[pos] >>> (ofs - 32);
+		stack[pos] = 0;
+	} else {
+		stack[pos + 1] = (stack[pos + 1] >>> ofs) | (stack[pos] << (32 - pos));
+		stack[pos] >>>= ofs;
 	}
 };

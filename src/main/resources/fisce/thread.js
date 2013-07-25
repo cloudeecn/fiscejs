@@ -24,7 +24,6 @@ var FyFrame;
 
 (function() {
 	"use strict";
-	var STACK_SIZE = 65536;
 
 	// instructions table
 	var $ = {
@@ -277,13 +276,13 @@ var FyFrame;
 	 */
 	FyThread = function(context) {
 		this.context = context;
+		this.realStack = new Int32Array(FyThread.STACK_SIZE + 16);
+		this.stack = new Int32Array(realStack.buffer, 64, FyThread.STACK_SIZE);
+		this.floatStack = new Int32Array(realStack.buffer, 64, FyThread.STACK_SIZE);
 
-		this.stack = new Int32Array(context.getSetting("thread.stackSize",
-				STACK_SIZE));
-		this.typeStack = new Int8Array(context.getSetting("thread.stackSize",
-				STACK_SIZE));
+		this.typeStack = new Int8Array(FyThread.STACK_SIZE);
 		this.sp = 0;
-		this.framePos = STACK_SIZE;
+		this.framePos = FyThread.STACK_SIZE;
 		this.yield = false;
 		this.handle = 0;
 
@@ -299,7 +298,11 @@ var FyFrame;
 		this.interrupted = false;
 		this.daemon = false;
 		this.destroyPending = false;
+
+		this.longOps = FyPortable.getLongOps(realStack);
 	};
+
+	FyThread.STACK_SIZE = 65520;
 
 	FyThread.frame_methodId = 0;
 	FyThread.frame_sb = 1;
@@ -329,6 +332,7 @@ var FyFrame;
 
 	/**
 	 * similar with pushFrame, but consider locks
+	 * 
 	 * @param {FyMethod}
 	 *            method
 	 * @returns {Number}
