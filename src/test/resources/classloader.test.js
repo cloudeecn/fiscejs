@@ -1,9 +1,7 @@
 (function() {
 	function assertCanCast(context, from, to, expected) {
-		console.log("cast test " + from + " -> " + to);
 		var result = context.classLoader.canCast(context.lookupClass(from),
 				context.lookupClass(to));
-		console.log("=cast test " + from + " -> " + to + " = " + result);
 		strictEqual(result, expected, from
 				+ (expected ? " can cast to " : " can't cast to ") + to);
 	}
@@ -53,8 +51,6 @@
 					"java/util/HashMap", true);
 			assertCanCast(context, "java/util/LinkedHashMap",
 					"java/lang/Cloneable", true);
-
-			console.log(context);
 		}
 	});
 })();

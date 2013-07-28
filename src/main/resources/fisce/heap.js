@@ -283,7 +283,7 @@ var FyObject;
 	 *            str
 	 * @returns {Number} handle
 	 */
-	FyHeap.prototype.makeString = function(str) {
+	FyHeap.prototype.fillString = function(stringHandle, str) {
 		/**
 		 * @returns {FyField}
 		 */
@@ -298,7 +298,6 @@ var FyObject;
 		var countField;
 		var cah;
 		var i;
-		var ret;
 
 		if (this.context.lookupClass(FyConst.FY_BASE_STRING) === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
@@ -309,15 +308,15 @@ var FyObject;
 		countField = this.context.getField(FyConst.stringCount);
 
 		cah = this.allocateArray(this.context.lookupClass("[C"), str.length);
-		ret = this.allocate(this.context.lookupClass(FyConst.FY_BASE_STRING));
-		this.putFieldInt(ret, valueField.posAbs, cah);
-		this.putFieldInt(ret, offsetField.posAbs, 0);
-		this.putFieldInt(ret, countField.posAbs, str.length);
+
+		this.putFieldInt(stringHandle, valueField.posAbs, cah);
+		this.putFieldInt(stringHandle, offsetField.posAbs, 0);
+		this.putFieldInt(stringHandle, countField.posAbs, str.length);
 
 		for (i = 0; i < str.length; i++) {
 			this.putArrayInt(cah, i, str.charCodeAt(i) & 0xffff);
 		}
-		return ret;
+		return stringHandle;
 	};
 
 	/**
@@ -329,7 +328,9 @@ var FyObject;
 	FyHeap.prototype.literal = function(str) {
 		var handle = this.literials[str];
 		if (handle === undefined) {
-			handle = this.makeString(str);
+			handle = this.allocate(this.context
+					.lookupClass(FyConst.FY_BASE_STRING));
+			this.fillString(handle, str);
 			this.literials[str] = handle;
 		}
 		return handle;
@@ -343,11 +344,32 @@ var FyObject;
 		return ret;
 	};
 
+	FyHeap.prototype.putFieldString = function(handle, pos, str) {
+		var strHandle = this.allocate(this.context
+				.lookupClass(FyConst.FY_BASE_STRING));
+		this.putFieldInt(handle, pos, strHandle);
+		this.fillString(strHandle, str);
+	};
+
 	FyHeap.prototype.getClassFromHandle = function(handle) {
 		/**
 		 * @returns {FyObject}
 		 */
 		var obj = this.objects[handle];
 		return obj.clazz;
+	};
+
+	/**
+	 * create multi arrays
+	 * 
+	 * @param {FyClass}
+	 *            clazz class which this method creates for
+	 * @param {Number}
+	 *            count arrays layers count
+	 * @param {Number}
+	 *            pos
+	 */
+	FyHeap.prototype.multiNewArray = function(clazz, count, pos) {
+		// TODO
 	};
 })();

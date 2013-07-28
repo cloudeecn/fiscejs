@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -425,19 +423,12 @@ public class ClassConverter {
 
 	public static void main(String[] args) throws Exception {
 		ClassConverter cc = new ClassConverter();
-		if (false) {
-			cc.convert(Object.class.getResourceAsStream("Object.class"));
-			PrintStream ps = new PrintStream("Object.json");
-			ps.print(cc.sb);
-			ps.close();
-		} else {
-			cc.convertJar(// "(function(context){context.addClassDef(",
-					new FileInputStream(
-							"../fiscevm/fiscevm-runtime/target/fiscevm-runtime-2.0.0-SNAPSHOT.jar"),
-					// ");})(fisceContext);",
-					new OutputStreamWriter(new FileOutputStream(
-							"src/test/resources/rt.json"), "ISO8859-1"));
-		}
+		cc.convertJar(// "(function(context){context.addClassDef(",
+				new FileInputStream(
+						"../fiscevm/fiscevm-runtime/target/fiscevm-runtime-2.0.0-SNAPSHOT.jar"),
+				// ");})(fisceContext);",
+				new OutputStreamWriter(new FileOutputStream(
+						"src/test/resources/rt.json"), "ISO8859-1"));
 
 		System.out.println("done");
 	}

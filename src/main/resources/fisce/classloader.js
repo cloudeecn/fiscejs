@@ -154,7 +154,6 @@ var FyClassLoader;
 				clazz.superClass = this.context
 						.lookupClassFromConstant(clazz.superClassData);
 				if (!clazz.superClass) {
-					console.log("Class not found: " + superClassName);
 					throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 							clazz.superClassData.name);
 				}
@@ -370,7 +369,6 @@ var FyClassLoader;
 	 * @returns {Boolean} whether class [from] can cast to class [to]
 	 */
 	FyClassLoader.prototype.canCast = function(from, to) {
-		// console.log("+cast test " + from.name + " -> " + to.name);
 		if (from === to || to === this.context.TOP_CLASS) {
 			return true;
 		}

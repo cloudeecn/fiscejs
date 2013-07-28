@@ -405,7 +405,8 @@
 					var heap = context.heap;
 
 					var str = "asdfghjkl";
-					var handle = heap.makeString(str);
+					var handle = heap.allocate(context.lookupClass(FyConst.FY_BASE_STRING));
+					heap.fillString(handle, str);
 					ok(handle, "String made handle=" + handle);
 					equal(heap.getString(handle), str, "String got");
 

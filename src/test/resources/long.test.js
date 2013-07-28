@@ -1,6 +1,6 @@
 (function(window) {
 	"use strict";
-	var ops = [ "cmp", "add", "sub", "mul", "div" ];
+	var ops = [ "cmp", "add", "sub", "mul", "div", "rem" ];
 	var data = [ 0x00000000 | 0, 0x00000001 | 0, 0x0000FFFF | 0,
 			0x00010000 | 0, 0x00010001 | 0, 0x0001FFFF | 0, 0xFFFF0000 | 0,
 			0xFFFF0001 | 0, 0xFFFFFFFF | 0, 0x80000000 | 0 ];
@@ -31,8 +31,9 @@
 		}
 	}
 
+	var stack = new Int32Array(65536);
+
 	function testLong(op, mode) {
-		var stack = new Int32Array(65536);
 		var lop = FyCreateLongOps(window, mode, stack);
 		var resultData = eval("FyLongTestData_" + op);
 
@@ -72,7 +73,7 @@
 
 		},
 		"   Long benchmark" : function() {
-			var times = 16;
+			var times = 1;
 			var intValue = 0 | 0;
 			var doubleValue = 0.0;
 			var pos;
@@ -81,16 +82,16 @@
 
 			begin = performance.now();
 			for ( var i = 0; i < times * vlen; i++) {
-				intValue = intValue + 1;
-				intValue = intValue + 1;
-				intValue = intValue + 1;
-				intValue = intValue + 1;
-				intValue = intValue + 1;
-				intValue = intValue + 1;
-				intValue = intValue + 1;
-				intValue = intValue + 1;
-				intValue = intValue + 1;
-				intValue = intValue + 1;
+				stack[1] = stack[2] + stack[3];
+				stack[1] = stack[2] + stack[3];
+				stack[1] = stack[2] + stack[3];
+				stack[1] = stack[2] + stack[3];
+				stack[1] = stack[2] + stack[3];
+				stack[1] = stack[2] + stack[3];
+				stack[1] = stack[2] + stack[3];
+				stack[1] = stack[2] + stack[3];
+				stack[1] = stack[2] + stack[3];
+				stack[1] = stack[2] + stack[3];
 			}
 			end = performance.now();
 			time = end - begin;
@@ -99,22 +100,70 @@
 
 			begin = performance.now();
 			for ( var i = 0; i < times * vlen; i++) {
-				doubleValue = doubleValue + 1.1;
-				doubleValue = doubleValue + 1.1;
-				doubleValue = doubleValue + 1.1;
-				doubleValue = doubleValue + 1.1;
-				doubleValue = doubleValue + 1.1;
-				doubleValue = doubleValue + 1.1;
-				doubleValue = doubleValue + 1.1;
-				doubleValue = doubleValue + 1.1;
-				doubleValue = doubleValue + 1.1;
-				doubleValue = doubleValue + 1.1;
+				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack, 2)
+						+ FyPortable.ieee64ToDouble(stack, 4), stack, 6);
+				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack, 2)
+						+ FyPortable.ieee64ToDouble(stack, 4), stack, 6);
+				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack, 2)
+						+ FyPortable.ieee64ToDouble(stack, 4), stack, 6);
+				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack, 2)
+						+ FyPortable.ieee64ToDouble(stack, 4), stack, 6);
+				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack, 2)
+						+ FyPortable.ieee64ToDouble(stack, 4), stack, 6);
+				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack, 2)
+						+ FyPortable.ieee64ToDouble(stack, 4), stack, 6);
+				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack, 2)
+						+ FyPortable.ieee64ToDouble(stack, 4), stack, 6);
+				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack, 2)
+						+ FyPortable.ieee64ToDouble(stack, 4), stack, 6);
+				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack, 2)
+						+ FyPortable.ieee64ToDouble(stack, 4), stack, 6);
+				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack, 2)
+						+ FyPortable.ieee64ToDouble(stack, 4), stack, 6);
 			}
 			end = performance.now();
 			time = end - begin;
 			ok(true, times * vlen * 10 + " doubles adds costs " + time + "ms "
 					+ doubleValue);
-			var stack = new Int32Array(65536);
+
+			begin = performance.now();
+			for ( var i = 0; i < times * vlen; i++) {
+				stack[2] = FyPortable.floatToIeee32(FyPortable
+						.ieee32ToFloat(stack[0])
+						+ FyPortable.ieee32ToFloat(stack[1]));
+				stack[2] = FyPortable.floatToIeee32(FyPortable
+						.ieee32ToFloat(stack[0])
+						+ FyPortable.ieee32ToFloat(stack[1]));
+				stack[2] = FyPortable.floatToIeee32(FyPortable
+						.ieee32ToFloat(stack[0])
+						+ FyPortable.ieee32ToFloat(stack[1]));
+				stack[2] = FyPortable.floatToIeee32(FyPortable
+						.ieee32ToFloat(stack[0])
+						+ FyPortable.ieee32ToFloat(stack[1]));
+				stack[2] = FyPortable.floatToIeee32(FyPortable
+						.ieee32ToFloat(stack[0])
+						+ FyPortable.ieee32ToFloat(stack[1]));
+				stack[2] = FyPortable.floatToIeee32(FyPortable
+						.ieee32ToFloat(stack[0])
+						+ FyPortable.ieee32ToFloat(stack[1]));
+				stack[2] = FyPortable.floatToIeee32(FyPortable
+						.ieee32ToFloat(stack[0])
+						+ FyPortable.ieee32ToFloat(stack[1]));
+				stack[2] = FyPortable.floatToIeee32(FyPortable
+						.ieee32ToFloat(stack[0])
+						+ FyPortable.ieee32ToFloat(stack[1]));
+				stack[2] = FyPortable.floatToIeee32(FyPortable
+						.ieee32ToFloat(stack[0])
+						+ FyPortable.ieee32ToFloat(stack[1]));
+				stack[2] = FyPortable.floatToIeee32(FyPortable
+						.ieee32ToFloat(stack[0])
+						+ FyPortable.ieee32ToFloat(stack[1]));
+			}
+			end = performance.now();
+			time = end - begin;
+			ok(true, times * vlen * 10 + " floats adds costs " + time + "ms "
+					+ doubleValue);
+
 			for ( var mode = 0; mode < 3; mode++) {
 				var lop = FyCreateLongOps(window, mode, stack);
 				for ( var opid in ops) {

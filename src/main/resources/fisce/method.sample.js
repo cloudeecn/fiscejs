@@ -1,3 +1,7 @@
+(function(){
+	var $1 = 0 | 0;
+	var $2 = 0 | 0;
+	var $ip = 0 | 0;
 FyMethod.prototype.invoke = //
 /**
  * Usable macros<br>
@@ -57,11 +61,10 @@ function(thread, message, ops) {
 	 * @returns {Float32Array}
 	 */
 	var floatStack = thread.floatStack;
-	var framePos = thread.getCurrentFramePos() | 0;
-	var ip = stack[framePos + FyThread.frame_ip] | 0;
-	var lip = stack[framePos + FyThread.frame_lip] | 0;
+	var ip = thread.getCurrentIp() | 0;
+	var lip = 0 | 0;
 	var sp = thread.sp | 0;
-	var sb = stack[framePos + FyThread.frame_sb] | 0;
+	var sb = thread.getCurrentStackBase() | 0;
 
 	/**
 	 * @returns {FyField}
@@ -74,18 +77,19 @@ function(thread, message, ops) {
 	var tmpClass;
 
 	/**
+	 * @returns {FyClass}
+	 */
+	var clinitClass;
+
+	/**
 	 * @returns {FyMethod}
 	 */
 	var tmpMethod;
 
 	var tmpInt1 = 0 | 0;
 
-	// /*
-	var $1 = 0 | 0;
-	var $2 = 0 | 0;
-	var $ip = 0 | 0;
-	// */
 	__fy_outer: while (true) {
+		
 		try {
 			__fy_inner: switch (ip) {
 			// ###
@@ -195,7 +199,7 @@ function(thread, message, ops) {
 
 				lip = $ip;
 				ip = -1;
-				break __fy_inner;
+				break __fy_outer;
 			// ###
 			case 36:
 				// ##OP-BALOAD -2 1
@@ -546,16 +550,15 @@ function(thread, message, ops) {
 							"Field " + tmpField.uniqueName + " is not static");
 				}
 
-				tmpClass = thread.clinit(tmpField.owner);
-				if (tmpClass !== undefined) {
+				// !CLINIT
+				clinitClass = thread.clinit(tmpField.owner);
+				if (clinitClass !== undefined) {
 					// invoke clinit
-					if (tmpClass.clinitThreadId == 0) {
+					if (clinitClass.clinitThreadId == 0) {
 						// no thread is running it, so let this run
 						// Local to frame
-						thread.sp = sp;
-						stack[framePos + FyThread.frame_lip] = $ip;
-						stack[framePos + FyThread.frame_ip] = $ip;
-						thread.pushFrame(tmpClass.clinit);
+						thread.localToFrame(sp, $ip, $ip);
+						thread.pushFrame(clinitClass.clinit);
 						return ops;
 					} else {
 						// wait for other thread clinit
@@ -885,9 +888,7 @@ function(thread, message, ops) {
 				}
 
 				// Local to frame
-				thread.sp = sp;
-				stack[framePos + FyThread.frame_lip] = $ip;
-				stack[framePos + FyThread.frame_ip] = $ip + 1;
+				thread.localToFrame(sp, $ip, $ip + 1);
 				thread.pushMethod(tmpMethod);
 				return ops;
 				// ###
@@ -904,16 +905,16 @@ function(thread, message, ops) {
 					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 							tmpMethod.uniqueName + " is not static");
 				}
-				tmpClass = thread.clinit(tmpMethod.owner);
-				if (tmpClass !== undefined) {
+
+				// !CLINIT
+				clinitClass = thread.clinit(tmpMethod.owner);
+				if (clinitClass !== undefined) {
 					// invoke clinit
-					if (tmpClass.clinitThreadId == 0) {
+					if (clinitClass.clinitThreadId == 0) {
 						// no thread is running it, so let this run
 						// Local to frame
-						thread.sp = sp;
-						stack[framePos + FyThread.frame_lip] = $ip;
-						stack[framePos + FyThread.frame_ip] = $ip;
-						thread.pushFrame(tmpClass.clinit);
+						thread.localToFrame(sp, $ip, $ip);
+						thread.pushFrame(clinitClass.clinit);
 						return ops;
 					} else {
 						// wait for other thread clinit
@@ -924,9 +925,7 @@ function(thread, message, ops) {
 				}
 
 				// Local to frame
-				thread.sp = sp;
-				stack[framePos + FyThread.frame_lip] = $ip;
-				stack[framePos + FyThread.frame_ip] = $ip + 1;
+				thread.localToFrame(sp, $ip, $ip + 1);
 				thread.pushMethod(tmpMethod);
 				return ops;
 				// ###
@@ -957,9 +956,7 @@ function(thread, message, ops) {
 				}
 
 				// Local to frame
-				thread.sp = sp;
-				stack[framePos + FyThread.frame_lip] = $ip;
-				stack[framePos + FyThread.frame_ip] = $ip + 1;
+				thread.localToFrame(sp, $ip, $ip + 1);
 				thread.pushMethod(tmpMethod);
 				return ops;
 				// ###
@@ -1120,7 +1117,18 @@ function(thread, message, ops) {
 				// ###
 			case 157:
 				// ##OP-LOOKUPSWITCH -1 0
-				// TODO
+				ops--;
+				sp--;
+				var lookupSwitchTarget = this.lookupSwitchTargets[$1];
+
+				tmpInt1 = ((lookupSwitchTarget.targets[stack[sp]] + 1) | 0) - 1;
+				if (tmpInt1 === -1) {
+					ip = lookupSwitchTarget.dflt;
+					break __fy_inner;
+				} else {
+					ip = tmpInt1;
+					break __fy_inner;
+				}
 				// ###
 			case 158:
 				// ##OP-LOR -4 2
@@ -1134,7 +1142,6 @@ function(thread, message, ops) {
 				ops--;
 				sp -= 2;
 				longOps.rem(sp + 14, sp + 16);
-				// TODO
 				// ###
 			case 160:
 				// ##OP-LSHL -3 2
@@ -1149,7 +1156,7 @@ function(thread, message, ops) {
 				longOps.shr(sp + 14, stack[sp]);
 				// ###
 			case 162:
-				// ##OP=LUSHR -3 2
+				// ##OP-LUSHR -3 2
 				ops--;
 				sp--;
 				longOps.ushr(sp + 14, stack[sp]);
@@ -1176,7 +1183,13 @@ function(thread, message, ops) {
 				// ###
 			case 166:
 				// ##OP-MONITORENTER -1 0
-				// TODO
+				ops--;
+				sp--;
+				if (thread.monitorEnter(stack[sp])) {
+					ip = $ip;
+					ops = 0;
+					break __fy_outer;
+				}
 				// ###
 			case 167:
 				// ##OP-MONITOREXIT -1 0
@@ -1185,39 +1198,172 @@ function(thread, message, ops) {
 				thread.monitorExit(stack[sp]);
 				// ###
 			case 168:
-				// ##OP-MULTIANEWARRAY X-MULTIANEWARRAY
-				// TODO
+				// ##OP-MULTIANEWARRAY X-MULTIANEWARRAY 1
+				ops--;
+				sp -= $2;
+				lip = $ip;
+				stack[sp] = heap.multiNewArray(context
+						.lookupClassFromConstant(constants[$1]), $2, sp);
+				sp++;
 				// ###
 			case 169:
 				// ##OP-NEW 0 1
-				// TODO
+				ops--;
+				lip = $ip;
+				tmpClass = context.lookupClassFromConstant(constants[$1]);
+				if (tmpClass.accessFlags
+						& (FyConst.FY_ACC_INTERFACE | FyConst.FY_ACC_ABSTRACT)) {
+					throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,
+							tmpClass.name);
+				}
+
+				// !CLINIT
+				clinitClass = thread.clinit(tmpClass);
+				if (clinitClass !== undefined) {
+					// invoke clinit
+					if (clinitClass.clinitThreadId == 0) {
+						// no thread is running it, so let this run
+						// Local to frame
+						thread.localToFrame(sp, $ip, $ip);
+						thread.pushFrame(clinitClass.clinit);
+						return ops;
+					} else {
+						// wait for other thread clinit
+						ops = 0;
+						ip = $ip;
+						break __fy_outer;
+					}
+				}
+
+				stack[sp] = heap.allocate(tmpClass);
+				sp++;
 				// ###
 			case 170:
-				// ##OP-NEWARRAY 0 1
-				// TODO
+				// ##OP-NEWARRAY -1 1
+				switch ($1) {
+				case 4:
+					stack[sp - 1] = heap.allocateArray(context
+							.lookupClass("[Z"), stack[sp - 1]);
+					break;
+				case 5:
+					stack[sp - 1] = heap.allocateArray(context
+							.lookupClass("[C"), stack[sp - 1]);
+					break;
+				case 6:
+					stack[sp - 1] = heap.allocateArray(context
+							.lookupClass("[F"), stack[sp - 1]);
+					break;
+				case 7:
+					stack[sp - 1] = heap.allocateArray(context
+							.lookupClass("[D"), stack[sp - 1]);
+					break;
+				case 8:
+					stack[sp - 1] = heap.allocateArray(context
+							.lookupClass("[B"), stack[sp - 1]);
+					break;
+				case 9:
+					stack[sp - 1] = heap.allocateArray(context
+							.lookupClass("[S"), stack[sp - 1]);
+					break;
+				case 10:
+					stack[sp - 1] = heap.allocateArray(context
+							.lookupClass("[I"), stack[sp - 1]);
+					break;
+				case 11:
+					stack[sp - 1] = heap.allocateArray(context
+							.lookupClass("[J"), stack[sp - 1]);
+					break;
+				default:
+					throw new FyException(FyConst.FY_EXCEPTION_VM,
+							"Unknown array type in NEWARRAY: $1");
+				}
 				// ###
 			case 171:
-				// ##OP-NOP
-				ops--;
+				// ##OP-NOP 0 0
 				// ###
 			case 172:
-				// ##OP-POP
-				ops--;
+				// ##OP-POP -1 0
 				sp--;
 				// ###
 			case 173:
-				// ##OP-POP2
-				ops--;
+				// ##OP-POP2 -2 0
 				sp--;
 				sp--;
 				// ###
 			case 174:
-				// ##OP-PUTFIELD
-				// TODO
+				// ##OP-PUTFIELD X-PUTFIELD 0
+				lip = $ip;
+				ops--;
+				tmpField = context.lookupFieldVirtualFromConstant(constant[$1]);
+				if (tmpField.accessFlags & FyConst.FY_ACC_STATIC) {
+					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+							"Field " + tmpField.uniqueName + " is static");
+				}
+
+				if ((tmpField.accessFlags & FyConst.FY_ACC_FINAL)
+						&& (method.owner != tmpField.owner)) {
+					throw new FyException(FyConst.FY_EXCEPTION_ACCESS, "Field "
+							+ tmpField.uniqueName + " is final");
+				}
+				switch (tmpField.descriptor.charCodeAt(0)) {
+				case FyConst.D:
+				case FyConst.J:
+					sp -= 3;
+					heap.putFieldRawLongFrom(stack[sp], tmpField.posAbs, stack,
+							sp + 1);
+					break;
+				default:
+					sp -= 2;
+					heap.putFieldRaw(stack[sp], tmpField.posAbs, stack[sp]);
+					break;
+				}
 				// ###
 			case 175:
-				// ##OP-PUTSTATIC
-				// TODO
+				// ##OP-PUTSTATIC X-PUTSTATIC 0
+				lip = $ip;
+				ops--;
+				tmpField = context.lookupFieldVirtualFromConstant(constant[$1]);
+				if (tmpField.accessFlags & FyConst.FY_ACC_STATIC == 0) {
+					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+							"Field " + tmpField.uniqueName + " is not static");
+				}
+
+				if ((tmpField.accessFlags & FyConst.FY_ACC_FINAL)
+						&& (method.owner != tmpField.owner)) {
+					throw new FyException(FyConst.FY_EXCEPTION_ACCESS, "Field "
+							+ tmpField.uniqueName + " is final");
+				}
+
+				// !CLINIT
+				clinitClass = thread.clinit(tmpField.owner);
+				if (clinitClass !== undefined) {
+					// invoke clinit
+					if (clinitClass.clinitThreadId == 0) {
+						// no thread is running it, so let this run
+						// Local to frame
+						thread.localToFrame(sp, $ip, $ip);
+						thread.pushFrame(clinitClass.clinit);
+						return ops;
+					} else {
+						// wait for other thread clinit
+						ops = 0;
+						ip = $ip;
+						break __fy_outer;
+					}
+				}
+
+				switch (tmpField.descriptor.charCodeAt(0)) {
+				case FyConst.D:
+				case FyConst.J:
+					sp -= 3;
+					heap.putStaticRawLongFrom(stack[sp], tmpField.posAbs,
+							stack, sp + 1);
+					break;
+				default:
+					sp -= 2;
+					heap.putStaticRaw(stack[sp], tmpField.posAbs, stack[sp]);
+					break;
+				}
 				// ###
 			case 177:
 				// ##OP-RETURN 0 0
@@ -1265,7 +1411,21 @@ function(thread, message, ops) {
 				// ###
 			case 182:
 				// ##OP-TABLESWITCH -1 0
-				// TODO
+				ops--;
+				sp--;
+				/**
+				 * @returns {FyTableSwitchTarget}
+				 */
+				var tableSwitchTarget = this.tableSwitchTargets[$1];
+				if (stack[sp] < tableSwitchTarget.min
+						|| stack[sp] > tableSwitchTarget.max) {
+					ip = tableSwitchTarget.dflt;
+					break __fy_inner;
+				} else {
+					ip = tableSwitchTarget.targets[stack[sp]
+							- tableSwitchTarget.min];
+					break __fy_inner;
+				}
 				// ###
 				break;
 			// ##MACRO-TAIL
@@ -1274,16 +1434,49 @@ function(thread, message, ops) {
 						+ this.uniqueName + "." + ip);
 			}
 		} catch (e) {
-
 			if (e instanceof FyException) {
+				(function() {
+					if (!e.clazz) {
+						context.panic(e.toString());
+						throw e;
+					}
+					try {
+						var exceptionClass = context.lookupClass(e.clazz);
+						if (context.classLoader.canCast(exceptionClass,
+								context.TOP_THROWABLE)) {
+							throw new FyException(undefined, "Exception "
+									+ exception.clazz
+									+ " is not a java.lang.Throwable");
+						}
 
+						var detailMessageField = context
+								.getField(FyConst.FY_BASE_THROWABLE
+										+ ".detailMessage.L"
+										+ FyConst.FY_BASE_STRING);
+
+						thread.currentThrowable = heap.allocate(context
+								.lookupClass(e.clazz));
+						heap.putFieldString(thread.currentThrowable,
+								detailMessageField, e.message);
+						thread.fillStackTrace(thread.currentThrowable, false);
+						break __fy_outer;
+					} catch (ee) {
+						context
+								.panic("Exception occored while processing exception: "
+										+ e);
+						throw ee;
+					}
+				})();
+			} else {
+				context.panic("Exception occored while executing thread #"
+						+ thread.threadId);
+				throw e;
 			}
 		}
 	}
 	// Local to frame
-	thread.sp = sp;
-	stack[framePos + FyThread.frame_lip] = $ip;
-	stack[framePos + FyThread.frame_ip] = $ip;
+	thread.localToFrame(sp, lip, ip);
 }
 // ###
+;})();
 ;

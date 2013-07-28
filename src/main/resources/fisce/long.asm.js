@@ -147,7 +147,7 @@ function __FyLongOpAsm(global, env, buffer) {
 		_pos1 = (pos1 << 2) | 0;
 		_pos2 = (pos2 << 2) | 0;
 
-		if (_equals(_pos1, stack[_pos2 >> 2] | 0, stack[(_pos2 + 4) >> 2] | 0)) {
+		if (_equals(_pos1, stack[_pos2 >> 2] | 0, stack[(_pos2 + 4) >> 2] | 0) | 0) {
 			return 0 | 0;
 		}
 
@@ -354,19 +354,20 @@ function __FyLongOpAsm(global, env, buffer) {
 		_pos1 = (pos1 << 2) | 0;
 		_pos2 = (pos2 << 2) | 0;
 
-		if (_equals(_pos1, 0 | 0, 0 | 0) | _equals(_pos2, 0 | 0, 0 | 0)) {
+		if ((_equals(_pos1, 0 | 0, 0 | 0) | 0)
+				| (_equals(_pos2, 0 | 0, 0 | 0) | 0)) {
 			stack[_pos1 >> 2] = 0 | 0;
 			stack[(_pos1 + 4) >> 2] = 0 | 0;
 			return;
 		}
 
-		if (_equals(_pos1, 0x80000000 | 0, 0 | 0)) {
+		if (_equals(_pos1, 0x80000000 | 0, 0 | 0) | 0) {
 			if (!(stack[(_pos2 + 4) >> 2] & 1 | 0)) {
 				stack[_pos1 >> 2] = 0;
 				stack[(_pos1 + 4) >> 2] = 0;
 			}
 			return;
-		} else if (_equals(_pos2, 0x80000000 | 0, 0 | 0)) {
+		} else if (_equals(_pos2, 0x80000000 | 0, 0 | 0) | 0) {
 			if (!(stack[(_pos1 + 4) >> 2] & 1 | 0)) {
 				stack[_pos1 >> 2] = 0 | 0;
 			} else {
@@ -393,26 +394,26 @@ function __FyLongOpAsm(global, env, buffer) {
 		b16 = (stack[(_pos2 + 4) >> 2] >>> 16) | 0;
 		b00 = (stack[(_pos2 + 4) >> 2] & 0xFFFF) | 0;
 
-		c00 = (c00 + imul(a00, b00)) | 0;
+		c00 = (c00 + (imul(a00, b00) | 0)) | 0;
 		c16 = (c16 + (c00 >>> 16)) | 0;
 		c00 = (c00 & 0xFFFF) | 0;
-		c16 = (c16 + imul(a16, b00)) | 0;
+		c16 = (c16 + (imul(a16, b00) | 0)) | 0;
 		c32 = (c32 + (c16 >>> 16)) | 0;
 		c16 = (c16 & 0xFFFF) | 0;
-		c16 = (c16 + imul(a00, b16)) | 0;
+		c16 = (c16 + (imul(a00, b16) | 0)) | 0;
 		c32 = (c32 + (c16 >>> 16)) | 0;
 		c16 = (c16 & 0xFFFF) | 0;
-		c32 = (c32 + imul(a32, b00)) | 0;
+		c32 = (c32 + (imul(a32, b00) | 0)) | 0;
 		c48 = (c48 + (c32 >>> 16)) | 0;
 		c32 = (c32 & 0xFFFF) | 0;
-		c32 = (c32 + imul(a16, b16)) | 0;
+		c32 = (c32 + (imul(a16, b16) | 0)) | 0;
 		c48 = (c48 + (c32 >>> 16)) | 0;
 		c32 = (c32 & 0xFFFF) | 0;
-		c32 = (c32 + imul(a00, b32)) | 0;
+		c32 = (c32 + (imul(a00, b32) | 0)) | 0;
 		c48 = (c48 + (c32 >>> 16)) | 0;
 		c32 = (c32 & 0xFFFF) | 0;
-		c48 = (c48 + imul(a48, b00) + imul(a32, b16) + imul(a16, b32) + imul(
-				a00, b48)) | 0;
+		c48 = (c48 + (imul(a48, b00) | 0) + (imul(a32, b16) | 0)
+				+ (imul(a16, b32) | 0) + (imul(a00, b48) | 0)) | 0;
 		c48 = (c48 & 0xFFFF) | 0;
 		_set(_pos1, ((c48 << 16) | c32) | 0, (c16 << 16) | c00 | 0);
 		if (neged) {
@@ -441,23 +442,24 @@ function __FyLongOpAsm(global, env, buffer) {
 			ln2 = +log(+2.0);
 		}
 
-		if (_equals(_pos2, 0 | 0, 0 | 0)) {
+		if (_equals(_pos2, 0 | 0, 0 | 0) | 0) {
 			// Division by zero will be considered outside
 			_set(_pos1, -1 | 0, -1 | 0);
 			return;
 		}
 
-		if (_equals(_pos1, 0x80000000 | 0, 0 | 0)) {
-			if (_equals(_pos2, 0 | 0, 1 | 0) | _equals(_pos2, -1 | 0, -1 | 0)) {
+		if (_equals(_pos1, 0x80000000 | 0, 0 | 0) | 0) {
+			if ((_equals(_pos2, 0 | 0, 1 | 0) | 0)
+					| (_equals(_pos2, -1 | 0, -1 | 0) | 0)) {
 				return;
-			} else if (_equals(_pos2, 0x80000000 | 0, 0 | 0)) {
+			} else if (_equals(_pos2, 0x80000000 | 0, 0 | 0) | 0) {
 				_set(_pos1, 0 | 0, 1 | 0);
 				return;
 			} else {
 				stack[_pos1 >> 2] = 0xC0000000 | 0;
 				div(pos1, pos2);
 				shl1(pos1);
-				if (_equals(_pos1, 0 | 0, 0 | 0)) {
+				if (_equals(_pos1, 0 | 0, 0 | 0) | 0) {
 					if (((stack[_pos2 >> 2] >>> 31) | 0) == (1 | 0)) {
 						_set(_pos1, 0 | 0, 1 | 0);
 					} else {
@@ -475,7 +477,7 @@ function __FyLongOpAsm(global, env, buffer) {
 					return;
 				}
 			}
-		} else if (_equals(_pos2, 0x80000000 | 0, 0 | 0)) {
+		} else if (_equals(_pos2, 0x80000000 | 0, 0 | 0) | 0) {
 			_set(_pos1, 0 | 0, 0 | 0);
 			return;
 		}
@@ -495,23 +497,24 @@ function __FyLongOpAsm(global, env, buffer) {
 		_copy(_pos1, _tmp2);
 		_set(_pos1, 0 | 0, 0 | 0);
 
-		while (compare(tmp2, pos2) >= 0) {
-			approx = _fmax(1.0, floor(_longToNumber(_tmp2)
-					/ _longToNumber(_pos2)));
-			log2 = ceil(log(approx) / ln2);
-			delta = (log2 <= 48.0) ? 1.0 : pow(2.0, log2 - 48.0);
+		while ((compare(tmp2, pos2) | 0) >= 0) {
+			approx = +_fmax(1.0, +floor((+_longToNumber(_tmp2))
+					/ (+_longToNumber(_pos2))));
+			log2 = +ceil(+log(approx) / ln2);
+			delta = (log2 <= 48.0) ? 1.0 : +pow(2.0, log2 - 48.0);
 			// tmp3 -> approxRes
 			// tmp4 -> approxRem
 			_longFromNumber(_tmp3, approx);
 			_copy(_tmp3, _tmp4);
 			mul(tmp4, pos2);
-			while ((stack[_tmp4 >> 2] | 0) < (0 | 0) | compare(tmp4, tmp2) > 0) {
+			while ((stack[_tmp4 >> 2] | 0) < (0 | 0)
+					| (compare(tmp4, tmp2) | 0) > 0) {
 				approx = approx - delta;
 				_longFromNumber(_tmp3, approx);
 				_copy(_tmp3, _tmp4);
 				mul(tmp4, pos2);
 			}
-			if (_equals(_tmp3, 0 | 0, 0 | 0)) {
+			if (_equals(_tmp3, 0 | 0, 0 | 0) | 0) {
 				_set(_tmp3, 0 | 0, 1 | 0);
 			}
 			add(pos1, tmp3);
@@ -530,7 +533,7 @@ function __FyLongOpAsm(global, env, buffer) {
 		pos1 = pos1 | 0;
 		pos2 = pos2 | 0;
 
-		if (_equals(pos2 << 2, 0 | 0, 0 | 0)) {
+		if (_equals(pos2 << 2, 0 | 0, 0 | 0) | 0) {
 			_set(pos1 << 2, -1 | 0, -1 | 0);
 			return;
 		}

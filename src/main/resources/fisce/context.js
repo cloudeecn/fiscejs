@@ -731,4 +731,15 @@ var FyContext;
 		}
 		return handle;
 	};
+
+	/**
+	 * Panic the whole virtual machine and try to dump virtual machine data as
+	 * much as possible
+	 * 
+	 * @param message
+	 */
+	FyContext.prototype.panic = function(message) {
+		console.log("ERROR! Virtual machine panic!");
+		console.log(context);
+	};
 })();

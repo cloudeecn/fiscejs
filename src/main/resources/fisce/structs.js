@@ -259,7 +259,7 @@ var FyLookupSwitchTarget;
 				+ ".fileName.L" + this.FY_BASE_STRING + ";";
 		this.stackTraceElementLineNumber = this.FY_BASE_STACKTHREADELEMENT
 				+ ".lineNumber.I";
-		
+
 		this.Z = "Z".charCodeAt(0);
 		this.B = "B".charCodeAt(0);
 		this.C = "C".charCodeAt(0);
@@ -327,6 +327,10 @@ var FyLookupSwitchTarget;
 		this.clinited = false;
 	};
 
+	FyMethod.prototype.toString = function() {
+		return "{Method}" + this.uniqueName;
+	};
+
 	FyTableSwitchTarget = function() {
 		this.dflt = 0;
 		this.min = 0;
@@ -360,6 +364,10 @@ var FyLookupSwitchTarget;
 		this.type = undefined;
 
 		this.posAbs = 0;
+	};
+
+	FyField.prototype.toString = function() {
+		return "{Field}" + this.uniqueName;
 	};
 
 	/**
@@ -423,6 +431,10 @@ var FyLookupSwitchTarget;
 		/** primitive only */
 		this.pType = undefined;
 	};
+
+	FyClass.prototype.toString = function() {
+		return this.name;
+	};
 	/**
 	 * FyException
 	 * 
@@ -434,6 +446,11 @@ var FyLookupSwitchTarget;
 	FyException = function(clazz, message) {
 		this.clazz = clazz;
 		this.message = message;
+
+	};
+
+	FyException.prototype.toString = function() {
+		return (this.clazz ? this.clazz : "FatalError") + ": " + this.message;
 	};
 
 	/**
