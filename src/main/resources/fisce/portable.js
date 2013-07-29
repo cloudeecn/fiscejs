@@ -21,7 +21,8 @@
 var FyPortable;
 
 var FyConfig = {
-	littleEndian : undefined
+	littleEndian : undefined,
+	debugMode : true
 };
 
 // now

@@ -23,8 +23,6 @@ var FyUtils;
 var FyConst;
 var FyLineNumber;
 var FyExceptionHandler;
-var FyMethod;
-var FyField;
 var FyClass;
 var FyException;
 var FyGlobal;
@@ -291,45 +289,7 @@ var FyLookupSwitchTarget;
 		this.handler = 0;
 	};
 
-	FyMethod = function() {
-		this.name = "";
-		this.descriptor = "";
-		this.accessFlags = "";
-
-		this.paramStackUsage = 0;
-		this.paramType = "";
-		this.returnType = "";
-
-		this.parameterCount = 0;
-		this.parameterClassNames = [];
-		this.returnClassName = "";
-
-		this.exceptionTable = [];
-		this.lineNumberTable = [];
-
-		this.maxStack = 0;
-		this.maxLocals = 0;
-		this.code = [];
-
-		/** Filled in by class loader phase 1* */
-		this.fullName = "";
-		this.uniqueName = "";
-		this.owner = undefined;
-
-		/** Filled in by class loader* */
-		this.methodId = 0;
-
-		this.opsCheck = {};
-		this.frames = {};
-		this.tableSwitchTargets = [];
-		this.lookupSwitchTargets = [];
-
-		this.clinited = false;
-	};
-
-	FyMethod.prototype.toString = function() {
-		return "{Method}" + this.uniqueName;
-	};
+	
 
 	FyTableSwitchTarget = function() {
 		this.dflt = 0;
@@ -343,98 +303,8 @@ var FyLookupSwitchTarget;
 		this.targets = {};
 	};
 
-	FyField = function() {
-		this.name = "";
-		this.descriptor = "";
-		this.accessFlags = 0;
-		this.posRel = "";
-		this.size = "";
-		this.clinitThreadId = -1;
+	
 
-		/** Filled in by class loader phase 1* */
-		this.fullName = "";
-		this.uniqueName = "";
-		this.owner = undefined;
-
-		/** Filled in by class loader* */
-		this.fieldId = 0;
-
-		this.constantValueData = undefined;
-
-		this.type = undefined;
-
-		this.posAbs = 0;
-	};
-
-	FyField.prototype.toString = function() {
-		return "{Field}" + this.uniqueName;
-	};
-
-	/**
-	 * 
-	 * @param {Number}
-	 *            type
-	 */
-	FyClass = function(type) {
-		this.name = "";
-		this.sourceFile = undefined;
-
-		this.majorVersion = 0;
-		this.minorVersion = 0;
-		this.constants = [];
-
-		this.accessFlags = 0;
-
-		// this.superClassData = undefined;
-		// this.interfaceDatas = undefined;
-
-		this.fields = [];
-		this.methods = [];
-		this.sizeRel = 0;
-		this.staticSize = 0;
-
-		this.phase = 0;
-
-		/* Filled by class loader */
-		this.needFinalize = false;
-		this.classId = 0;
-		this.sizeAbs = 0;
-		this.ofsInHeap = 0;
-
-		this.interfaces = [];
-
-		this.superClass = undefined;
-		this.type = type;
-		/*
-		 * this.arr = { arrayType : 0, contentClass : undefined };
-		 * 
-		 * this.prm = { pType : "" };
-		 */
-
-		this.clinitThreadId = -1;
-		/**
-		 * @return FyMethod
-		 */
-		this.clinit = undefined;
-
-		/* BEGIN GC Only */
-		this.fieldStatic = [];
-		this.fieldAbs = [];
-		/* END GC Only */
-
-		this.virtualTable = {};
-
-		/** Array only* */
-		this.contentClass = undefined;
-		this.arrayType = 0;
-
-		/** primitive only */
-		this.pType = undefined;
-	};
-
-	FyClass.prototype.toString = function() {
-		return this.name;
-	};
 	/**
 	 * FyException
 	 * 
