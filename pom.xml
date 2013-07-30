@@ -25,6 +25,16 @@
 			<layout>default</layout>
 		</repository>
 	</repositories>
+	<build>
+		<testResources>
+			<testResource>
+				<directory>${project.basedir}/src/test/resources</directory>
+			</testResource>
+			<testResource>
+				<directory>${project.basedir}/src/main/resources</directory>
+			</testResource>
+		</testResources>
+	</build>
 	<dependencies>
 		<dependency>
 			<groupId>com.cirnoworks.fisce</groupId>
