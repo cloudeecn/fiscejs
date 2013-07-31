@@ -88,7 +88,6 @@
 		var tmpInt1 = 0 | 0;
 
 		__fy_outer: while (true) {
-
 			try {
 				__fy_inner: switch (ip) {
 				// ###
@@ -1486,7 +1485,6 @@
 									detailMessageField, e.message);
 							thread.fillStackTrace(thread.currentThrowable,
 									false);
-							break __fy_outer;
 						} catch (ee) {
 							context
 									.panic("Exception occored while processing exception: "
@@ -1494,6 +1492,7 @@
 							throw ee;
 						}
 					})();
+					break __fy_outer;
 				} else {
 					context.panic("Exception occored while executing thread #"
 							+ thread.threadId);

@@ -250,8 +250,7 @@ var __FyAOTUtil;
 	};
 
 	/**
-	 * @param {FyMethod}
-	 *            method
+	 * @param {FyMethod} method
 	 */
 	__FyAOTUtil.prototype.aot = function(method) {
 		var macros = this.template.macros;
@@ -331,7 +330,7 @@ var __FyAOTUtil;
 						"method.sample.js should not have content begins with '$' except $ip $1 $2");
 			}
 		}
-		console.log(result);
-		method.invoke = eval("function(thread,ops){" + result + "}");
+		method.invoke = eval("(function(){return function(thread,ops){"
+				+ result + "};})();");
 	};
 })();
