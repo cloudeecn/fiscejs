@@ -50,6 +50,33 @@ var FyLookupSwitchTarget;
 		}
 	};
 
+	/**
+	 * copy all strings and numbers from src into dest
+	 */
+	FyUtils.simpleClone = function(src, dest, keys) {
+		if (keys) {
+			for ( var keyId in keys) {
+				var key = keys[keyId];
+				var value = src[key];
+				if (value === undefined) {
+				} else if (typeof value === "string"
+						|| typeof value === "number") {
+					dest[key] = value;
+				} else {
+					throw new FyException(undefined, "Value of key[" + key
+							+ "] is not string or number");
+				}
+			}
+		} else {
+			for ( var key in src) {
+				var value = src[key];
+				if (typeof value === "string" || typeof value === "number") {
+					dest[key] = value;
+				}
+			}
+		}
+	};
+
 	function __FyConst() {
 		this.TYPE_OBJECT = 0;
 		this.TYPE_PRIMITIVE = 1;
@@ -270,6 +297,7 @@ var FyLookupSwitchTarget;
 		this.V = "V".charCodeAt(0);
 		this.ARR = "[".charCodeAt(0);
 
+		Object.preventExtensions(this);
 	}
 
 	FyConst = new __FyConst();
@@ -277,6 +305,7 @@ var FyLookupSwitchTarget;
 	FyLineNumber = function() {
 		this.start = 0;
 		this.line = 0;
+		Object.preventExtensions(this);
 	};
 
 	FyExceptionHandler = function() {
@@ -285,25 +314,24 @@ var FyLookupSwitchTarget;
 		/**
 		 * constant class data
 		 */
-		this.catchClassData = undefined;
+		this.catchClass = undefined;
 		this.handler = 0;
+		Object.preventExtensions(this);
 	};
-
-	
 
 	FyTableSwitchTarget = function() {
 		this.dflt = 0;
 		this.min = 0;
 		this.max = 0;
 		this.targets = [];
+		Object.preventExtensions(this);
 	};
 
 	FyLookupSwitchTarget = function() {
 		this.dflt = 0;
 		this.targets = {};
+		Object.preventExtensions(this);
 	};
-
-	
 
 	/**
 	 * FyException
@@ -316,6 +344,7 @@ var FyLookupSwitchTarget;
 	FyException = function(clazz, message) {
 		this.clazz = clazz;
 		this.message = message;
+		Object.preventExtensions(this);
 
 	};
 
@@ -329,6 +358,7 @@ var FyLookupSwitchTarget;
 	FyMessage = function() {
 		this.type = 0;
 		this.param = undefined;
+		Object.preventExtensions(this);
 	};
 
 	FyMessage.message_continue = 0; // In thread

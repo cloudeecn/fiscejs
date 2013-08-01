@@ -25,6 +25,8 @@ var FyField;
 		this.type = dummyClass;
 
 		this.posAbs = 0;
+		
+		Object.preventExtensions(this);
 	};
 
 	FyField.prototype.toString = function() {

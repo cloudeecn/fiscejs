@@ -167,8 +167,12 @@ var FyContext;
 	 * @returns {String} result
 	 */
 	FyContext.prototype.pool = function(string) {
+		if ("string" !== typeof string) {
+			throw new FyException(undefined, "Type of " + string
+					+ " is not string");
+		}
 		var ret = FyContext.stringPool[string];
-		if (ret === undefined) {
+		if (ret !== string) {
 			ret = string;
 			FyContext.stringPool[string] = string;
 		}
@@ -238,20 +242,6 @@ var FyContext;
 				}
 			}
 
-			// ////////////// body
-			if (def.superClassData !== undefined) {
-				def.superClassData = lookup(def.constants, def.superClassData);
-			}
-
-			// interfaces
-			{
-				for ( var j = 0; j < def.interfaceDatas.length; j++) {
-					def.interfaceDatas[j] = lookup(def.constants,
-							def.interfaceDatas[j]);
-				}
-				delete def.interfaceIdx;
-			}
-
 			// fields
 			{
 				for ( var j = 0; j < def.fields.length; j++) {
@@ -259,9 +249,6 @@ var FyContext;
 					field.name = this.pool(lookup(strings, field.name));
 					field.descriptor = this.pool(lookup(strings,
 							field.descriptor));
-
-					field.constantValueData = lookup(def.constants,
-							field.constantValueData);
 				}
 			}
 
@@ -273,16 +260,6 @@ var FyContext;
 					method.name = this.pool(lookup(strings, method.name));
 					method.descriptor = this.pool(lookup(strings,
 							method.descriptor));
-
-					if (method.exceptionTable) {
-						var exceptionTable = method.exceptionTable;
-
-						if (exceptionTable.catchClassData !== undefined) {
-							exceptionTable.catchClassData = lookup(
-									def.constants,
-									exceptionTable.catchClassData);
-						}
-					}
 
 					method.paramType = this.pool(lookup(strings,
 							method.paramType));
@@ -631,12 +608,17 @@ var FyContext;
 	FyContext.prototype.lookupClass = function(name) {
 		var clazz = this.getClass(name);
 		if (clazz === undefined) {
+			var classDef = undefined;
 			if (!name) {
 				throw new "Class name for load is null!";
 			}
 			clazz = this.classLoader.loadClass(name);
 			this.registerClass(clazz);
-			this.classLoader.phase2(clazz);
+
+			if (clazz.type == FyConst.TYPE_OBJECT) {
+				classDef = this.classDef[name];
+			}
+			this.classLoader.phase2(clazz, classDef);
 			this.lookupClass(FyConst.FY_BASE_CLASS);
 		}
 		return clazz;

@@ -27,6 +27,8 @@ var FyConfig = {
 
 // now
 (function(window) {
+	"use strict";
+
 	if (!Date.now) {
 		Date.now = function now() {
 			return Number(new Date());
@@ -43,6 +45,7 @@ var FyConfig = {
 	})();
 
 	if (!window.Math.imul) {
+		console.log("Polyfill Math.imul");
 		// @see
 		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/imul
 		window.Math.imul = function(a, b) {
@@ -56,6 +59,12 @@ var FyConfig = {
 		};
 	}
 
+	if (!Object.preventExtensions) {
+		console.log("Polyfill Object.preventExtensions");
+		Object.preventExtensions = function(obj) {
+		};
+	}
+
 	var darr = new Float64Array(1);
 	var iarr = new Int32Array(darr.buffer);
 
@@ -66,13 +75,9 @@ var FyConfig = {
 		// Little Endian
 		FyConfig.littleEndian = true;
 	}
-}((function() {
-	return this;
-}.call())));
 
-// We use ArrayBuffer for converting floats from/to ieee754 integers by default
-(function(global) {
-	"use strict";
+	// We use ArrayBuffer for converting floats from/to ieee754 integers by
+	// default
 
 	var buffer = new ArrayBuffer(8);
 	var intView = new Int32Array(buffer);
@@ -80,6 +85,7 @@ var FyConfig = {
 	var doubleView = new Float64Array(buffer);
 
 	var __FyPortable = function() {
+		Object.preventExtensions(this);
 	};
 
 	__FyPortable.prototype.now = performance.now;
@@ -190,7 +196,7 @@ var FyConfig = {
 	};
 
 	FyPortable = new __FyPortable();
-	
+
 })((function() {
 	return this;
 }.call()));

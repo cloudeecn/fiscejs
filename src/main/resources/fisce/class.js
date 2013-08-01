@@ -70,6 +70,7 @@ var FyClass;
 
 		/** primitive only */
 		this.pType = undefined;
+		Object.preventExtensions(this);
 	};
 
 	FyClass.prototype.toString = function() {

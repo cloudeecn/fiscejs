@@ -191,7 +191,7 @@ public class ClassConverter {
 
 					SimpleJSONUtil.add(sb, 3, "\"maxStack\"",
 							(int) method.getMaxStack(), true);
-					SimpleJSONUtil.add(sb, 3, "\"maxLocales\"",
+					SimpleJSONUtil.add(sb, 3, "\"maxLocals\"",
 							(int) method.getMaxLocals(), true);
 
 					SimpleJSONUtil.add(sb, 3, "\"code\"", "[", false);

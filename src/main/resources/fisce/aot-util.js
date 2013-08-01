@@ -281,7 +281,7 @@ var __FyAOTUtil;
 			/**
 			 * @returns {Array}
 			 */
-			var frame = frames[ip];
+			var frame = false;/*frame data will be extracted by gc*/ // frames[ip];
 			if (!opName) {
 				throw new FyException(undefined, "Error in preprocessing "
 						+ method.uniqueName + ": Unknown opcode: " + op);

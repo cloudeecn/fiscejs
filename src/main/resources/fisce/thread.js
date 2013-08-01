@@ -477,12 +477,4 @@ var FyFrame;
 		console.log("monitor exit stub");
 	};
 
-	/**
-	 * 
-	 * @param {FyMethod}
-	 *            method method to generate aot code
-	 */
-	FyThread.aot = function(method) {
-		
-	};
 })();

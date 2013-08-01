@@ -58,6 +58,8 @@ var FyMethod;
 		 *            ops
 		 */
 		this.invoke = dummyInvoke;
+		
+		Object.preventExtensions(this);
 	};
 
 	FyMethod.prototype.toString = function() {
