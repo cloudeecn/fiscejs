@@ -342,12 +342,15 @@ var FyLookupSwitchTarget;
 	 *            msg message
 	 */
 	FyException = function(clazz, message) {
+		this.name = "FyException";
 		this.clazz = clazz;
 		this.message = message;
+		this.stack = new Error().stack;
 		Object.preventExtensions(this);
-
 	};
 
+	FyException.prototype = new Error();
+	FyException.prototype.constructor = FyException;
 	FyException.prototype.toString = function() {
 		return (this.clazz ? this.clazz : "FatalError") + ": " + this.message;
 	};

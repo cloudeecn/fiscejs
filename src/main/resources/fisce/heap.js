@@ -338,7 +338,7 @@ var FyObject;
 
 	FyHeap.prototype.literalWithConstant = function(constant) {
 		var ret = constant.value;
-		if (ret !== undefined) {
+		if (ret === undefined) {
 			ret = constant.value = this.literal(constant.string);
 		}
 		return ret;

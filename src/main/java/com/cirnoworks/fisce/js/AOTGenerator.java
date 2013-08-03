@@ -167,7 +167,7 @@ public class AOTGenerator {
 		}
 		System.out.println(sb);
 		PrintWriter pw = new PrintWriter(
-				"src/main/resources/fisce/aot.js");
+				"src/main/resources/fisce/aot.data.js");
 		try {
 			pw.println("/**");
 			pw.println(" * AOT Template");

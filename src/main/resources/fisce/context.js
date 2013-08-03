@@ -629,13 +629,14 @@ var FyContext;
 	 * 
 	 * @param {FyObject}
 	 *            clazz
-	 * @returns {FyObject}
+	 * @returns {FyClass}
 	 */
 	FyContext.prototype.lookupArrayClass = function(clazz) {
 		if (clazz.type === FyConst.TYPE_OBJECT) {
-			return context.lookupClass("[L" + clazz1.name + ";");
+			return this.lookupClass("[L" + clazz.name + ";");
 		} else {
-			return context.lookupClass("[" + clazz1.name);
+			return this.lookupClass("["
+					+ FyContext.mapPrimitivesRev[clazz.name]);
 		}
 	};
 
@@ -721,7 +722,7 @@ var FyContext;
 	 * @param message
 	 */
 	FyContext.prototype.panic = function(message) {
-		console.log("ERROR! Virtual machine panic!");
-		console.log(context);
+		console.log("ERROR! Virtual machine panic: " + message);
+		console.log(this);
 	};
 })();

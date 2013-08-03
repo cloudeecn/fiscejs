@@ -36,17 +36,19 @@
 		"use strict";
 		// ##MACRO-HEADER
 		/**
+		 * @returns {FyContext}
+		 */
+		var context = thread.context;
+		/**
 		 * @returns {FyClass}
 		 */
+
 		var clazz = this.owner;
 		/**
 		 * @returns {FyHeap}
 		 */
 		var heap = context.heap;
-		/**
-		 * @returns {FyContext}
-		 */
-		var context = thread.context;
+
 		/**
 		 * @returns {__FyLongOps}
 		 */
@@ -92,6 +94,27 @@
 				__fy_inner: switch (ip) {
 				// ###
 				case 0:
+					if (method.name == FyConst.FY_METHOD_CLINIT) {
+						// ##MACRO-CLINIT
+						// !CLINIT
+						clinitClass = thread.clinit(this.owner.superClass);
+						if (clinitClass !== undefined) {
+							// invoke clinit
+							if (clinitClass.clinitThreadId == 0) {
+								// no thread is running it, so let this run
+								// Local to frame
+								thread.localToFrame(sp, $ip, $ip);
+								thread.pushFrame(clinitClass.clinit);
+								return ops;
+							} else {
+								// wait for other thread clinit
+								ops = 0;
+								ip = $ip;
+								break __fy_outer;
+							}
+						}
+						// ###
+					}
 					// ##MACRO-OPS
 					if (ops < 0) {
 						lip = $ip;
@@ -119,24 +142,31 @@
 					sp -= 3;
 					// 2[1]=0
 					if (stack[sp] !== 0
-							|| !context.classLoader.canCast(heap
-									.getClassFromHandle(stack[0]), heap
-									.getClassFromHandle(stack[2]).contentClass)) {
+							|| !context.classLoader
+									.canCast(
+											heap
+													.getClassFromHandle(stack[sp + 0]),
+											heap
+													.getClassFromHandle(stack[sp + 2]).contentClass)) {
 						throw new FyException(
 								FyConst.FY_EXCEPTION_STORE,
 								"Can't store "
-										+ heap.getClassFromHandle(stack[0]).name
+										+ heap
+												.getClassFromHandle(stack[sp + 0]).name
 										+ " to "
-										+ heap.getClassFromHandle(stack[2]).name);
+										+ heap
+												.getClassFromHandle(stack[sp + 2]).name);
 					}
-					heap.putArrayInt(stack[2], stack[1], stack[0]);
+					heap.putArrayInt(stack[sp + 2], stack[sp + 1],
+							stack[sp + 0]);
 					// ###
 				case 3:
 					// ##OP-FASTORE|IASTORE -3 0
 					lip = $ip;
 					ops--;
 					sp -= 3;
-					heap.putArrayInt(stack[2], stack[1], stack[0]);
+					heap.putArrayInt(stack[sp + 2], stack[sp + 1],
+							stack[sp + 0]);
 					// ###
 				case 4:
 					// ##OP-ACONST_NULL 0 1
@@ -529,7 +559,7 @@
 					lip = $ip;
 					ops--;
 					tmpField = context
-							.lookupFieldVirtualFromConstant(constant[$1]);
+							.lookupFieldVirtualFromConstant(constants[$1]);
 					if (tmpField.accessFlags & FyConst.FY_ACC_STATIC) {
 						throw new FyException(
 								FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, "Field "
@@ -549,11 +579,11 @@
 					}
 					// ###
 				case 83:
-					// ##OP-GETSTATIC -1 X-GETSTATIC
+					// ##OP-GETSTATIC 0 X-GETSTATIC
 					lip = $ip;
 					ops--;
 					tmpField = context
-							.lookupFieldVirtualFromConstant(constant[$1]);
+							.lookupFieldVirtualFromConstant(constants[$1]);
 
 					if (!(tmpField.accessFlags & FyConst.FY_ACC_STATIC)) {
 						throw new FyException(
@@ -583,13 +613,14 @@
 					switch (tmpField.descriptor.charCodeAt(0)) {
 					case FyConst.D:
 					case FyConst.J:
-						heap.getStaticRawLongTo(stack[sp - 1], tmpField.posAbs,
-								stack, sp - 1);
-						sp++;
+						heap.getStaticRawLongTo(tmpField.owner,
+								tmpField.posAbs, stack, sp);
+						sp += 2;
 						break;
 					default:
-						stack[sp - 1] = heap.getStaticRaw(stack[sp - 1],
+						stack[sp] = heap.getStaticRaw(tmpField.owner,
 								tmpField.posAbs);
+						sp++;
 						break;
 					}
 					// ###
@@ -1311,7 +1342,7 @@
 					lip = $ip;
 					ops--;
 					tmpField = context
-							.lookupFieldVirtualFromConstant(constant[$1]);
+							.lookupFieldVirtualFromConstant(constants[$1]);
 					if (tmpField.accessFlags & FyConst.FY_ACC_STATIC) {
 						throw new FyException(
 								FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, "Field "
@@ -1341,7 +1372,7 @@
 					lip = $ip;
 					ops--;
 					tmpField = context
-							.lookupFieldVirtualFromConstant(constant[$1]);
+							.lookupFieldVirtualFromConstant(constants[$1]);
 					if (tmpField.accessFlags & FyConst.FY_ACC_STATIC == 0) {
 						throw new FyException(
 								FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, "Field "
@@ -1376,15 +1407,14 @@
 					switch (tmpField.descriptor.charCodeAt(0)) {
 					case FyConst.D:
 					case FyConst.J:
-						sp -= 3;
-						heap.putStaticRawLongFrom(stack[sp], tmpField.posAbs,
-								stack, sp + 1);
+						sp -= 2;
+						heap.putStaticRawLongFrom(tmpField.owner,
+								tmpField.posAbs, stack, sp);
 						break;
 					default:
-						sp -= 2;
-						heap
-								.putStaticRaw(stack[sp], tmpField.posAbs,
-										stack[sp]);
+						sp--;
+						heap.putStaticRaw(tmpField.owner, tmpField.posAbs,
+								stack[sp]);
 						break;
 					}
 					// ###
@@ -1466,29 +1496,34 @@
 							throw e;
 						}
 						try {
+							console.log(1);
 							var exceptionClass = context.lookupClass(e.clazz);
-							if (context.classLoader.canCast(exceptionClass,
+							console.log(2);
+							if (!context.classLoader.canCast(exceptionClass,
 									context.TOP_THROWABLE)) {
 								throw new FyException(undefined, "Exception "
-										+ exception.clazz
-										+ " is not a java.lang.Throwable");
+										+ e.clazz + " is not a "
+										+ context.TOP_THROWABLE);
 							}
-
+							console.log(3);
 							var detailMessageField = context
 									.getField(FyConst.FY_BASE_THROWABLE
 											+ ".detailMessage.L"
 											+ FyConst.FY_BASE_STRING);
-
+							console.log(4);
 							thread.currentThrowable = heap.allocate(context
 									.lookupClass(e.clazz));
+							console.log(5);
 							heap.putFieldString(thread.currentThrowable,
 									detailMessageField, e.message);
+							console.log(6);
 							thread.fillStackTrace(thread.currentThrowable,
 									false);
+							console.log(7);
 						} catch (ee) {
-							context
-									.panic("Exception occored while processing exception: "
-											+ e);
+							context.panic(
+									"Exception occored while processing exception: "
+											+ e, ee);
 							throw ee;
 						}
 					})();

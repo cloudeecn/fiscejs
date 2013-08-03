@@ -20,7 +20,6 @@
  */
 
 var FyThread;
-var FyFrame;
 
 (function() {
 	"use strict";
@@ -36,8 +35,8 @@ var FyFrame;
 		this.STACK_SIZE = stackSize - 16;
 		this.context = context;
 		this.realStack = new Int32Array(stackSize);
-		this.stack = new Int32Array(realStack.buffer, 64, this.STACK_SIZE);
-		this.floatStack = new Int32Array(realStack.buffer, 64, this.STACK_SIZE);
+		this.stack = new Int32Array(this.realStack.buffer, 64, this.STACK_SIZE);
+		this.floatStack = new Int32Array(this.realStack.buffer, 64, this.STACK_SIZE);
 
 		this.typeStack = new Int8Array(this.STACK_SIZE);
 		this.sp = 0;
@@ -58,7 +57,7 @@ var FyFrame;
 		this.daemon = false;
 		this.destroyPending = false;
 
-		this.longOps = FyPortable.getLongOps(realStack);
+		this.longOps = FyPortable.getLongOps(this.realStack);
 	};
 
 	/**
@@ -73,7 +72,7 @@ var FyFrame;
 	 * @returns {FyMethod}
 	 */
 	FyThread.prototype.getCurrentMethod = function() {
-		return this.context.methods[stack[this.framePos]];
+		return this.context.methods[this.stack[this.framePos]];
 	};
 
 	/**
@@ -89,6 +88,14 @@ var FyFrame;
 	 */
 	FyThread.prototype.getCurrentIp = function() {
 		return this.stack[this.framePos + 2];
+	};
+
+	/**
+	 * 
+	 * @returns {Number}
+	 */
+	FyThread.prototype.getCurrentLastIp = function() {
+		return this.stack[this.framePos + 3];
 	};
 
 	/**
@@ -148,13 +155,13 @@ var FyFrame;
 	 */
 	FyThread.prototype.pushFrame = function(method) {
 		var stack = this.stack;
-		if (this.sp + method.maxLocals + method.maxStack >= framePos - 4) {
+		if (this.sp + method.maxLocals + method.maxStack >= this.framePos - 4) {
 			throw new FyException(undefined, "stack overflow for thread "
 					+ this.threadId);
 		}
 		this.framePos -= 4;
 		stack[this.framePos + 0] = method.methodId;
-		stack[this.framePos + 1] = sp;
+		stack[this.framePos + 1] = this.sp;
 		stack[this.framePos + 2] = 0;
 		stack[this.framePos + 3] = 0;
 		this.sp += method.maxLocals;
@@ -191,8 +198,7 @@ var FyFrame;
 		return this.framePos;
 	};
 
-	FyThread.prototype.getExceptionHandlerIp = function(framePos, handle, ip,
-			exception) {
+	FyThread.prototype.getExceptionHandlerIp = function(handle, ip) {
 
 		/**
 		 * @returns {FyMethod}
@@ -206,7 +212,7 @@ var FyFrame;
 			/**
 			 * @returns {FyObject}
 			 */
-			var obj = this.context.heap.objects[handler];
+			var obj = this.context.heap.objects[handle];
 			if (ip >= handler.start && ip < handler.end) {
 				if (handler.catchClassData) {
 					/**
@@ -385,7 +391,7 @@ var FyFrame;
 		} else {
 			return clazz;
 		}
-		return NULL;
+		return undefined;
 	};
 
 	/**
@@ -454,9 +460,60 @@ var FyFrame;
 		 * @returns {FyMethod}
 		 */
 		var method;
+		var handlerIp;
 		while (ops > 0) {
 			method = this.getCurrentMethod();
-			ops = method.invoke(this.context, this, message, ops);
+			if (!method.invoke) {
+				if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
+					// TODO
+					throw new FyException(undefined,
+							"Unresolved native method " + method.uniqueName);
+				} else {
+					FyAOTUtil.aot(method);
+				}
+			}
+			ops = method.invoke(this, ops);
+			if (this.currentThrowable) {
+				while (true) {
+					method = this.getCurrentMethod();
+					handlerIp = this.getExceptionHandlerIp(
+							this.currentThrowable, this.getCurrentLastIp());
+					if (handlerIp >= 0) {
+						this.sp = this.getCurrentStackBase() + method.maxLocals
+								+ 1;
+						this.localToFrame(this.getCurrentStackBase()
+								+ method.maxLocals, ip, ip);
+						this.stack[this.sp - 1] = this.currentThrowable;
+						this.currentThrowable = 0;
+						break;
+					} else {
+						if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
+							if (method.accessFlags & FyConst.FY_ACC_STATIC) {
+								this.monitorExit(context
+										.getClassObjectHandle(method.owner));
+							} else {
+								this.monitorExit(stack[sb]);
+							}
+						}
+						if (method.accessFlags & FyConst.FY_ACC_CLINIT) {
+							method.owner.clinitThreadId = -1;
+						}
+						this.popFrame();
+						if (this.framePos >= this.STACK_SIZE) {
+							// 全部弹出了……显示stacktrace
+							method = this.context
+									.lookupClass(FyConst.FY_BASE_THROWABLE
+											+ ".printStackTrace.()V");
+							this.pushFrame(method);
+							this.stack[this.getCurrentStackBase()] = this.currentThrowable;
+							this.currentThrowable = 0;
+						}
+					}
+				}
+				if (ops === 0) {
+					ops = 1;
+				}
+			}
 		}
 	};
 

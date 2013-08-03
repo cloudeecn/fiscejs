@@ -1,14 +1,20 @@
 (function() {
-	var classes = [ "EXCLUDE.fisce.test.SwitchTest",
-			"EXCLUDE.fisce.test.SwitchTest2" ];
-	fisceTests.extend({
-		"$aot" : function() {
-			var context = fisceTests.context();
-			for ( var i = 0, max = classes.length; i < max; i++) {
-				var clazz = context.lookupClass(classes[i].replace(/\./g, "/"));
-				console.log(clazz);
-			}
-			ok(true, "Please check console for classes");
-		}
-	});
+
+	fisceTests
+			.extend({
+				"HelloWorld" : function() {
+					var context = fisceTests.context();
+					var clazz = context
+							.lookupClass("EXCLUDE/fisce/test/HelloWorld");
+					var thread = new FyThread(context, 65536);
+					var threadHandle = context.heap.allocate(context
+							.lookupClass("java/lang/Thread"));
+					thread
+							.initWithMethod(
+									threadHandle,
+									context
+											.getMethod("EXCLUDE/fisce/test/HelloWorld.main.([Ljava/lang/String;)V"));
+					thread.run(new FyMessage(), 99999999);
+				}
+			});
 })();

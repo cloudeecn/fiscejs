@@ -148,8 +148,12 @@ var FyClassLoader;
 					method.uniqueName = this.context.pool(clazz.name
 							+ method.fullName);
 					method.owner = clazz;
-					if (method.name === "<clinit>") {
+					
+					if (method.name === FyConst.FY_METHOD_CLINIT) {
 						clazz.clinit = method;
+						method.accessFlags |= FyConst.FY_ACC_CLINIT;
+					} else if (method.name === FyConst.FY_METHOD_INIT) {
+						method.accessFlags |= FyConst.FY_ACC_CONSTRUCTOR;
 					}
 
 					if (methodDef.lineNumberTable) {

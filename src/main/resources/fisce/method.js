@@ -1,17 +1,6 @@
 var FyMethod;
 (function() {
 	/**
-	 * @param {FyThread}
-	 *            thread
-	 * @param {Number}
-	 *            ops
-	 */
-	function dummyInvoke(thread, ops) {
-		throw new FyException(undefined, "Undefined method code for method "
-				+ this.uniqueName);
-	}
-	
-	/**
 	 * @returns {FyClass}
 	 */
 	var dummyClass=undefined;
@@ -51,13 +40,7 @@ var FyMethod;
 
 		this.clinited = false;
 
-		/**
-		 * @param {FyThread}
-		 *            thread
-		 * @param {Number}
-		 *            ops
-		 */
-		this.invoke = dummyInvoke;
+		this.invoke = undefined;
 		
 		Object.preventExtensions(this);
 	};
