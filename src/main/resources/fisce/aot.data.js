@@ -5,32 +5,32 @@
 var FyAOTUtil = new __FyAOTUtil({
 	"ops" : {
 		"AALOAD" : {
-			"code" : "lip = $ip;ops--;sp--;stack[sp - 1] = heap.getArrayInt(stack[sp], stack[sp - 1]);",
+			"code" : "lip = $ip;ops--;sp--;stack[sp - 1] = heap.getArrayInt(stack[sp - 1], stack[sp]);",
 			"pops" : "-2",
 			"pushes" : "1"
 		},
 		"FALOAD" : {
-			"code" : "lip = $ip;ops--;sp--;stack[sp - 1] = heap.getArrayInt(stack[sp], stack[sp - 1]);",
+			"code" : "lip = $ip;ops--;sp--;stack[sp - 1] = heap.getArrayInt(stack[sp - 1], stack[sp]);",
 			"pops" : "-2",
 			"pushes" : "1"
 		},
 		"IALOAD" : {
-			"code" : "lip = $ip;ops--;sp--;stack[sp - 1] = heap.getArrayInt(stack[sp], stack[sp - 1]);",
+			"code" : "lip = $ip;ops--;sp--;stack[sp - 1] = heap.getArrayInt(stack[sp - 1], stack[sp]);",
 			"pops" : "-2",
 			"pushes" : "1"
 		},
 		"AASTORE" : {
-			"code" : "lip = $ip;ops--;sp -= 3;if (stack[sp] !== 0|| !context.classLoader.canCast(heap.getClassFromHandle(stack[sp + 0]),heap.getClassFromHandle(stack[sp + 2]).contentClass)) {throw new FyException(FyConst.FY_EXCEPTION_STORE,\"Can't store \"+ heap.getClassFromHandle(stack[sp + 0]).name+ \" to \"+ heap.getClassFromHandle(stack[sp + 2]).name);}heap.putArrayInt(stack[sp + 2], stack[sp + 1],stack[sp + 0]);",
+			"code" : "lip = $ip;ops--;sp -= 3;if (stack[sp] !== 0&& (!context.classLoader.canCast(heap.getClassFromHandle(stack[sp + 2]),heap.getClassFromHandle(stack[sp + 0]).contentClass))) {throw new FyException(FyConst.FY_EXCEPTION_STORE,\"Can't store \"+ heap.getClassFromHandle(stack[sp + 2]).name+ \" to \"+ heap.getClassFromHandle(stack[sp + 0]).name);}heap.putArrayInt(stack[sp + 0], stack[sp + 1],stack[sp + 2]);",
 			"pops" : "-3",
 			"pushes" : "0"
 		},
 		"FASTORE" : {
-			"code" : "lip = $ip;ops--;sp -= 3;heap.putArrayInt(stack[sp + 2], stack[sp + 1],stack[sp + 0]);",
+			"code" : "lip = $ip;ops--;sp -= 3;heap.putArrayInt(stack[sp + 0], stack[sp + 1],stack[sp + 2]);",
 			"pops" : "-3",
 			"pushes" : "0"
 		},
 		"IASTORE" : {
-			"code" : "lip = $ip;ops--;sp -= 3;heap.putArrayInt(stack[sp + 2], stack[sp + 1],stack[sp + 0]);",
+			"code" : "lip = $ip;ops--;sp -= 3;heap.putArrayInt(stack[sp + 0], stack[sp + 1],stack[sp + 2]);",
 			"pops" : "-3",
 			"pushes" : "0"
 		},
@@ -330,7 +330,7 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "X-GETFIELD"
 		},
 		"GETSTATIC" : {
-			"code" : "lip = $ip;ops--;tmpField = context.lookupFieldVirtualFromConstant(constants[$1]);if (!(tmpField.accessFlags & FyConst.FY_ACC_STATIC)) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, \"Field \"+ tmpField.uniqueName+ \" is not static\");}clinitClass = thread.clinit(tmpField.owner);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}switch (tmpField.descriptor.charCodeAt(0)) {case FyConst.D:case FyConst.J:heap.getStaticRawLongTo(tmpField.owner,tmpField.posAbs, stack, sp);sp += 2;break;default:stack[sp] = heap.getStaticRaw(tmpField.owner,tmpField.posAbs);sp++;break;}",
+			"code" : "lip = $ip;ops--;tmpField = context.lookupFieldVirtualFromConstant(constants[$1]);if (!(tmpField.accessFlags & FyConst.FY_ACC_STATIC)) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, \"Field \"+ tmpField.uniqueName+ \" is not static\");}clinitClass = thread.clinit(tmpField.owner);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {clinitClass.clinitThreadId = thread.threadId;thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}switch (tmpField.descriptor.charCodeAt(0)) {case FyConst.D:case FyConst.J:heap.getStaticRawLongTo(tmpField.owner,tmpField.posAbs, stack, sp);sp += 2;break;default:stack[sp] = heap.getStaticRaw(tmpField.owner,tmpField.posAbs);sp++;break;}",
 			"pops" : "0",
 			"pushes" : "X-GETSTATIC"
 		},
@@ -370,7 +370,7 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "1"
 		},
 		"IADD" : {
-			"code" : "ops--;sp--;stack[sp - 1] -= stack[sp];",
+			"code" : "ops--;sp--;stack[sp - 1] += stack[sp];",
 			"pops" : "-2",
 			"pushes" : "1"
 		},
@@ -520,17 +520,17 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "0"
 		},
 		"INVOKESTATIC" : {
-			"code" : "lip = $ip;ops--;tmpMethod = context.lookupMethodVirtualFromConstant(constants[$1]);sp -= tmpMethod.paramStackUsage;if (!(tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,tmpMethod.uniqueName + \" is not static\");}clinitClass = thread.clinit(tmpMethod.owner);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}thread.localToFrame(sp, $ip, $ip + 1);thread.pushMethod(tmpMethod);return ops;",
+			"code" : "lip = $ip;ops--;tmpMethod = context.lookupMethodVirtualFromConstant(constants[$1]);sp -= tmpMethod.paramStackUsage;if (!(tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,tmpMethod.uniqueName + \" is not static\");}console.log(\"clinit: \" + tmpMethod.owner);clinitClass = thread.clinit(tmpMethod.owner);console.log(\"result: \" + clinitClass);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {clinitClass.clinitThreadId = thread.threadId;thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}thread.localToFrame(sp, $ip, $ip + 1);thread.pushMethod(tmpMethod);return ops;",
 			"pops" : "X-INVOKESTATIC",
 			"pushes" : "0"
 		},
 		"INVOKEINTERFACE" : {
-			"code" : "lip = $ip;ops--;tmpMethod = context.lookupMethodVirtualFromConstant(constants[$1]);sp -= tmpMethod.paramStackUsage + 1;if (!(tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,tmpMethod.uniqueName + \" is static\");}if (stack[sp] === 0) {throw new FyException(FyConst.FY_EXCEPTION_NPT,\"FATAL ERROR HERE!!\");}if (!(tmpMethod.accessFlags & FyConst.FY_ACC_FINAL)) {tmpClass = heap.getObject(stack[sp]).clazz;tmpMethod = context.lookupMethodVirtualByMethod(clazz,tmpMethod);}thread.localToFrame(sp, $ip, $ip + 1);thread.pushMethod(tmpMethod);return ops;",
+			"code" : "lip = $ip;ops--;tmpMethod = context.lookupMethodVirtualFromConstant(constants[$1]);sp -= tmpMethod.paramStackUsage + 1;if ((tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,tmpMethod.uniqueName + \" is static\");}if (stack[sp] === 0) {throw new FyException(FyConst.FY_EXCEPTION_NPT,\"FATAL ERROR HERE!!\");}if (!(tmpMethod.accessFlags & FyConst.FY_ACC_FINAL)) {tmpClass = heap.getObject(stack[sp]).clazz;tmpMethod = context.lookupMethodVirtualByMethod(clazz,tmpMethod);}thread.localToFrame(sp, $ip, $ip + 1);thread.pushMethod(tmpMethod);return ops;",
 			"pops" : "X-INVOKEVIRTUAL",
 			"pushes" : "0"
 		},
 		"INVOKEVIRTUAL" : {
-			"code" : "lip = $ip;ops--;tmpMethod = context.lookupMethodVirtualFromConstant(constants[$1]);sp -= tmpMethod.paramStackUsage + 1;if (!(tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,tmpMethod.uniqueName + \" is static\");}if (stack[sp] === 0) {throw new FyException(FyConst.FY_EXCEPTION_NPT,\"FATAL ERROR HERE!!\");}if (!(tmpMethod.accessFlags & FyConst.FY_ACC_FINAL)) {tmpClass = heap.getObject(stack[sp]).clazz;tmpMethod = context.lookupMethodVirtualByMethod(clazz,tmpMethod);}thread.localToFrame(sp, $ip, $ip + 1);thread.pushMethod(tmpMethod);return ops;",
+			"code" : "lip = $ip;ops--;tmpMethod = context.lookupMethodVirtualFromConstant(constants[$1]);sp -= tmpMethod.paramStackUsage + 1;if ((tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,tmpMethod.uniqueName + \" is static\");}if (stack[sp] === 0) {throw new FyException(FyConst.FY_EXCEPTION_NPT,\"FATAL ERROR HERE!!\");}if (!(tmpMethod.accessFlags & FyConst.FY_ACC_FINAL)) {tmpClass = heap.getObject(stack[sp]).clazz;tmpMethod = context.lookupMethodVirtualByMethod(clazz,tmpMethod);}thread.localToFrame(sp, $ip, $ip + 1);thread.pushMethod(tmpMethod);return ops;",
 			"pops" : "X-INVOKEVIRTUAL",
 			"pushes" : "0"
 		},
@@ -705,7 +705,7 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "1"
 		},
 		"NEW" : {
-			"code" : "ops--;lip = $ip;tmpClass = context.lookupClassFromConstant(constants[$1]);if (tmpClass.accessFlags& (FyConst.FY_ACC_INTERFACE | FyConst.FY_ACC_ABSTRACT)) {throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,tmpClass.name);}clinitClass = thread.clinit(tmpClass);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}stack[sp] = heap.allocate(tmpClass);sp++;",
+			"code" : "ops--;lip = $ip;tmpClass = context.lookupClassFromConstant(constants[$1]);if (tmpClass.accessFlags& (FyConst.FY_ACC_INTERFACE | FyConst.FY_ACC_ABSTRACT)) {throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,tmpClass.name);}clinitClass = thread.clinit(tmpClass);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {clinitClass.clinitThreadId = thread.threadId;thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}stack[sp] = heap.allocate(tmpClass);sp++;",
 			"pops" : "0",
 			"pushes" : "1"
 		},
@@ -735,7 +735,7 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "0"
 		},
 		"PUTSTATIC" : {
-			"code" : "lip = $ip;ops--;tmpField = context.lookupFieldVirtualFromConstant(constants[$1]);if (tmpField.accessFlags & FyConst.FY_ACC_STATIC == 0) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, \"Field \"+ tmpField.uniqueName+ \" is not static\");}if ((tmpField.accessFlags & FyConst.FY_ACC_FINAL)&& (method.owner != tmpField.owner)) {throw new FyException(FyConst.FY_EXCEPTION_ACCESS,\"Field \" + tmpField.uniqueName + \" is final\");}clinitClass = thread.clinit(tmpField.owner);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}switch (tmpField.descriptor.charCodeAt(0)) {case FyConst.D:case FyConst.J:sp -= 2;heap.putStaticRawLongFrom(tmpField.owner,tmpField.posAbs, stack, sp);break;default:sp--;heap.putStaticRaw(tmpField.owner, tmpField.posAbs,stack[sp]);break;}",
+			"code" : "lip = $ip;ops--;tmpField = context.lookupFieldVirtualFromConstant(constants[$1]);if (tmpField.accessFlags & FyConst.FY_ACC_STATIC == 0) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, \"Field \"+ tmpField.uniqueName+ \" is not static\");}if ((tmpField.accessFlags & FyConst.FY_ACC_FINAL)&& (method.owner != tmpField.owner)) {throw new FyException(FyConst.FY_EXCEPTION_ACCESS,\"Field \" + tmpField.uniqueName + \" is final\");}clinitClass = thread.clinit(tmpField.owner);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {clinitClass.clinitThreadId = thread.threadId;thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}switch (tmpField.descriptor.charCodeAt(0)) {case FyConst.D:case FyConst.J:sp -= 2;heap.putStaticRawLongFrom(tmpField.owner,tmpField.posAbs, stack, sp);break;default:sp--;heap.putStaticRaw(tmpField.owner, tmpField.posAbs,stack[sp]);break;}",
 			"pops" : "X-PUTSTATIC",
 			"pushes" : "0"
 		},
@@ -772,8 +772,8 @@ var FyAOTUtil = new __FyAOTUtil({
 	},
 	"macros" : {
 		"HEADER" : "var context = thread.context;var clazz = this.owner;var heap = context.heap;var longOps = thread.longOps;var constants = clazz.constants;var stack = thread.stack;var floatStack = thread.floatStack;var ip = thread.getCurrentIp() | 0;var lip = 0 | 0;var sp = thread.sp | 0;var sb = thread.getCurrentStackBase() | 0;var tmpField;var tmpClass;var clinitClass;var tmpMethod;var tmpInt1 = 0 | 0;__fy_outer: while (true) {try {__fy_inner: switch (ip) {",
-		"CLINIT" : "clinitClass = thread.clinit(this.owner.superClass);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}",
+		"CLINIT" : "clinitClass = thread.clinit(this.owner.superClass);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {clinitClass.clinitThreadId = thread.threadId;thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}",
 		"OPS" : "if (ops < 0) {lip = $ip;ip = $ip;break __fy_outer;}",
-		"TAIL" : "default:throw new FyException(undefined, \"IP out of sync at \"+ this.uniqueName + \".\" + ip);}} catch (e) {if (e instanceof FyException) {(function() {if (!e.clazz) {context.panic(e.toString());throw e;}try {console.log(1);var exceptionClass = context.lookupClass(e.clazz);console.log(2);if (context.classLoader.canCast(exceptionClass,context.TOP_THROWABLE)) {throw new FyException(undefined, \"Exception \"+ e.clazz + \" is not a \"+ context.TOP_THROWABLE);}console.log(3);var detailMessageField = context.getField(FyConst.FY_BASE_THROWABLE+ \".detailMessage.L\"+ FyConst.FY_BASE_STRING);console.log(4);thread.currentThrowable = heap.allocate(context.lookupClass(e.clazz));console.log(5);heap.putFieldString(thread.currentThrowable,detailMessageField, e.message);console.log(6);thread.fillStackTrace(thread.currentThrowable,false);console.log(7);} catch (ee) {console.log(ee);context.panic(\"Exception occored while processing exception: \"+ e);throw ee;}})();break __fy_outer;} else {context.panic(\"Exception occored while executing thread #\"+ thread.threadId);throw e;}}}thread.localToFrame(sp, lip, ip);"
+		"TAIL" : "default:throw new FyException(undefined, \"IP out of sync at \"+ this.uniqueName + \".\" + ip);}} catch (e) {if (e instanceof FyException) {(function() {if (!e.clazz) {context.panic(e.toString());throw e;}try {console.log(1);var exceptionClass = context.lookupClass(e.clazz);console.log(2);if (!context.classLoader.canCast(exceptionClass,context.TOP_THROWABLE)) {throw new FyException(undefined, \"Exception \"+ e.clazz + \" is not a \"+ context.TOP_THROWABLE);}console.log(3);var detailMessageField = context.getField(FyConst.FY_BASE_THROWABLE+ \".detailMessage.L\"+ FyConst.FY_BASE_STRING);console.log(4);thread.currentThrowable = heap.allocate(context.lookupClass(e.clazz));console.log(5);heap.putFieldString(thread.currentThrowable,detailMessageField, e.message);console.log(6);thread.fillStackTrace(thread.currentThrowable,false);console.log(7);} catch (ee) {context.panic(\"Exception occored while processing exception: \"+ e, ee);throw ee;}})();break __fy_outer;} else {context.panic(\"Exception occored while executing thread #\"+ thread.threadId);throw e;}}}thread.localToFrame(sp, lip, ip);"
 	}
 });

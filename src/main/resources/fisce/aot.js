@@ -304,10 +304,27 @@ var __FyAOTUtil;
 				code.push(" ");
 				code.push(oprand2);
 			}
-
 			code.push("\n");
+			if (FyConfig.verboseMode) {
+				code.push("console \
+						.log([this.owner, this.uniqueName,"
+						+ ip
+						+ ", thread.sp, \""
+						+ opName
+						+ "\", "
+						+ oprand1
+						+ ", "
+						+ (oprand1 ? "method.owner.constants[" + oprand1 + "]"
+								: "undefined")
+						+ ", "
+						+ oprand2
+						+ ", "
+						+ (oprand2 ? "method.owner.constants[" + oprand2 + "]"
+								: "undefined") + "]);");
+			}
+
 			if (ip === 0 && method.name === FyConst.FY_METHOD_CLINIT) {
-				code.push(macros["CLINIT"]);
+				code.push(replaceAll(macros["CLINIT"], ip, oprand1, oprand2));
 			}
 			if (frame) {
 				// Hint frame types for gc
@@ -329,12 +346,13 @@ var __FyAOTUtil;
 		result = code.join("").toString();
 		if (FyConfig.debugMode) {
 			if (result.indexOf("$") >= 0) {
+				console.log(result);
 				throw new FyException(undefined,
 						"method.sample.js should not have content begins with '$' except $ip $1 $2");
 			}
 		}
 		method.invoke = eval("(function(){return function(thread,ops){"
 				+ result + "};})();");
-		console.log(method.invoke);
+		// console.log(method.invoke);
 	};
 })();

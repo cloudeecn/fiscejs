@@ -36,7 +36,8 @@ var FyThread;
 		this.context = context;
 		this.realStack = new Int32Array(stackSize);
 		this.stack = new Int32Array(this.realStack.buffer, 64, this.STACK_SIZE);
-		this.floatStack = new Int32Array(this.realStack.buffer, 64, this.STACK_SIZE);
+		this.floatStack = new Int32Array(this.realStack.buffer, 64,
+				this.STACK_SIZE);
 
 		this.typeStack = new Int8Array(this.STACK_SIZE);
 		this.sp = 0;
@@ -47,7 +48,7 @@ var FyThread;
 		this.currentThrowable = 0;
 		this.status = 0;
 		this.priority = 0;
-		this.threadId = 0;
+		this.threadId = 1;
 
 		this.waitForLockId = 0;
 		this.waitForNotifyId = 0;
@@ -466,6 +467,7 @@ var FyThread;
 			if (!method.invoke) {
 				if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
 					// TODO
+					throw "Unresolved native method " + method.uniqueName;
 					throw new FyException(undefined,
 							"Unresolved native method " + method.uniqueName);
 				} else {
@@ -501,8 +503,11 @@ var FyThread;
 						this.popFrame();
 						if (this.framePos >= this.STACK_SIZE) {
 							// 全部弹出了……显示stacktrace
+							throw "Uncatched exception: "
+									+ this.context.heap
+											.getObject(this.currentThrowable).clazz;
 							method = this.context
-									.lookupClass(FyConst.FY_BASE_THROWABLE
+									.getMethod(FyConst.FY_BASE_THROWABLE
 											+ ".printStackTrace.()V");
 							this.pushFrame(method);
 							this.stack[this.getCurrentStackBase()] = this.currentThrowable;

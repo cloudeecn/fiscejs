@@ -38,7 +38,7 @@ var FyMethod;
 		this.tableSwitchTargets = [];
 		this.lookupSwitchTargets = [];
 
-		this.clinited = false;
+//		this.clinited = false;
 
 		this.invoke = undefined;
 		

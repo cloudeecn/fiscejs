@@ -349,10 +349,11 @@ var FyLookupSwitchTarget;
 		Object.preventExtensions(this);
 	};
 
-	FyException.prototype = new Error();
+//	FyException.prototype = new Error();
 	FyException.prototype.constructor = FyException;
 	FyException.prototype.toString = function() {
-		return (this.clazz ? this.clazz : "FatalError") + ": " + this.message;
+		return "" + (this.clazz ? this.clazz : "FatalError") + ": "
+				+ this.message;
 	};
 
 	/**

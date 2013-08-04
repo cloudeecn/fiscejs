@@ -102,6 +102,7 @@
 							// invoke clinit
 							if (clinitClass.clinitThreadId == 0) {
 								// no thread is running it, so let this run
+								clinitClass.clinitThreadId = thread.threadId;
 								// Local to frame
 								thread.localToFrame(sp, $ip, $ip);
 								thread.pushFrame(clinitClass.clinit);
@@ -126,14 +127,14 @@
 					lip = $ip;
 					ops--;
 					sp--;
-					stack[sp - 1] = heap.getArrayInt(stack[sp], stack[sp - 1]);
+					stack[sp - 1] = heap.getArrayInt(stack[sp - 1], stack[sp]);
 					// ###
 				case 1:
 					// ##OP-FALOAD|IALOAD -2 1
 					lip = $ip;
 					ops--;
 					sp--;
-					stack[sp - 1] = heap.getArrayInt(stack[sp], stack[sp - 1]);
+					stack[sp - 1] = heap.getArrayInt(stack[sp - 1], stack[sp]);
 					// ###
 				case 2:
 					// ##OP-AASTORE -3 0
@@ -142,31 +143,31 @@
 					sp -= 3;
 					// 2[1]=0
 					if (stack[sp] !== 0
-							|| !context.classLoader
+							&& (!context.classLoader
 									.canCast(
 											heap
-													.getClassFromHandle(stack[sp + 0]),
+													.getClassFromHandle(stack[sp + 2]),
 											heap
-													.getClassFromHandle(stack[sp + 2]).contentClass)) {
+													.getClassFromHandle(stack[sp + 0]).contentClass))) {
 						throw new FyException(
 								FyConst.FY_EXCEPTION_STORE,
 								"Can't store "
 										+ heap
-												.getClassFromHandle(stack[sp + 0]).name
+												.getClassFromHandle(stack[sp + 2]).name
 										+ " to "
 										+ heap
-												.getClassFromHandle(stack[sp + 2]).name);
+												.getClassFromHandle(stack[sp + 0]).name);
 					}
-					heap.putArrayInt(stack[sp + 2], stack[sp + 1],
-							stack[sp + 0]);
+					heap.putArrayInt(stack[sp + 0], stack[sp + 1],
+							stack[sp + 2]);
 					// ###
 				case 3:
 					// ##OP-FASTORE|IASTORE -3 0
 					lip = $ip;
 					ops--;
 					sp -= 3;
-					heap.putArrayInt(stack[sp + 2], stack[sp + 1],
-							stack[sp + 0]);
+					heap.putArrayInt(stack[sp + 0], stack[sp + 1],
+							stack[sp + 2]);
 					// ###
 				case 4:
 					// ##OP-ACONST_NULL 0 1
@@ -598,6 +599,7 @@
 						// invoke clinit
 						if (clinitClass.clinitThreadId == 0) {
 							// no thread is running it, so let this run
+							clinitClass.clinitThreadId = thread.threadId;
 							// Local to frame
 							thread.localToFrame(sp, $ip, $ip);
 							thread.pushFrame(clinitClass.clinit);
@@ -667,7 +669,7 @@
 					// ##OP-IADD -2 1
 					ops--;
 					sp--;
-					stack[sp - 1] -= stack[sp];
+					stack[sp - 1] += stack[sp];
 					// ###
 				case 101:
 					// ##OP-IAND -2 1
@@ -953,11 +955,14 @@
 					}
 
 					// !CLINIT
+					console.log("clinit: " + tmpMethod.owner);
 					clinitClass = thread.clinit(tmpMethod.owner);
+					console.log("result: " + clinitClass);
 					if (clinitClass !== undefined) {
 						// invoke clinit
 						if (clinitClass.clinitThreadId == 0) {
 							// no thread is running it, so let this run
+							clinitClass.clinitThreadId = thread.threadId;
 							// Local to frame
 							thread.localToFrame(sp, $ip, $ip);
 							thread.pushFrame(clinitClass.clinit);
@@ -984,7 +989,7 @@
 
 					sp -= tmpMethod.paramStackUsage + 1;
 
-					if (!(tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
+					if ((tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
 						throw new FyException(
 								FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 								tmpMethod.uniqueName + " is static");
@@ -1270,6 +1275,7 @@
 						// invoke clinit
 						if (clinitClass.clinitThreadId == 0) {
 							// no thread is running it, so let this run
+							clinitClass.clinitThreadId = thread.threadId;
 							// Local to frame
 							thread.localToFrame(sp, $ip, $ip);
 							thread.pushFrame(clinitClass.clinit);
@@ -1392,6 +1398,7 @@
 						// invoke clinit
 						if (clinitClass.clinitThreadId == 0) {
 							// no thread is running it, so let this run
+							clinitClass.clinitThreadId = thread.threadId;
 							// Local to frame
 							thread.localToFrame(sp, $ip, $ip);
 							thread.pushFrame(clinitClass.clinit);
@@ -1537,6 +1544,7 @@
 		}
 		// Local to frame
 		thread.localToFrame(sp, lip, ip);
+		return ops;
 		// ###
 	};
 })();

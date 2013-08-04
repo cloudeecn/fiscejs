@@ -51,7 +51,7 @@ var FyClass;
 		 * this.prm = { pType : "" };
 		 */
 
-		this.clinitThreadId = -1;
+		this.clinitThreadId = 0;
 		/**
 		 * @return FyMethod
 		 */
