@@ -32,13 +32,9 @@
 	 * @param {Number}
 	 *            ops instructions left to run
 	 */
-	function(thread, ops) {
+	function(context, thread, ops) {
 		"use strict";
 		// ##MACRO-HEADER
-		/**
-		 * @returns {FyContext}
-		 */
-		var context = thread.context;
 		/**
 		 * @returns {FyClass}
 		 */

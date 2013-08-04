@@ -474,7 +474,7 @@ var FyThread;
 					FyAOTUtil.aot(method);
 				}
 			}
-			ops = method.invoke(this, ops);
+			ops = method.invoke(this.context, this, ops);
 			if (this.currentThrowable) {
 				while (true) {
 					method = this.getCurrentMethod();

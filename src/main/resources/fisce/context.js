@@ -725,4 +725,39 @@ var FyContext;
 		console.log("ERROR! Virtual machine panic: " + message);
 		console.log(this);
 	};
+
+	FyContext.prototype.registerNativeHandler = function(name, func, extraVars,
+			stackSize) {
+		if (typeof name === "object") {
+			if (name.length) {
+				for ( var i = 0, max = name.length; i < max; i++) {
+					this.nativeHandlers[name.name] = {
+						func : name.func,
+						extraVars : name.extraVars,
+						stackSize : name.stackSize
+					};
+				}
+			} else {
+				for ( var key in name) {
+					this.nativeHandlers[key] = {
+						func : name[key],
+						extraVars : 0,
+						stackSize : 0
+					};
+				}
+			}
+		} else {
+			if (!extraVars) {
+				extraVars = 0;
+			}
+			if (!stackSize) {
+				stackSize = 0;
+			}
+			this.nativeHandlers[name] = {
+				func : func,
+				extraVars : extraVars,
+				stackSize : stackSize
+			};
+		}
+	};
 })();

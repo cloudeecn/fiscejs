@@ -148,7 +148,7 @@ var FyClassLoader;
 					method.uniqueName = this.context.pool(clazz.name
 							+ method.fullName);
 					method.owner = clazz;
-					
+
 					if (method.name === FyConst.FY_METHOD_CLINIT) {
 						clazz.clinit = method;
 						method.accessFlags |= FyConst.FY_ACC_CLINIT;
@@ -199,6 +199,14 @@ var FyClassLoader;
 					}
 					if (methodDef.parameterClassNames) {
 						method.parameterClassNames = methodDef.parameterClassNames;
+					}
+					if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
+						var nativeHandler = this.context.nativeHandlers[method.uniqueName];
+						if (nativeHandler !== undefined) {
+							method.invoke = nativeHandler.func;
+							method.maxLocals += nativeHandler.extraVars;
+							method.maxStack += nativeHandler.stackSize;
+						}
 					}
 					this.context.registerMethod(method);
 				}
