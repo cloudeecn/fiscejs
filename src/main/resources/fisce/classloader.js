@@ -64,6 +64,30 @@ var FyClassLoader;
 		}
 	};
 
+	FyClassLoader.getArrayContentName = function(arrayName) {
+		switch (arrayName.charAt(1)) {
+		case FyConst.FY_TYPE_ARRAY:
+			return arrayName.substring(1, arrayName.length);
+		case FyConst.FY_TYPE_HANDLE:
+			return arrayName.substring(2, arrayName.length - 1);
+		default:
+			return FyContext.primitives[arrayName.charAt(1)];
+		}
+	};
+
+	FyClassLoader.getArrayName = function(arrayContentName) {
+		var primitiveClassName = FyContext.mapPrimitivesRev[arrayContentName];
+		if (!!primitiveClassName) {
+			// primitive
+			return "[" + primitiveClassName;
+		} else if (arrayContentName.charAt(0) === FyConst.FY_TYPE_ARRAY) {
+			// array
+			return "[" + arrayContentName;
+		} else {
+			return "[L" + arrayContentName + ";";
+		}
+	};
+
 	/**
 	 * load class
 	 * 
@@ -84,20 +108,8 @@ var FyClassLoader;
 			clazz.name = name;
 			clazz.superClass = this.context.lookupClass(FyConst.FY_BASE_OBJECT);
 			clazz.arrayType = FyClassLoader.getArrayContentType(name);
-			switch (name.charAt(1)) {
-			case FyConst.FY_TYPE_ARRAY:
-				clazz.contentClass = this.context.lookupClass(name.substring(1,
-						name.length));
-				break;
-			case FyConst.FY_TYPE_HANDLE:
-				clazz.contentClass = this.context.lookupClass(name.substring(2,
-						name.length - 1));
-				break;
-			default:
-				clazz.contentClass = this.context
-						.lookupClass(FyContext.primitives[name.charAt(1)]);
-				break;
-			}
+			clazz.contentClass = this.context.lookupClass(FyClassLoader
+					.getArrayContentName(name));
 		} else if (FyContext.mapPrimitivesRev[name]) {
 			// Primitive
 			name = this.context.pool(name);
@@ -201,7 +213,8 @@ var FyClassLoader;
 						method.parameterClassNames = methodDef.parameterClassNames;
 					}
 					if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
-						var nativeHandler = this.context.nativeHandlers[method.uniqueName];
+						var nativeHandler = this.context.nativeHandlers[method.uniqueName]
+								|| FyContext.staticNativeHandlers[method.uniqueName];
 						if (nativeHandler !== undefined) {
 							method.invoke = nativeHandler.func;
 							method.maxLocals += nativeHandler.extraVars;
@@ -233,18 +246,29 @@ var FyClassLoader;
 			}
 
 			if (classDef.superClassData) {
-				clazz.superClass = this.context
-						.lookupClassFromConstant(clazz.constants[classDef.superClassData]);
-				if (!clazz.superClass) {
-					throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
-							clazz.superClassData.name);
+				var superClassConstant = clazz.constants[classDef.superClassData];
+				clazz.superClass = superClassConstant.resolvedClass;
+				if (clazz.superClass === undefined) {
+					clazz.superClass = this.context
+							.getClass(superClassConstant.name);
+					if (clazz.superClass === undefined) {
+						clazz.superClass = this
+								.loadClass(superClassConstant.name);
+						if (!clazz.superClass) {
+							throw new FyException(
+									FyConst.FY_EXCEPTION_CLASSNOTFOUND,
+									clazz.superClassData.name);
+						}
+						this.context.registerClass(clazz.superClass);
+					}
+					superClassConstant.resolvedClass = clazz.superClass;
+					delete superClassConstant.name;
 				}
-				delete clazz.superClassData;
 			}
 
-			if (!this.context.TOP_CLASS
+			if (!this.context.TOP_OBJECT
 					&& clazz.name === FyConst.FY_BASE_OBJECT) {
-				this.context.TOP_CLASS = clazz;
+				this.context.TOP_OBJECT = clazz;
 			} else if (!this.context.TOP_THROWABLE
 					&& clazz.name === FyConst.FY_BASE_THROWABLE) {
 				this.context.TOP_THROWABLE = clazz;
@@ -263,6 +287,9 @@ var FyClassLoader;
 			} else if (!this.context.TOP_PHANTOM_REF
 					&& clazz.name === FyConst.FY_REF_PHANTOM) {
 				this.context.TOP_PHA3NTOM_REF = clazz;
+			} else if (!this.context.TOP_CLASS
+					&& clazz.name === FyConst.FY_BASE_CLASS) {
+				this.context.TOP_CLASS = clazz;
 			}
 		}
 		clazz.phase = 1;
@@ -279,10 +306,15 @@ var FyClassLoader;
 		if (!clazz || !clazz.name || clazz.phase !== 1) {
 			throw "Passed illegal class to class loader phase 2";
 		}
+		clazz.phase = 2;
 		switch (clazz.type) {
 		case FyConst.TYPE_ARRAY:
 			break;
 		case FyConst.TYPE_OBJECT: {
+			if (clazz.superClass && clazz.superClass.phase === 1) {
+				this.phase2(clazz.superClass,
+						this.context.classDef[clazz.superClass.name]);
+			}
 			// Count method params already done.
 			{
 				var interfaceDatas = classDef.interfaceDatas;
@@ -293,7 +325,6 @@ var FyClassLoader;
 					clazz.interfaces[i] = this.context
 							.lookupClassFromConstant(interfaceData);
 				}
-				delete clazz.interfaceDatas;
 			}
 
 			if (clazz.superClass) {
@@ -302,6 +333,11 @@ var FyClassLoader;
 				clazz.sizeAbs = 0;
 				while (tmp) {
 					clazz.sizeAbs += tmp.sizeRel;
+					if (tmp != this.context.TOP_OBJECT
+							&& tmp.superClass === undefined) {
+						throw new FyException(undefined,
+								"broken class link on " + tmp.name);
+					}
 					tmp = tmp.superClass;
 				}
 				var fields = clazz.fields;
@@ -367,13 +403,13 @@ var FyClassLoader;
 					 * @returns {FyMethod}
 					 */
 					var method = methods[i];
-					var methodDef = classDef.methods[i]
+					var methodDef = classDef.methods[i];
 					if (methodDef.exceptionTable) {
 						for ( var etId in methodDef.exceptionTable) {
 							var fehDef = methodDef.exceptionTable[etId];
 							var feh = method.exceptionTable[etId] = new FyExceptionHandler();
-							FyUtils.simpleClone(fehDef, feh, "start", "end",
-									"handler");
+							FyUtils.simpleClone(fehDef, feh, [ "start", "end",
+									"handler" ]);
 							if (fehDef.catchClassData) {
 								feh.catchClass = this.context
 										.lookupClassFromConstant(clazz.constants[fehDef.catchClassData]);
@@ -463,7 +499,7 @@ var FyClassLoader;
 		case FyConst.TYPE_PRIMITIVE:
 			break;
 		}
-		clazz.phase = 2;
+		// clazz.phase = 2;
 	};
 
 	/**
@@ -475,7 +511,7 @@ var FyClassLoader;
 	 * @returns {Boolean} whether class [from] can cast to class [to]
 	 */
 	FyClassLoader.prototype.canCast = function(from, to) {
-		if (from === to || to === this.context.TOP_CLASS) {
+		if (from === to || to === this.context.TOP_OBJECT) {
 			return true;
 		}
 		if (from.type === FyConst.TYPE_OBJECT) {
@@ -497,7 +533,7 @@ var FyClassLoader;
 			if (to.type == FyConst.TYPE_ARRAY) {
 				return this.canCast(from.contentClass, to.contentClass);
 			} else if (to.type == FyConst.TYPE_OBJECT) {
-				return to === this.context.TOP_CLASS;
+				return to === this.context.TOP_OBJECT;
 			} else {
 				return false;
 			}

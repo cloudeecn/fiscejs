@@ -16,6 +16,9 @@
  */
 
 // Utils and some plain structs without methods.
+/**
+ * @returns {__FyUtils}
+ */
 var FyUtils;
 /**
  * @returns {__FyConst}
@@ -36,7 +39,7 @@ var FyLookupSwitchTarget;
 		STRICT_CHECK : true
 	};
 
-	FyUtils = function() {
+	var __FyUtils = function() {
 	};
 	/**
 	 * copy all attributes from src into dest
@@ -44,7 +47,7 @@ var FyLookupSwitchTarget;
 	 * @param src
 	 * @param dest
 	 */
-	FyUtils.shallowClone = function(src, dest) {
+	__FyUtils.prototype.shallowClone = function(src, dest) {
 		for ( var key in src) {
 			dest[key] = src[key];
 		}
@@ -53,7 +56,7 @@ var FyLookupSwitchTarget;
 	/**
 	 * copy all strings and numbers from src into dest
 	 */
-	FyUtils.simpleClone = function(src, dest, keys) {
+	__FyUtils.prototype.simpleClone = function(src, dest, keys) {
 		if (keys) {
 			for ( var keyId in keys) {
 				var key = keys[keyId];
@@ -76,6 +79,79 @@ var FyLookupSwitchTarget;
 			}
 		}
 	};
+
+	__FyUtils.prototype.utf8Size = function(code) {
+		code = code & 0xffff;
+		if (code > 0x0800) {
+			return 3;
+		} else if (code > 0x80 || code === 0) {
+			return 2;
+		} else {
+			return 1;
+		}
+	};
+
+	__FyUtils.prototype.utf8SizeU = function(first) {
+		first = first << 24 >> 24;
+		if (first > 127) {
+			first -= 256;
+		}
+		if (first >= 0) {
+			return -1;
+		} else if (first >= -16) {
+			return 1;
+		} else if (first >= -32) {
+			return 3;
+		} else if (first >= -64) {
+			return 2;
+		} else {
+			return -1;
+		}
+	};
+
+	__FyUtils.prototype.utf8Decode = function(utf8Array, ofs, unicodeArray,
+			ofs1) {
+		switch (this.utf8SizeU(utf8Array[ofs])) {
+		case 1:
+			unicodeArray[ofs1] = utf8Array[ofs];
+			return 1;
+		case 2:
+			unicodeArray[ofs1] = ((utf8Array[ofs] & 0x1f) << 6)
+					+ (utf8Array[ofs + 1] & 0x3f);
+			return 2;
+		case 3:
+			unicodeArray[ofs1] = ((utf8Array[ofs] & 0xf) << 12)
+					+ ((utf8Array[ofs + 1] & 0x3f) << 6)
+					+ (utf8Array[ofs + 2] & 0x3f);
+			return 3;
+		default:
+			unicodeArray[ofs1] = 63;
+			return 1;
+		}
+	};
+
+	__FyUtils.prototype.utf8Encode = function(unicode, utf8Array, ofs) {
+		unicode &= 0xffff;
+		switch (this.utf8Size(unicode)) {
+		case 3:
+			utf8Array[ofs] = (unicode >> 12) - 32;
+			utf8Array[ofs + 1] = ((unicode >> 6) & 0x3f) - 128;
+			utf8Array[ofs + 2] = (unicode & 0x3f) - 128;
+			return 3;
+		case 2:
+			utf8Array[ofs] = (unicode >> 6) - 64;
+			utf8Array[ofs + 1] = (unicode & 0x3f) - 128;
+			return 2;
+		case 1:
+			utf8Array[ofs] = unicode;
+			return 1;
+		default:
+			utf8Array[ofs] = 63;
+			return 1;
+		}
+	};
+
+	FyUtils = new __FyUtils();
 
 	function __FyConst() {
 		this.TYPE_OBJECT = 0;
@@ -154,7 +230,7 @@ var FyLookupSwitchTarget;
 
 		/* Core classes */
 		this.FY_BASE_STRING = "java/lang/String";
-		this.FY_BASE_VM = "com/cirnoworks/fisce/privat/FyVM";
+		this.FY_BASE_VM = "com/cirnoworks/fisce/privat/FiScEVM";
 		this.FY_BASE_ENUM = "java/lang/Enum";
 		this.FY_BASE_ANNOTATION = "java/lang/annotation/Annotation";
 		this.FY_BASE_STRING_BUILDER = "java/lang/StringBuilder";
@@ -349,11 +425,11 @@ var FyLookupSwitchTarget;
 		Object.preventExtensions(this);
 	};
 
-//	FyException.prototype = new Error();
+	// FyException.prototype = new Error();
 	FyException.prototype.constructor = FyException;
 	FyException.prototype.toString = function() {
 		return "" + (this.clazz ? this.clazz : "FatalError") + ": "
-				+ this.message;
+				+ this.message + (this.stack ? ("\n" + this.stack) : "");
 	};
 
 	/**

@@ -105,7 +105,7 @@ var FyThread;
 	 * @returns {Number}
 	 */
 	FyThread.prototype.getStackBase = function(frameId) {
-		return this.stack[this.STACK_SIZE - ((frameNum + 1) << 2) + 1];
+		return this.stack[this.STACK_SIZE - ((frameId + 1) << 2) + 1];
 	};
 
 	/**
@@ -115,14 +115,14 @@ var FyThread;
 	 */
 	FyThread.prototype.getFrameMethod = function(frameId) {
 		return this.context.methods[this.stack[this.STACK_SIZE
-				- ((frameNum + 1) << 2)]];
+				- ((frameId + 1) << 2)]];
 	};
 
 	/**
 	 * @returns {Number}
 	 */
 	FyThread.prototype.getLastIp = function(frameId) {
-		return this.stack[this.STACK_SIZE - ((frameNum + 1) << 2) + 3];
+		return this.stack[this.STACK_SIZE - ((frameId + 1) << 2) + 3];
 	};
 
 	/**
@@ -142,6 +142,7 @@ var FyThread;
 	 *            ip
 	 */
 	FyThread.prototype.localToFrame = function(sp, lip, ip) {
+		// console.log("Local=>Frame: "+sp+" "+lip+" "+ip);
 		var fp = this.framePos;
 		this.sp = sp;
 		this.stack[fp + 2] = ip;
@@ -285,6 +286,7 @@ var FyThread;
 	 *            f
 	 */
 	FyThread.prototype.walkFrames = function(f) {
+		var stack = this.stack;
 		for ( var pos = this.framePos; pos < this.STACK_SIZE; pos += 4) {
 			if (f(((this.STACK_SIZE - pos) >> 2) - 1, stack[pos],
 					stack[pos + 1], stack[pos + 2], stack[pos + 3])) {
@@ -322,9 +324,9 @@ var FyThread;
 
 		var topFrameId = this.getFramesCount() - 1;
 		if (excludeThis) {
-			var thisHandle = stack[this.getCurrentStackBase()];
+			var thisHandle = this.stack[this.getCurrentStackBase()];
 			for (; topFrameId >= 0; topFrame--) {
-				if (!(stack[this.getStackBase(topFrameId)] === thisHandle && this
+				if (!(this.stack[this.getStackBase(topFrameId)] === thisHandle && this
 						.getFrameMethod(topFrameId).name === FyConst.FY_METHOD_INIT)) {
 					break;
 				}
@@ -336,36 +338,40 @@ var FyThread;
 				.putFieldInt(handle, stackTraceElementsField.posAbs,
 						steArrayHandle);
 
-		this.walkFrames(function(frameId, methodId, sb, ip, lip) {
-			var lineNumber = -1;
-			if (frameId > topFrameId) {
-				return false;
-			}
-			/**
-			 * @returns {FyMethod}
-			 */
-			var method = context.methods[methodId];
-			var steHandle = heap.allocate(steClass);
-			heap.putArrayInt(steArrayHandle, topFrameId - frameId, steHandle);
-			heap.putFieldString(steHandle, declaringClassField.pos,
-					method.owner.name.replace(/\//g, "."));
-			heap.putFieldString(steHandle, methodNameField.pos, method.name);
-			heap.putFieldString(steHandle, fileNameField,
-					method.owner.sourceFile);
-
-			if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
-				lineNumber = -2;
-			} else if (method.lineNumberTable) {
-				for ( var j = 0; j < method.lineNumberTable; j++) {
-					var ln = method.lineNumberTable[j];
-					if (lip > ln.start) {
-						lineNumber = ln.line;
-						break;
+		this
+				.walkFrames(function(frameId, methodId, sb, ip, lip) {
+					var lineNumber = -1;
+					if (frameId > topFrameId) {
+						return false;
 					}
-				}
-			}
-			heap.putFieldInt(steHandle, lineNumberField.posAbs, lineNumber);
-		});
+					/**
+					 * @returns {FyMethod}
+					 */
+					var method = context.methods[methodId];
+					var steHandle = heap.allocate(steClass);
+					heap.putArrayInt(steArrayHandle, topFrameId - frameId,
+							steHandle);
+					heap.putFieldString(steHandle, declaringClassField.posAbs,
+							method.owner.name.replace(/\//g, "."));
+					heap.putFieldString(steHandle, methodNameField.posAbs,
+							method.name);
+					heap.putFieldString(steHandle, fileNameField.posAbs,
+							method.owner.sourceFile);
+
+					if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
+						lineNumber = -2;
+					} else if (method.lineNumberTable) {
+						for ( var j = method.lineNumberTable.length - 1; j >= 0; j--) {
+							var ln = method.lineNumberTable[j];
+							if (lip > ln.start) {
+								lineNumber = ln.line;
+								break;
+							}
+						}
+					}
+					heap.putFieldInt(steHandle, lineNumberField.posAbs,
+							lineNumber);
+				});
 	};
 
 	/**
@@ -484,7 +490,7 @@ var FyThread;
 						this.sp = this.getCurrentStackBase() + method.maxLocals
 								+ 1;
 						this.localToFrame(this.getCurrentStackBase()
-								+ method.maxLocals, ip, ip);
+								+ method.maxLocals, handlerIp, handlerIp);
 						this.stack[this.sp - 1] = this.currentThrowable;
 						this.currentThrowable = 0;
 						break;
@@ -503,9 +509,11 @@ var FyThread;
 						this.popFrame();
 						if (this.framePos >= this.STACK_SIZE) {
 							// 全部弹出了……显示stacktrace
-							throw "Uncatched exception: "
-									+ this.context.heap
-											.getObject(this.currentThrowable).clazz;
+							throw new FyException(
+									undefined,
+									"Uncatched exception: "
+											+ this.context.heap
+													.getObject(this.currentThrowable).clazz);
 							method = this.context
 									.getMethod(FyConst.FY_BASE_THROWABLE
 											+ ".printStackTrace.()V");
@@ -522,6 +530,69 @@ var FyThread;
 		}
 	};
 
+	FyThread.prototype.nativeReturn = function(method, size) {
+		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
+			if (method.accessFlags & FyConst.FY_ACC_STATIC) {
+				this.monitorExit(context.getClassObjectHandle(clazz));
+			} else {
+				this.monitorExit(stack[sb]);
+			}
+		}
+		this.popFrame(size | 0);
+	};
+
+	FyThread.prototype.nativeReturnInt = function(method, value) {
+		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
+			if (method.accessFlags & FyConst.FY_ACC_STATIC) {
+				this.monitorExit(context.getClassObjectHandle(clazz));
+			} else {
+				this.monitorExit(stack[sb]);
+			}
+		}
+		this.stack[this.getCurrentStackBase()] = value;
+		this.popFrame(1);
+	};
+
+	FyThread.prototype.nativeReturnFloat = function(method, value) {
+		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
+			if (method.accessFlags & FyConst.FY_ACC_STATIC) {
+				this.monitorExit(context.getClassObjectHandle(clazz));
+			} else {
+				this.monitorExit(stack[sb]);
+			}
+		}
+		this.stack[this.getCurrentStackBase()] = FyPortable
+				.floatToIeee32(value);
+		this.popFrame(1);
+	};
+
+	FyThread.prototype.nativeReturnDouble = function(method, value) {
+		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
+			if (method.accessFlags & FyConst.FY_ACC_STATIC) {
+				this.monitorExit(context.getClassObjectHandle(clazz));
+			} else {
+				this.monitorExit(stack[sb]);
+			}
+		}
+		FyPortable
+				.doubleToIeee64(value, this.stack, this.getCurrentStackBase());
+		this.popFrame(2);
+	};
+
+	FyThread.prototype.nativeReturnLong = function(method, container, ofs) {
+		var sb = this.getCurrentStackBase();
+		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
+			if (method.accessFlags & FyConst.FY_ACC_STATIC) {
+				this.monitorExit(context.getClassObjectHandle(clazz));
+			} else {
+				this.monitorExit(stack[sb]);
+			}
+		}
+		this.stack[sb] = container[ofs];
+		this.stack[sb + 1] = container[ofs + 1];
+		this.popFrame(2);
+	};
+
 	/**
 	 * 
 	 * @param handle
@@ -530,13 +601,13 @@ var FyThread;
 	 */
 	FyThread.prototype.monitorEnter = function(handle) {
 		// TODO
-		console.log("monitor enter stub");
+		// console.log("monitor enter stub");
 		return false;
 	};
 
 	FyThread.prototype.monitorExit = function(handle) {
 		// TODO
-		console.log("monitor exit stub");
+		// console.log("monitor exit stub");
 	};
 
 })();

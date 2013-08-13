@@ -216,7 +216,8 @@ var FyObject;
 	 */
 	FyHeap.prototype.checkLength = function(arr, idx) {
 		if (idx < 0 || idx > arr.multiUsageData) {
-			throw new FyException(FyConst.FY_EXCEPTION_IOOB, idx);
+			throw new FyException(FyConst.FY_EXCEPTION_IOOB, idx + "/"
+					+ arr.multiUsageData);
 		}
 	};
 
@@ -278,7 +279,8 @@ var FyObject;
 	};
 
 	/**
-	 * 
+	 * @param {Number}
+	 *            stringHandle
 	 * @param {String}
 	 *            str
 	 * @returns {Number} handle
@@ -315,6 +317,49 @@ var FyObject;
 
 		for (i = 0; i < str.length; i++) {
 			this.putArrayInt(cah, i, str.charCodeAt(i) & 0xffff);
+		}
+		return stringHandle;
+	};
+
+	/**
+	 * @param {Number}
+	 *            stringHandle
+	 * @param {String}
+	 *            str
+	 * @returns {Number} handle
+	 */
+	FyHeap.prototype.fillStringWithArray = function(stringHandle, arr, pos, len) {
+		/**
+		 * @returns {FyField}
+		 */
+		var valueField;
+		/**
+		 * @returns {FyField}
+		 */
+		var offsetField;
+		/**
+		 * @returns {FyField}
+		 */
+		var countField;
+		var cah;
+		var i;
+
+		if (this.context.lookupClass(FyConst.FY_BASE_STRING) === undefined) {
+			throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
+					FyConst.FY_BASE_STRING);
+		}
+		valueField = this.context.getField(FyConst.stringValue);
+		offsetField = this.context.getField(FyConst.stringOffset);
+		countField = this.context.getField(FyConst.stringCount);
+
+		cah = this.allocateArray(this.context.lookupClass("[C"), str.length);
+
+		this.putFieldInt(stringHandle, valueField.posAbs, cah);
+		this.putFieldInt(stringHandle, offsetField.posAbs, 0);
+		this.putFieldInt(stringHandle, countField.posAbs, len);
+
+		for (i = 0; i < len; i++) {
+			this.putArrayInt(cah, i, arr[i + pos] & 0xffff);
 		}
 		return stringHandle;
 	};

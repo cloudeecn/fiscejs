@@ -6,6 +6,8 @@
 					var context = fisceTests.context();
 					var clazz = context
 							.lookupClass("EXCLUDE/fisce/test/HelloWorld");
+					console.log(context);
+					console.log(clazz);
 					var thread = new FyThread(context, 4096);
 					thread.threadId = 1;
 					var threadHandle = context.heap.allocate(context

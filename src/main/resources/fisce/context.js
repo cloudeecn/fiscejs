@@ -95,6 +95,7 @@ var FyContext;
 	}
 
 	FyContext = function() {
+		var levels = [ "D", "I", "W", "E" ];
 		this.settings = {};
 		this.classDef = {};
 
@@ -118,19 +119,25 @@ var FyContext;
 		this.classLoader = new FyClassLoader(this);
 		this.heap = new FyHeap(this);
 
+		this.log = function(level, content) {
+			console.log(levels[level] + ": " + content);
+		};
+
 		/** Special types* */
 		/**
-		 * TOP_CLASS
+		 * TOP_OBJECT
 		 * 
 		 * @returns {FyClass}
 		 */
-		this.TOP_CLASS = undefined;
+		this.TOP_OBJECT = undefined;
 		this.TOP_THROWABLE = undefined;
 		this.TOP_ENUM = undefined;
 		this.TOP_ANNOTATION = undefined;
 		this.TOP_SOFT_REF = undefined;
 		this.TOP_WEAK_REF = undefined;
 		this.TOP_PHANTOM_REF = undefined;
+		this.TOP_CLASS = undefined;
+		Object.preventExtensions(this);
 	};
 
 	FyContext.primitives = {
@@ -158,6 +165,16 @@ var FyContext;
 	};
 
 	FyContext.stringPool = {};
+
+	FyContext.staticNativeHandlers = {};
+
+	FyContext.registerStaticNH = function(name, func, extraVars, extraStack) {
+		this.staticNativeHandlers[name] = {
+			func : func,
+			extraVars : extraVars,
+			stackSize : extraStack
+		};
+	};
 
 	/**
 	 * Pool a string to string pool
@@ -399,9 +416,11 @@ var FyContext;
 		if (mid === undefined) {
 			mid = this.methods.length;
 			method.methodId = mid;
+			this.methods.push(method);
 			this.mapMethodNameToId[method.uniqueName] = mid;
+		} else {
+			this.methods[mid] = method;
 		}
-		this.methods[mid] = method;
 	};
 	/**
 	 * get method by name
@@ -610,7 +629,7 @@ var FyContext;
 		if (clazz === undefined) {
 			var classDef = undefined;
 			if (!name) {
-				throw new "Class name for load is null!";
+				throw new FyException(undefined, "Class name for load is null!");
 			}
 			clazz = this.classLoader.loadClass(name);
 			this.registerClass(clazz);
@@ -674,6 +693,21 @@ var FyContext;
 			this.mapClassIdToHandle[clazz.classId] = handle;
 		}
 		return handle;
+	};
+
+	/**
+	 * 
+	 * @param handle
+	 * @returns {FyClass}
+	 */
+	FyContext.prototype.getClassFromClassObject = function(handle) {
+		var obj = this.heap.getObject(handle);
+		if (obj.clazz !== this.TOP_CLASS) {
+			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+					"Object #" + handle + "(" + obj.clazz.name
+							+ ") is not a class object");
+		}
+		return this.classes[obj.multiUsageData];
 	};
 
 	/**
@@ -760,4 +794,5 @@ var FyContext;
 			};
 		}
 	};
+	Object.preventExtensions(FyContext);
 })();

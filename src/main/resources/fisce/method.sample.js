@@ -833,6 +833,7 @@
 						ip = $1;
 						break __fy_inner;
 					}
+					// ###
 				case 122:
 					// ##OP-IFLT -1 0
 					ops--;
@@ -901,7 +902,6 @@
 					ops--;
 					tmpMethod = context
 							.lookupMethodVirtualFromConstant(constants[$1]);
-
 					sp -= tmpMethod.paramStackUsage + 1;
 
 					tmpClass = tmpMethod.owner;
@@ -942,8 +942,6 @@
 					tmpMethod = context
 							.lookupMethodVirtualFromConstant(constants[$1]);
 
-					sp -= tmpMethod.paramStackUsage;
-
 					if (!(tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
 						throw new FyException(
 								FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
@@ -951,9 +949,9 @@
 					}
 
 					// !CLINIT
-					console.log("clinit: " + tmpMethod.owner);
+					// console.log("clinit: " + tmpMethod.owner);
 					clinitClass = thread.clinit(tmpMethod.owner);
-					console.log("result: " + clinitClass);
+					// console.log("result: " + clinitClass);
 					if (clinitClass !== undefined) {
 						// invoke clinit
 						if (clinitClass.clinitThreadId == 0) {
@@ -971,6 +969,7 @@
 						}
 					}
 
+					sp -= tmpMethod.paramStackUsage;
 					// Local to frame
 					thread.localToFrame(sp, $ip, $ip + 1);
 					thread.pushMethod(tmpMethod);
@@ -999,8 +998,8 @@
 					if (!(tmpMethod.accessFlags & FyConst.FY_ACC_FINAL)) {
 						// Virtual lookup
 						tmpClass = heap.getObject(stack[sp]).clazz;
-						tmpMethod = context.lookupMethodVirtualByMethod(clazz,
-								tmpMethod);
+						tmpMethod = context.lookupMethodVirtualByMethod(
+								tmpClass, tmpMethod);
 					}
 
 					// Local to frame
@@ -1365,7 +1364,8 @@
 						break;
 					default:
 						sp -= 2;
-						heap.putFieldRaw(stack[sp], tmpField.posAbs, stack[sp]);
+						heap.putFieldRaw(stack[sp], tmpField.posAbs,
+								stack[sp + 1]);
 						break;
 					}
 					// ###
@@ -1499,30 +1499,25 @@
 							throw e;
 						}
 						try {
-							console.log(1);
 							var exceptionClass = context.lookupClass(e.clazz);
-							console.log(2);
 							if (!context.classLoader.canCast(exceptionClass,
 									context.TOP_THROWABLE)) {
 								throw new FyException(undefined, "Exception "
 										+ e.clazz + " is not a "
 										+ context.TOP_THROWABLE);
 							}
-							console.log(3);
 							var detailMessageField = context
 									.getField(FyConst.FY_BASE_THROWABLE
 											+ ".detailMessage.L"
-											+ FyConst.FY_BASE_STRING);
-							console.log(4);
+											+ FyConst.FY_BASE_STRING + ";");
 							thread.currentThrowable = heap.allocate(context
 									.lookupClass(e.clazz));
-							console.log(5);
 							heap.putFieldString(thread.currentThrowable,
-									detailMessageField, e.message);
-							console.log(6);
+									detailMessageField.posAbs, e.message);
+							// Local to frame
+							thread.localToFrame(sp, lip, ip);
 							thread.fillStackTrace(thread.currentThrowable,
 									false);
-							console.log(7);
 						} catch (ee) {
 							context.panic(
 									"Exception occored while processing exception: "

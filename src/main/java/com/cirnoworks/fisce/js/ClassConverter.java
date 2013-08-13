@@ -1,11 +1,11 @@
 package com.cirnoworks.fisce.js;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
-import java.io.PrintStream;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +31,7 @@ import com.cirnoworks.fisce.vm.data.attributes.ExceptionHandler;
 import com.cirnoworks.fisce.vm.data.attributes.LineNumber;
 
 public class ClassConverter {
-	private final StringBuilder sb = new StringBuilder(16384);
+	private StringBuilder sb;
 
 	private final LinkedHashMap<JSONExportableConstantData, Integer> constantTable = new LinkedHashMap<JSONExportableConstantData, Integer>();
 	{
@@ -65,7 +65,7 @@ public class ClassConverter {
 
 	};
 
-	private void convert(InputStream is) throws IOException {
+	private void convert(InputStream is, StringBuilder sb) throws IOException {
 		ClassReader cr = new ClassReader(is);
 		ClassData clazz = new ClassData(cr);
 		cr.accept(clazz, ClassReader.EXPAND_FRAMES);
@@ -73,6 +73,7 @@ public class ClassConverter {
 		sb.append("{\n");
 		SimpleJSONUtil.add(sb, 1, "\"name\"",
 				stringPool.poolString(clazz.getName()), true);
+		System.out.println(clazz.getName());
 
 		if (clazz.sourceFile != null) {
 			SimpleJSONUtil.add(sb, 1, "\"sourceFile\"",
@@ -197,7 +198,7 @@ public class ClassConverter {
 					SimpleJSONUtil.add(sb, 3, "\"code\"", "[", false);
 					SimpleJSONUtil.addIndent(sb, 4);
 					for (int j = 0, maxj = code.length; j < maxj; j++) {
-						sb.append(((int) code[j]) & 0xff);
+						sb.append(code[j]);
 						if (j < maxj - 1) {
 							sb.append(", ");
 							if (j % 32 == 31) {
@@ -351,33 +352,31 @@ public class ClassConverter {
 		sb.append("}\n");
 	}
 
-	public void convertJar(InputStream is, Writer os) throws IOException {
-		convertJar(null, is, null, os);
+	public String singleConvert(InputStream is) throws IOException {
+		StringBuilder sb = new StringBuilder();
+		convert(is, sb);
+		return sb.toString();
 	}
 
-	public void convertJar(String prefix, InputStream is, String postfix,
-			Writer os) throws IOException {
+	public void multiBegin() {
+		if (sb != null) {
+			throw new IllegalStateException(
+					"You should only run mulitBegin once!");
+		}
+		sb = new StringBuilder(16384);
 		SimpleJSONUtil.add(sb, 0, "{", false);
 		SimpleJSONUtil.add(sb, 0, "\"classes\"", "[", false);
-		ZipInputStream jar = new ZipInputStream(is);
-		try {
-			ZipEntry entry;
-			while ((entry = jar.getNextEntry()) != null) {
-				if (entry.getName().endsWith(".class")) {
-					convert(jar);
-					sb.append(",");
-				}
-				jar.closeEntry();
-			}
-		} finally {
-			try {
-				jar.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
+	}
 
-		sb.setLength(sb.length() - 1);
+	public void multiPush(InputStream is) throws IOException {
+		convert(is, sb);
+		sb.append(",");
+	}
+
+	public String multiFinish() {
+		if (sb.charAt(sb.length() - 1) == ',') {
+			sb.setLength(sb.length() - 1);
+		}
 		SimpleJSONUtil.add(sb, 0, "]", true);
 
 		SimpleJSONUtil.add(sb, 0, "\"constants\"", "[", false);
@@ -411,24 +410,110 @@ public class ClassConverter {
 		SimpleJSONUtil.add(sb, 0, "]", false);
 
 		SimpleJSONUtil.add(sb, 0, "}", false);
+		String ret = sb.toString();
+		sb = null;
+		return ret;
+	}
+
+	public static void convertJar(InputStream is, Writer os) throws IOException {
+		convertJar(null, is, null, os);
+	}
+
+	public static void convertJar(String prefix, InputStream is,
+			String postfix, Writer os) throws IOException {
+		ClassConverter converter = new ClassConverter();
+		converter.multiBegin();
+		final ZipInputStream jar = new ZipInputStream(is);
+		try {
+			ZipEntry entry;
+			while ((entry = jar.getNextEntry()) != null) {
+				if (entry.getName().endsWith(".class")) {
+					converter.multiPush(jar);
+				}
+				jar.closeEntry();
+			}
+		} finally {
+			try {
+				jar.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		String out = converter.multiFinish();
 		if (prefix != null) {
 			os.write(prefix);
 		}
-		os.write(sb.toString());
+		os.write(out);
 		if (postfix != null) {
 			os.write(postfix);
 		}
 		os.flush();
 	}
 
-	public static void main(String[] args) throws Exception {
+	private static void walkDirectory(File directory, ClassConverter cc)
+			throws IOException {
+		for (File file : directory.listFiles()) {
+			if (file.isDirectory()) {
+				walkDirectory(file, cc);
+			} else if (file.isFile()) {
+				if (file.getName().endsWith(".class")) {
+					// A class file
+					FileInputStream fis = null;
+					try {
+						fis = new FileInputStream(file);
+						cc.multiPush(fis);
+					} finally {
+						try {
+							if (fis != null) {
+								fis.close();
+							}
+						} catch (IOException e) {
+							System.err.println("Warning: Can't close file "
+									+ file);
+						}
+					}
+				}
+			} else {
+				System.err.println("Warning: Unknown file type " + file);
+			}
+		}
+	}
+
+	public static String convertDirectory(File directory) throws IOException {
+		if (directory == null || !directory.isDirectory()) {
+			throw new IOException(directory + " is not a directory!");
+		}
 		ClassConverter cc = new ClassConverter();
-		cc.convertJar(// "(function(context){context.addClassDef(",
-				new FileInputStream(
-						"../fiscevm/fiscevm-runtime/target/fiscevm-runtime-2.0.0-SNAPSHOT.jar"),
-				// ");})(fisceContext);",
-				new OutputStreamWriter(new FileOutputStream(
-						"src/test/resources/rt.json"), "ISO8859-1"));
+		cc.multiBegin();
+		walkDirectory(directory, cc);
+		return cc.multiFinish();
+	}
+
+	public static void convertDirectory(File directory, Writer wr)
+			throws IOException {
+		convertDirectory(null, directory, null, wr);
+	}
+
+	public static void convertDirectory(String prefix, File directory,
+			String postfix, Writer wr) throws IOException {
+		if (prefix != null) {
+			wr.write(prefix);
+		}
+		wr.write(convertDirectory(directory));
+		if (postfix != null) {
+			wr.write(postfix);
+		}
+		wr.flush();
+	}
+
+	public static void main(String[] args) throws Exception {
+		ClassConverter
+				.convertDirectory(// "(function(context){context.addClassDef(",
+						new File(
+								"../fiscevm/fiscevm-runtime/target/classes"),
+						// ");})(fisceContext);",
+						new OutputStreamWriter(new FileOutputStream(
+								"src/test/resources/rt.json"), "ISO8859-1"));
 
 		System.out.println("done");
 	}

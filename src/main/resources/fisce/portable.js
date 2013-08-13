@@ -23,7 +23,7 @@ var FyPortable;
 var FyConfig = {
 	littleEndian : undefined,
 	debugMode : true,
-	verboseMode : true
+	verboseMode : false
 };
 
 // now
@@ -36,14 +36,18 @@ var FyConfig = {
 		};
 	}
 
-	window.performance = window.performance || {};
-	performance.now = (function() {
-		return performance.now || performance.mozNow || performance.msNow
-				|| performance.oNow || performance.webkitNow || function() {
-					// Doh! Crap browser!
-					return new Date().getTime();
-				};
-	})();
+	if (!window.performance) {
+		window.performance = {};
+	}
+	if (!performance.now) {
+		performance.now = (function() {
+			return performance.now || performance.mozNow || performance.msNow
+					|| performance.oNow || performance.webkitNow || function() {
+						// Doh! Crap browser!
+						return new Date().getTime();
+					};
+		})();
+	}
 
 	if (!window.Math.imul) {
 		console.log("Polyfill Math.imul");
@@ -88,8 +92,6 @@ var FyConfig = {
 	var __FyPortable = function() {
 		Object.preventExtensions(this);
 	};
-
-	__FyPortable.prototype.now = performance.now;
 
 	/**
 	 * convert float to ieee754 int
@@ -194,6 +196,10 @@ var FyConfig = {
 
 	__FyPortable.prototype.getLongOps = function(stack) {
 		return FyCreateLongOps(this, 0, stack);
+	};
+
+	__FyPortable.prototype.now = function() {
+		return performance.now();
 	};
 
 	FyPortable = new __FyPortable();

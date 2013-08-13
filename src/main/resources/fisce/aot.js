@@ -307,7 +307,7 @@ var __FyAOTUtil;
 			code.push("\n");
 			if (FyConfig.verboseMode) {
 				code.push("console \
-						.log([this.owner, this.uniqueName,"
+						.log([this.owner, this.uniqueName,this,"
 						+ ip
 						+ ", thread.sp, \""
 						+ opName
@@ -320,7 +320,7 @@ var __FyAOTUtil;
 						+ oprand2
 						+ ", "
 						+ (oprand2 ? "method.owner.constants[" + oprand2 + "]"
-								: "undefined") + "]);");
+								: "undefined") + ", sb, sp, stack.subarray(sb,sb+this.maxLocals+this.maxStack)]);");
 			}
 
 			if (ip === 0 && method.name === FyConst.FY_METHOD_CLINIT) {
@@ -351,7 +351,7 @@ var __FyAOTUtil;
 						"method.sample.js should not have content begins with '$' except $ip $1 $2");
 			}
 		}
-		method.invoke = eval("(function(){return function(thread,ops){"
+		method.invoke = eval("(function(){return function(context, thread,ops){"
 				+ result + "};})();");
 		// console.log(method.invoke);
 	};
