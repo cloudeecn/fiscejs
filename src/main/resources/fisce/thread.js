@@ -99,6 +99,10 @@ var FyThread;
 		return this.stack[this.framePos + 3];
 	};
 
+	FyThread.prototype.rollbackCurrentIp = function() {
+		this.stack[this.framePos + 2] = this.stack[this.framePos + 3];
+	};
+
 	/**
 	 * @param {Number}
 	 *            frameId
@@ -177,7 +181,7 @@ var FyThread;
 	 *            method
 	 * @returns {Number}
 	 */
-	FyThread.prototype.pushMethod = function(method) {
+	FyThread.prototype.pushMethod = function(method, ops) {
 		var ret = this.pushFrame(method);
 		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
 			this
@@ -185,7 +189,76 @@ var FyThread;
 							.getClassObjectHandle(method.owner)
 							: this.stack[ret + 1]);
 		}
-		return ret;
+		return this.yield ? 0 : ops;
+	};
+	
+	/**
+	 * @param {FyMethod}
+	 *            method
+	 * @param {Number}
+	 *            ops
+	 * @return {Number} ops left
+	 */
+	FyThread.prototype.invokeStatic = function(method, ops) {
+		if (!(method.accessFlags & FyConst.FY_ACC_STATIC)) {
+			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+					tmpMethod.uniqueName + " is not static");
+		}
+
+		// !CLINIT
+		var clinitClass = this.clinit(method.owner);
+		if (clinitClass !== undefined) {
+			// invoke clinit
+			if (clinitClass.clinitThreadId == 0) {
+				// no thread is running it, so let this run
+				clinitClass.clinitThreadId = thread.threadId;
+				this.rollbackCurrentIp();
+				this.pushFrame(clinitClass.clinit);
+				return ops;
+			} else {
+				// wait for other thread clinit
+				this.rollbackCurrentIp();
+				return 0;
+			}
+		}
+
+		this.sp -= method.paramStackUsage;
+		if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
+			return method.invoke(this.context, this, ops);
+		} else {
+			return this.pushMethod(method, ops);
+		}
+	};
+
+	/**
+	 * Invoke a method
+	 * 
+	 * @param {FyMethod}
+	 *            method
+	 * @param ops
+	 */
+	FyThread.prototype.invokeVirtual = function(method, ops) {
+		if ((method.accessFlags & FyConst.FY_ACC_STATIC)) {
+			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+					method.uniqueName + " is static");
+		}
+
+		this.sp -= method.paramStackUsage + 1;
+		if (this.stack[this.sp] === 0) {
+			// this = null!!!
+			throw new FyException(undefined,
+					"Invoke virtual with a null this pointer");
+		}
+		if (!(method.accessFlags & FyConst.FY_ACC_FINAL)) {
+			// Virtual lookup
+			method = this.context.lookupMethodVirtualByMethod(this.context.heap
+					.getObject(this.stack[this.sp]).clazz, method);
+		}
+		if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
+			return method.invoke(this.context, this, ops);
+		} else {
+			return this.pushMethod(method, ops);
+		}
 	};
 
 	FyThread.prototype.popFrame = function(pushes) {
@@ -470,15 +543,11 @@ var FyThread;
 		var handlerIp;
 		while (ops > 0) {
 			method = this.getCurrentMethod();
+			if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
+				throw new FyException(undefined, "Native method pushed");
+			}
 			if (!method.invoke) {
-				if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
-					// TODO
-					throw "Unresolved native method " + method.uniqueName;
-					throw new FyException(undefined,
-							"Unresolved native method " + method.uniqueName);
-				} else {
-					FyAOTUtil.aot(method);
-				}
+				FyAOTUtil.aot(method);
 			}
 			ops = method.invoke(this.context, this, ops);
 			if (this.currentThrowable) {
@@ -523,74 +592,34 @@ var FyThread;
 						}
 					}
 				}
-				if (ops === 0) {
-					ops = 1;
-				}
+			}
+			if (this.yield) {
+				this.yield = false;
+				ops = 0;
 			}
 		}
 	};
 
-	FyThread.prototype.nativeReturn = function(method, size) {
-		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
-			if (method.accessFlags & FyConst.FY_ACC_STATIC) {
-				this.monitorExit(context.getClassObjectHandle(clazz));
-			} else {
-				this.monitorExit(stack[sb]);
-			}
-		}
-		this.popFrame(size | 0);
+	FyThread.prototype.nativeReturn = function(size) {
+		this.sp += size | 0;
 	};
 
-	FyThread.prototype.nativeReturnInt = function(method, value) {
-		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
-			if (method.accessFlags & FyConst.FY_ACC_STATIC) {
-				this.monitorExit(context.getClassObjectHandle(clazz));
-			} else {
-				this.monitorExit(stack[sb]);
-			}
-		}
-		this.stack[this.getCurrentStackBase()] = value;
-		this.popFrame(1);
+	FyThread.prototype.nativeReturnInt = function(value) {
+		this.stack[this.sp++] = value;
 	};
 
-	FyThread.prototype.nativeReturnFloat = function(method, value) {
-		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
-			if (method.accessFlags & FyConst.FY_ACC_STATIC) {
-				this.monitorExit(context.getClassObjectHandle(clazz));
-			} else {
-				this.monitorExit(stack[sb]);
-			}
-		}
-		this.stack[this.getCurrentStackBase()] = FyPortable
-				.floatToIeee32(value);
-		this.popFrame(1);
+	FyThread.prototype.nativeReturnFloat = function(value) {
+		this.stack[this.sp++] = FyPortable.floatToIeee32(value);
 	};
 
-	FyThread.prototype.nativeReturnDouble = function(method, value) {
-		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
-			if (method.accessFlags & FyConst.FY_ACC_STATIC) {
-				this.monitorExit(context.getClassObjectHandle(clazz));
-			} else {
-				this.monitorExit(stack[sb]);
-			}
-		}
-		FyPortable
-				.doubleToIeee64(value, this.stack, this.getCurrentStackBase());
-		this.popFrame(2);
+	FyThread.prototype.nativeReturnDouble = function(value) {
+		FyPortable.doubleToIeee64(value, this.stack, this.sp);
+		this.sp += 2;
 	};
 
-	FyThread.prototype.nativeReturnLong = function(method, container, ofs) {
-		var sb = this.getCurrentStackBase();
-		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
-			if (method.accessFlags & FyConst.FY_ACC_STATIC) {
-				this.monitorExit(context.getClassObjectHandle(clazz));
-			} else {
-				this.monitorExit(stack[sb]);
-			}
-		}
-		this.stack[sb] = container[ofs];
-		this.stack[sb + 1] = container[ofs + 1];
-		this.popFrame(2);
+	FyThread.prototype.nativeReturnLong = function(container, ofs) {
+		this.stack[this.sp++] = container[ofs];
+		this.stack[this.sp++] = container[ofs + 1];
 	};
 
 	/**

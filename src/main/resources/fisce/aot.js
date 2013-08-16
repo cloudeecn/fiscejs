@@ -1,6 +1,6 @@
 var __FyAOTUtil;
 (function() {
-
+	"use strict";
 	// instructions table
 	var $ = {
 		NOP : 0x00,
@@ -241,8 +241,20 @@ var __FyAOTUtil;
 	})();
 
 	function replaceAll(code, ip, oprand1, oprand2) {
-		return code.replace(/\$ip/g, ip).replace(/\$1/g, oprand1).replace(
+		code = code.replace(/\$ip/g, ip).replace(/\$1/g, oprand1).replace(
 				/\$2/g, oprand2);
+		if (!FyConfig.verboseMode) {
+			code = code.replace(/\"\#\!\".*?\"\!\#\"\;/g, "");
+		}
+		return code;
+	}
+
+	function aot(body) {
+		var ret = eval("(function(){return function(context, thread,ops){"
+				+ body + "};})();");
+		body = undefined;
+		arguments[0] = undefined;
+		return ret;
 	}
 
 	__FyAOTUtil = function(template) {
@@ -306,21 +318,23 @@ var __FyAOTUtil;
 			}
 			code.push("\n");
 			if (FyConfig.verboseMode) {
-				code.push("console \
-						.log([this.owner, this.uniqueName,this,"
-						+ ip
-						+ ", thread.sp, \""
-						+ opName
-						+ "\", "
-						+ oprand1
-						+ ", "
-						+ (oprand1 ? "method.owner.constants[" + oprand1 + "]"
-								: "undefined")
-						+ ", "
-						+ oprand2
-						+ ", "
-						+ (oprand2 ? "method.owner.constants[" + oprand2 + "]"
-								: "undefined") + ", sb, sp, stack.subarray(sb,sb+this.maxLocals+this.maxStack)]);");
+				code
+						.push("console"
+								+ ".log([this.owner, this.uniqueName,this,"
+								+ ip
+								+ ", thread.sp, \""
+								+ opName
+								+ "\", "
+								+ oprand1
+								+ ", "
+								+ (oprand1 ? "method.owner.constants["
+										+ oprand1 + "]" : "undefined")
+								+ ", "
+								+ oprand2
+								+ ", "
+								+ (oprand2 ? "method.owner.constants["
+										+ oprand2 + "]" : "undefined")
+								+ ", sb, sp, stack.subarray(sb,sb+this.maxLocals+this.maxStack)]);\n");
 			}
 
 			if (ip === 0 && method.name === FyConst.FY_METHOD_CLINIT) {
@@ -351,8 +365,7 @@ var __FyAOTUtil;
 						"method.sample.js should not have content begins with '$' except $ip $1 $2");
 			}
 		}
-		method.invoke = eval("(function(){return function(context, thread,ops){"
-				+ result + "};})();");
+		method.invoke = aot(result);
 		// console.log(method.invoke);
 	};
 })();

@@ -90,7 +90,7 @@
 				__fy_inner: switch (ip) {
 				// ###
 				case 0:
-					if (method.name == FyConst.FY_METHOD_CLINIT) {
+					if (this.name == FyConst.FY_METHOD_CLINIT) {
 						// ##MACRO-CLINIT
 						// !CLINIT
 						clinitClass = thread.clinit(this.owner.superClass);
@@ -203,6 +203,9 @@
 						}
 					}
 					stack[sb] = stack[sp - 1];
+					"#!";
+					console.log(stack[sb]);
+					"!#";
 					thread.popFrame(1);
 					return ops;
 					// ###
@@ -903,6 +906,15 @@
 					tmpMethod = context
 							.lookupMethodVirtualFromConstant(constants[$1]);
 					sp -= tmpMethod.paramStackUsage + 1;
+					"#!";
+					(function() {
+						var out = new Array(tmpMethod.paramStackUsage + 1);
+						for ( var i = 0, max = tmpMethod.paramStackUsage + 1; i < max; i++) {
+							out[i] = stack[sp + i];
+						}
+						console.log(out);
+					})();
+					"!#";
 
 					tmpClass = tmpMethod.owner;
 					if ((clazz.accessFlags & FyConst.FY_ACC_SUPER)
@@ -932,8 +944,11 @@
 
 					// Local to frame
 					thread.localToFrame(sp, $ip, $ip + 1);
-					thread.pushMethod(tmpMethod);
-					return ops;
+					if(tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE){
+						return tmpMethod.invoke(context, thread, ops);
+					}else{
+						return thread.pushMethod(tmpMethod, ops);
+					}
 					// ###
 				case 131:
 					// ##OP-INVOKESTATIC X-INVOKESTATIC 0
@@ -941,39 +956,18 @@
 					ops--;
 					tmpMethod = context
 							.lookupMethodVirtualFromConstant(constants[$1]);
-
-					if (!(tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
-						throw new FyException(
-								FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
-								tmpMethod.uniqueName + " is not static");
-					}
-
-					// !CLINIT
-					// console.log("clinit: " + tmpMethod.owner);
-					clinitClass = thread.clinit(tmpMethod.owner);
-					// console.log("result: " + clinitClass);
-					if (clinitClass !== undefined) {
-						// invoke clinit
-						if (clinitClass.clinitThreadId == 0) {
-							// no thread is running it, so let this run
-							clinitClass.clinitThreadId = thread.threadId;
-							// Local to frame
-							thread.localToFrame(sp, $ip, $ip);
-							thread.pushFrame(clinitClass.clinit);
-							return ops;
-						} else {
-							// wait for other thread clinit
-							ops = 0;
-							ip = $ip;
-							break __fy_outer;
+					"#!";
+					(function() {
+						var out = new Array(tmpMethod.paramStackUsage);
+						for ( var i = 0, max = tmpMethod.paramStackUsage; i < max; i++) {
+							out[i] = stack[sp - tmpMethod.paramStackUsage + i];
 						}
-					}
-
-					sp -= tmpMethod.paramStackUsage;
+						console.log(out);
+					})();
+					"!#";
 					// Local to frame
 					thread.localToFrame(sp, $ip, $ip + 1);
-					thread.pushMethod(tmpMethod);
-					return ops;
+					return thread.invokeStatic(tmpMethod, ops);
 					// ###
 				case 132:
 					// ##OP-INVOKEINTERFACE|INVOKEVIRTUAL X-INVOKEVIRTUAL 0
@@ -981,31 +975,19 @@
 					ops--;
 					tmpMethod = context
 							.lookupMethodVirtualFromConstant(constants[$1]);
-
-					sp -= tmpMethod.paramStackUsage + 1;
-
-					if ((tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
-						throw new FyException(
-								FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
-								tmpMethod.uniqueName + " is static");
-					}
-
-					if (stack[sp] === 0) {
-						// this = null!!!
-						throw new FyException(FyConst.FY_EXCEPTION_NPT,
-								"FATAL ERROR HERE!!");
-					}
-					if (!(tmpMethod.accessFlags & FyConst.FY_ACC_FINAL)) {
-						// Virtual lookup
-						tmpClass = heap.getObject(stack[sp]).clazz;
-						tmpMethod = context.lookupMethodVirtualByMethod(
-								tmpClass, tmpMethod);
-					}
-
+					"#!";
+					(function() {
+						var out = new Array(tmpMethod.paramStackUsage);
+						for ( var i = 0, max = tmpMethod.paramStackUsage + 1; i < max; i++) {
+							out[i] = stack[sp - tmpMethod.paramStackUsage - 1
+									+ i];
+						}
+						console.log(out);
+					})();
+					"!#";
 					// Local to frame
 					thread.localToFrame(sp, $ip, $ip + 1);
-					thread.pushMethod(tmpMethod);
-					return ops;
+					return thread.invokeVirtual(tmpMethod, ops);
 					// ###
 				case 134:
 					// ##OP-IOR -2 1
@@ -1351,7 +1333,7 @@
 					}
 
 					if ((tmpField.accessFlags & FyConst.FY_ACC_FINAL)
-							&& (method.owner != tmpField.owner)) {
+							&& (this.owner != tmpField.owner)) {
 						throw new FyException(FyConst.FY_EXCEPTION_ACCESS,
 								"Field " + tmpField.uniqueName + " is final");
 					}
@@ -1383,7 +1365,7 @@
 					}
 
 					if ((tmpField.accessFlags & FyConst.FY_ACC_FINAL)
-							&& (method.owner != tmpField.owner)) {
+							&& (this.owner != tmpField.owner)) {
 						throw new FyException(FyConst.FY_EXCEPTION_ACCESS,
 								"Field " + tmpField.uniqueName + " is final");
 					}
@@ -1512,8 +1494,10 @@
 											+ FyConst.FY_BASE_STRING + ";");
 							thread.currentThrowable = heap.allocate(context
 									.lookupClass(e.clazz));
-							heap.putFieldString(thread.currentThrowable,
-									detailMessageField.posAbs, e.message);
+							if (!!e.message) {
+								heap.putFieldString(thread.currentThrowable,
+										detailMessageField.posAbs, e.message);
+							}
 							// Local to frame
 							thread.localToFrame(sp, lip, ip);
 							thread.fillStackTrace(thread.currentThrowable,
