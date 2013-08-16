@@ -417,4 +417,359 @@ var FyObject;
 	FyHeap.prototype.multiNewArray = function(clazz, count, pos) {
 		// TODO
 	};
+
+	/**
+	 * 
+	 * @param {Number}
+	 *            handle
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.unwrapBoolean = function(handle) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_BOOLEAN);
+		var field = context.getField(FyConst.FY_VALUE_BOOLEAN);
+		context.lookupClass(FyConst.FY_PRIM_BOOLEAN);
+		if (this.getObject(handle).clazz !== clazz) {
+			throw new FyException(FyConst.FY_EXCEPTION_ARGU,
+					"Can't unwrap handle=" + handle + " as boolean");
+		}
+		return this.getFieldBoolean(handle, field.posAbs);
+	};
+
+	/**
+	 * @param {Number}
+	 *            value
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.wrapBoolean = function(value) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_BOOLEAN);
+		var field = context.getField(FyConst.FY_VALUE_BOOLEAN);
+		var ret = context.heap.allocate(clazz);
+		context.heap.putFieldBoolean(ret, field.posAbs, value);
+		return ret;
+	};
+
+	/**
+	 * 
+	 * @param {Number}
+	 *            handle
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.unwrapBooleanRaw = function(handle) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_BOOLEAN);
+		var field = context.getField(FyConst.FY_VALUE_BOOLEAN);
+		context.lookupClass(FyConst.FY_PRIM_BOOLEAN);
+		if (this.getObject(handle).clazz !== clazz) {
+			throw new FyException(FyConst.FY_EXCEPTION_ARGU,
+					"Can't unwrap handle=" + handle + " as boolean");
+		}
+		return this.getFieldRaw(handle, field.posAbs);
+	};
+
+	/**
+	 * @param {Number}
+	 *            value
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.wrapBooleanRaw = function(value) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_BOOLEAN);
+		var field = context.getField(FyConst.FY_VALUE_BOOLEAN);
+		var ret = context.heap.allocate(clazz);
+		context.heap.putFieldRaw(ret, field.posAbs, value);
+		return ret;
+	};
+
+	/**
+	 * 
+	 * @param {Number}
+	 *            handle
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.unwrapByte = function(handle) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_BYTE);
+		var field = context.getField(FyConst.FY_VALUE_BYTE);
+		context.lookupClass(FyConst.FY_PRIM_BYTE);
+		if (this.getObject(handle).clazz !== clazz) {
+			throw new FyException(FyConst.FY_EXCEPTION_ARGU,
+					"Can't unwrap handle=" + handle + " as byte");
+		}
+		return this.getFieldByte(handle, field.posAbs);
+	};
+
+	/**
+	 * @param {Number}
+	 *            value
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.wrapByte = function(value) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_BYTE);
+		var field = context.getField(FyConst.FY_VALUE_BYTE);
+		var ret = context.heap.allocate(clazz);
+		context.heap.putFieldByte(ret, field.posAbs, value);
+		return ret;
+	};
+
+	/**
+	 * 
+	 * @param {Number}
+	 *            handle
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.unwrapShort = function(handle) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_SHORT);
+		var field = context.getField(FyConst.FY_VALUE_SHORT);
+		context.lookupClass(FyConst.FY_PRIM_SHORT);
+		if (this.getObject(handle).clazz !== clazz) {
+			throw new FyException(FyConst.FY_EXCEPTION_ARGU,
+					"Can't unwrap handle=" + handle + " as short");
+		}
+		return this.getFieldShort(handle, field.posAbs);
+	};
+
+	/**
+	 * @param {Number}
+	 *            value
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.wrapShort = function(value) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_SHORT);
+		var field = context.getField(FyConst.FY_VALUE_SHORT);
+		var ret = context.heap.allocate(clazz);
+		context.heap.putFieldShort(ret, field.posAbs, value);
+		return ret;
+	};
+
+	/**
+	 * 
+	 * @param {Number}
+	 *            handle
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.unwrapChar = function(handle) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_CHAR);
+		var field = context.getField(FyConst.FY_VALUE_CHAR);
+		context.lookupClass(FyConst.FY_PRIM_CHAR);
+		if (this.getObject(handle).clazz !== clazz) {
+			throw new FyException(FyConst.FY_EXCEPTION_ARGU,
+					"Can't unwrap handle=" + handle + " as char");
+		}
+		return this.getFieldChar(handle, field.posAbs);
+	};
+
+	/**
+	 * @param {Number}
+	 *            value
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.wrapChar = function(value) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_CHAR);
+		var field = context.getField(FyConst.FY_VALUE_CHAR);
+		var ret = context.heap.allocate(clazz);
+		context.heap.putFieldChar(ret, field.posAbs, value);
+		return ret;
+	};
+
+	/**
+	 * 
+	 * @param {Number}
+	 *            handle
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.unwrapInt = function(handle) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_INT);
+		var field = context.getField(FyConst.FY_VALUE_INT);
+		context.lookupClass(FyConst.FY_PRIM_INT);
+		if (this.getObject(handle).clazz !== clazz) {
+			throw new FyException(FyConst.FY_EXCEPTION_ARGU,
+					"Can't unwrap handle=" + handle + " as int");
+		}
+		return this.getFieldInt(handle, field.posAbs);
+	};
+
+	/**
+	 * @param {Number}
+	 *            value
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.wrapInt = function(value) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_INT);
+		var field = context.getField(FyConst.FY_VALUE_INT);
+		var ret = context.heap.allocate(clazz);
+		context.heap.putFieldInt(ret, field.posAbs, value);
+		return ret;
+	};
+
+	/**
+	 * 
+	 * @param {Number}
+	 *            handle
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.unwrapFloat = function(handle) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_FLOAT);
+		var field = context.getField(FyConst.FY_VALUE_FLOAT);
+		context.lookupClass(FyConst.FY_PRIM_FLOAT);
+		if (this.getObject(handle).clazz !== clazz) {
+			throw new FyException(FyConst.FY_EXCEPTION_ARGU,
+					"Can't unwrap handle=" + handle + " as float");
+		}
+		return this.getFieldFloat(handle, field.posAbs);
+	};
+
+	/**
+	 * @param {Number}
+	 *            value
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.wrapFloat = function(value) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_FLOAT);
+		var field = context.getField(FyConst.FY_VALUE_FLOAT);
+		var ret = context.heap.allocate(clazz);
+		context.heap.putFieldFloat(ret, field.posAbs, value);
+		return ret;
+	};
+
+	/**
+	 * 
+	 * @param {Number}
+	 *            handle
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.unwrapFloatRaw = function(handle) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_FLOAT);
+		var field = context.getField(FyConst.FY_VALUE_FLOAT);
+		context.lookupClass(FyConst.FY_PRIM_FLOAT);
+		if (this.getObject(handle).clazz !== clazz) {
+			throw new FyException(FyConst.FY_EXCEPTION_ARGU,
+					"Can't unwrap handle=" + handle + " as float");
+		}
+		return this.getFieldRaw(handle, field.posAbs);
+	};
+
+	/**
+	 * @param {Number}
+	 *            value
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.wrapFloatRaw = function(value) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_FLOAT);
+		var field = context.getField(FyConst.FY_VALUE_FLOAT);
+		var ret = context.heap.allocate(clazz);
+		context.heap.putFieldRaw(ret, field.posAbs, value);
+		return ret;
+	};
+
+	/**
+	 * 
+	 * @param {Number}
+	 *            handle
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.unwrapLong = function(handle, container, pos) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_LONG);
+		var field = context.getField(FyConst.FY_VALUE_LONG);
+		context.lookupClass(FyConst.FY_PRIM_LONG);
+		if (this.getObject(handle).clazz !== clazz) {
+			throw new FyException(FyConst.FY_EXCEPTION_ARGU,
+					"Can't unwrap handle=" + handle + " as long");
+		}
+
+		this.getFieldLongTo(handle, field.posAbs, container, pos);
+	};
+
+	/**
+	 * @param {Number}
+	 *            value
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.wrapLong = function(container, ofs) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_LONG);
+		var field = context.getField(FyConst.FY_VALUE_LONG);
+		var ret = context.heap.allocate(clazz);
+		context.heap.putFieldLongFrom(ret, field.posAbs, container, ofs);
+		return ret;
+	};
+
+	/**
+	 * 
+	 * @param {Number}
+	 *            handle
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.unwrapDouble = function(handle) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_DOUBLE);
+		var field = context.getField(FyConst.FY_VALUE_DOUBLE);
+		context.lookupClass(FyConst.FY_PRIM_DOUBLE);
+		if (this.getObject(handle).clazz !== clazz) {
+			throw new FyException(FyConst.FY_EXCEPTION_ARGU,
+					"Can't unwrap handle=" + handle + " as double");
+		}
+
+		return this.getFieldDouble(handle, field.posAbs);
+	};
+
+	/**
+	 * @param {Number}
+	 *            value
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.wrapDouble = function(value) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_DOUBLE);
+		var field = context.getField(FyConst.FY_VALUE_DOUBLE);
+		var ret = context.heap.allocate(clazz);
+		context.heap.putFieldDouble(ret, field.posAbs, value)
+		return ret;
+	};
+
+	/**
+	 * 
+	 * @param {Number}
+	 *            handle
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.unwrapDoubleRaw = function(handle, container, pos) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_DOUBLE);
+		var field = context.getField(FyConst.FY_VALUE_DOUBLE);
+		context.lookupClass(FyConst.FY_PRIM_DOUBLE);
+		if (this.getObject(handle).clazz !== clazz) {
+			throw new FyException(FyConst.FY_EXCEPTION_ARGU,
+					"Can't unwrap handle=" + handle + " as double");
+		}
+
+		this.getFieldRawLongTo(handle, field.posAbs, container, pos);
+	};
+
+	/**
+	 * @param {Number}
+	 *            value
+	 * @returns {Number}
+	 */
+	FyHeap.prototype.wrapDoubleRaw = function(container, ofs) {
+		var context = this.context;
+		var clazz = context.lookupClass(FyConst.FY_BASE_DOUBLE);
+		var field = context.getField(FyConst.FY_VALUE_DOUBLE);
+		var ret = context.heap.allocate(clazz);
+		context.heap.putFieldLongFrom(ret, field.posAbs, container, ofs);
+		return ret;
+	};
 })();

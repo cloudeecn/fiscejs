@@ -3,8 +3,8 @@ var FyMethod;
 	/**
 	 * @returns {FyClass}
 	 */
-	var dummyClass=undefined;
-	
+	var dummyClass = undefined;
+
 	FyMethod = function() {
 		this.name = "";
 		this.descriptor = "";
@@ -18,6 +18,7 @@ var FyMethod;
 		this.parameterClassNames = [];
 		this.returnClassName = "";
 
+		this.exceptions = [];
 		this.exceptionTable = [];
 		this.lineNumberTable = [];
 
@@ -38,15 +39,15 @@ var FyMethod;
 		this.tableSwitchTargets = [];
 		this.lookupSwitchTargets = [];
 
-//		this.clinited = false;
+		// this.clinited = false;
 
 		this.invoke = undefined;
-		
+
 		Object.preventExtensions(this);
 	};
 
 	FyMethod.prototype.toString = function() {
 		return "{Method}" + this.uniqueName;
 	};
-	
+
 })();

@@ -116,7 +116,7 @@ var FyClassLoader;
 			clazz = new FyClass(FyConst.TYPE_PRIMITIVE);
 			clazz.name = name;
 			clazz.superClass = this.context.lookupClass(FyConst.FY_BASE_OBJECT);
-			clazz.pType = FyContext.mapPrimitivesRev[name];
+			clazz.pType = FyContext.mapPrimitivesRev[name].charCodeAt(0);
 		} else {
 			// Normal class
 			var classDef = this.context.classDef[name];
@@ -206,12 +206,19 @@ var FyClassLoader;
 					if (methodDef.opsCheck) {
 						method.opsCheck = methodDef.opsCheck;
 					}
+
 					if (methodDef.frames) {
 						method.frames = methodDef.frames;
 					}
+
 					if (methodDef.parameterClassNames) {
 						method.parameterClassNames = methodDef.parameterClassNames;
 					}
+
+					if (methodDef.exceptions) {
+						method.exceptions = methodDef.exceptions;
+					}
+
 					if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
 						var nativeHandler = this.context.nativeHandlers[method.uniqueName]
 								|| FyContext.staticNativeHandlers[method.uniqueName];
@@ -290,6 +297,15 @@ var FyClassLoader;
 			} else if (!this.context.TOP_CLASS
 					&& clazz.name === FyConst.FY_BASE_CLASS) {
 				this.context.TOP_CLASS = clazz;
+			} else if (!this.context.TOP_METHOD
+					&& clazz.name === FyConst.FY_REFLECT_METHOD) {
+				this.context.TOP_METHOD = clazz;
+			} else if (!this.context.TOP_CONSTRUCTOR
+					&& clazz.name === FyConst.FY_REFLECT_CONSTRUCTOR) {
+				this.context.TOP_CONSTRUCTOR = clazz;
+			} else if (!this.context.TOP_FIELD
+					&& clazz.name === FyConst.FY_REFLECT_FIELD) {
+				this.context.TOP_FIELD = clazz;
 			}
 		}
 		clazz.phase = 1;

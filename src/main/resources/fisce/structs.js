@@ -253,6 +253,16 @@ var FyLookupSwitchTarget;
 		this.FY_BASE_FINALIZER = "java/lang/Finalizer";
 		this.FY_BASE_RUNTIME = "java/lang/Runtime";
 
+		this.FY_PRIM_BOOLEAN = "boolean";
+		this.FY_PRIM_BYTE = "byte";
+		this.FY_PRIM_SHORT = "short";
+		this.FY_PRIM_CHAR = "char";
+		this.FY_PRIM_INT = "int";
+		this.FY_PRIM_FLOAT = "float";
+		this.FY_PRIM_LONG = "long";
+		this.FY_PRIM_DOUBLE = "double";
+		this.FY_PRIM_VOID = "void";
+
 		this.FY_IO_INPUTSTREAM = "java/io/InputStream";
 		this.FY_IO_PRINTSTREAM = "java/io/PrintStream";
 

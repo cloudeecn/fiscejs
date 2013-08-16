@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -151,6 +152,21 @@ public class ClassConverter {
 						stringPool.poolString(method.getDescriptor()));
 				SimpleJSONUtil.add(sb, 3, "\"accessFlags\"",
 						(int) method.getAccessFlags());
+
+				List<String> exceptions = method.exceptions;
+				{
+					SimpleJSONUtil.add(sb, 3, "\"exceptions\"", "[", false);
+					if (exceptions.size() > 0) {
+						sb.append("\t\t\t\t");
+					}
+					for (int j = 0, maxj = exceptions.size(); j < maxj; j++) {
+						sb.append(stringPool.poolString(exceptions.get(j)));
+						if (j < maxj - 1) {
+							sb.append(',');
+						}
+					}
+					SimpleJSONUtil.add(sb, 3, "]", true);
+				}
 
 				ExceptionHandler[] exceptionHandlerTable = method
 						.getExceptionTable();
@@ -507,13 +523,11 @@ public class ClassConverter {
 	}
 
 	public static void main(String[] args) throws Exception {
-		ClassConverter
-				.convertDirectory(// "(function(context){context.addClassDef(",
-						new File(
-								"../fiscevm/fiscevm-runtime/target/classes"),
-						// ");})(fisceContext);",
-						new OutputStreamWriter(new FileOutputStream(
-								"src/test/resources/rt.json"), "ISO8859-1"));
+		ClassConverter.convertDirectory(// "(function(context){context.addClassDef(",
+				new File("../fiscevm/fiscevm-runtime/target/classes"),
+				// ");})(fisceContext);",
+				new OutputStreamWriter(new FileOutputStream(
+						"src/test/resources/rt.json"), "ISO8859-1"));
 
 		System.out.println("done");
 	}

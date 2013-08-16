@@ -130,13 +130,46 @@ var FyContext;
 		 * @returns {FyClass}
 		 */
 		this.TOP_OBJECT = undefined;
+		/**
+		 * @returns {FyClass}
+		 */
 		this.TOP_THROWABLE = undefined;
+		/**
+		 * @returns {FyClass}
+		 */
 		this.TOP_ENUM = undefined;
+		/**
+		 * @returns {FyClass}
+		 */
 		this.TOP_ANNOTATION = undefined;
+		/**
+		 * @returns {FyClass}
+		 */
 		this.TOP_SOFT_REF = undefined;
+		/**
+		 * @returns {FyClass}
+		 */
 		this.TOP_WEAK_REF = undefined;
+		/**
+		 * @returns {FyClass}
+		 */
 		this.TOP_PHANTOM_REF = undefined;
+		/**
+		 * @returns {FyClass}
+		 */
 		this.TOP_CLASS = undefined;
+		/**
+		 * @returns {FyClass}
+		 */
+		this.TOP_METHOD = undefined;
+		/**
+		 * @returns {FyClass}
+		 */
+		this.TOP_FIELD = undefined;
+		/**
+		 * @returns {FyClass}
+		 */
+		this.TOP_CONSTRUCTOR = undefined;
 		Object.preventExtensions(this);
 	};
 
@@ -282,6 +315,11 @@ var FyContext;
 							method.paramType));
 					method.returnType = this.pool(lookup(strings,
 							method.returnType));
+
+					for ( var k = 0; k < method.exceptions.length; k++) {
+						method.exceptions[k] = this.pool(lookup(strings,
+								method.exceptions[k]));
+					}
 
 					for ( var k = 0; k < method.parameterClassNames.length; k++) {
 						method.parameterClassNames[k] = this.pool(lookup(
@@ -733,6 +771,21 @@ var FyContext;
 	};
 
 	/**
+	 * 
+	 * @param handle
+	 * @returns {FyMethod}
+	 */
+	FyContext.prototype.getMethodFromMethodObject = function(handle) {
+		var obj = this.heap.getObject(handle);
+		if (obj.clazz !== this.TOP_METHOD && obj.clazz !== this.TOP_CONSTRUCTOR) {
+			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+					"Object #" + handle + "(" + obj.clazz.name
+							+ ") is not a method or constructor object");
+		}
+		return this.methods[obj.multiUsageData];
+	};
+
+	/**
 	 * @param {FyField}
 	 *            field
 	 * @returns {Number}
@@ -747,6 +800,20 @@ var FyContext;
 			this.mapFieldIdToHandle[field.fieldId] = handle;
 		}
 		return handle;
+	};
+	/**
+	 * 
+	 * @param handle
+	 * @returns {FyField}
+	 */
+	FyContext.prototype.getFieldFromFieldObject = function(handle) {
+		var obj = this.heap.getObject(handle);
+		if (obj.clazz !== this.TOP_FIELD) {
+			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+					"Object #" + handle + "(" + obj.clazz.name
+							+ ") is not a field object");
+		}
+		return this.fields[obj.multiUsageData];
 	};
 
 	/**
