@@ -333,7 +333,7 @@
 		} else {
 			displayBuffer.push(stack[sb + 1]);
 			if (displayBuffer.length >= 132) {
-//				throw String.fromCharCode.apply(undefined, displayBuffer);
+				// throw String.fromCharCode.apply(undefined, displayBuffer);
 				console
 						.log(String.fromCharCode
 								.apply(undefined, displayBuffer));
@@ -862,5 +862,35 @@
 			+ FyConst.FY_BASE_STRING + ";[BII)[C", vmDecode);
 	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".encode.(L"
 			+ FyConst.FY_BASE_STRING + ";[CII)[B", vmEncode);
+	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".getDoubleRaw.(D)J",
+			doubleLongBitsToDouble);
+	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".getFloatRaw.(F)[I",
+			floatIntBitsToFloat);
+	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".stringToDouble.(L"
+			+ FyConst.FY_BASE_STRING + ";)D", vmStringToDouble);
+	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".stringToFloat.(L"
+			+ FyConst.FY_BASE_STRING + ";)F", vmStringToFloat);
+	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".floatToString.(F)L"
+			+ FyConst.FY_BASE_STRING + ";", vmFloatToString);
+	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".doubleToString.(D)L"
+			+ FyConst.FY_BASE_STRING + ";", vmDoubleToString);
+	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".breakpoint.()V",
+			vmBreakpoint);
 
+	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".currentThread.()L"
+			+ FyConst.FY_BASE_THREAD + ";", threadCurrentThread);
+	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".setPriority0.(I)V",
+			threadSetPriority);
+	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".isAlive.()Z",
+			threadIsAlive);
+	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".start0.()V",
+			threadStart);
+	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".interrupt0.()V",
+			threadInterrupt);
+	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".isInterrupted.(Z)Z",
+			threadInterrupted);
+	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".sleep.(J)V",
+			threadSleep);
+	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".yield.()V",
+			threadYield);
 })();

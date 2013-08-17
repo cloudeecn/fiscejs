@@ -224,7 +224,12 @@ var FyThread;
 
 		this.sp -= method.paramStackUsage;
 		if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
-			return method.invoke(this.context, this, ops);
+			if (method.invoke) {
+				return method.invoke(this.context, this, ops);
+			} else {
+				throw new FyException(undefined,
+						"Unresolved native handler for " + method.uniqueName);
+			}
 		} else {
 			return this.pushMethod(method, ops);
 		}
@@ -255,7 +260,12 @@ var FyThread;
 					.getObject(this.stack[this.sp]).clazz, method);
 		}
 		if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
-			return method.invoke(this.context, this, ops);
+			if (method.invoke) {
+				return method.invoke(this.context, this, ops);
+			} else {
+				throw new FyException(undefined,
+						"Unresolved native handler for " + method.uniqueName);
+			}
 		} else {
 			return this.pushMethod(method, ops);
 		}

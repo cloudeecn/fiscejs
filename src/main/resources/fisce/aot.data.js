@@ -520,7 +520,7 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "1"
 		},
 		"INVOKESPECIAL" : {
-			"code" : "lip = $ip;ops--;tmpMethod = context.lookupMethodVirtualFromConstant(constants[$1]);sp -= tmpMethod.paramStackUsage + 1;\"#!\";(function() {var out = new Array(tmpMethod.paramStackUsage + 1);for ( var i = 0, max = tmpMethod.paramStackUsage + 1; i < max; i++) {out[i] = stack[sp + i];}console.log(out);})();\"!#\";tmpClass = tmpMethod.owner;if ((clazz.accessFlags & FyConst.FY_ACC_SUPER)&& context.classLoader.isSuperClassOf(tmpClass,clazz)&& tmpMethod.name === FyConst.FY_METHOD_INIT) {tmpMethod = context.lookupMethodVirtualByMethod(clazz.superClass, tmpMethod);}if (tmpMethod === undefined) {throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT, \"\");}if (tmpMethod.name !== FyConst.FY_METHOD_INIT&& tmpMethod.owner !== tmpClass) {throw new FyException(FyConst.FY_EXCEPTION_NO_METHOD,tmpMethod.uniqueName);}if (tmpMethod.accessFlags & FyConst.FY_ACC_STATIC) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,tmpMethod.uniqueName);}if (tmpMethod.accessFlags & FyConst.FY_ACC_ABSTRACT) {throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,tmpMethod.uniqueName);}thread.localToFrame(sp, $ip, $ip + 1);if (tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE) {return tmpMethod.invoke(context, thread, ops);} else {return thread.pushMethod(tmpMethod, ops);}",
+			"code" : "lip = $ip;ops--;tmpMethod = context.lookupMethodVirtualFromConstant(constants[$1]);sp -= tmpMethod.paramStackUsage + 1;\"#!\";(function() {var out = new Array(tmpMethod.paramStackUsage + 1);for ( var i = 0, max = tmpMethod.paramStackUsage + 1; i < max; i++) {out[i] = stack[sp + i];}console.log(out);})();\"!#\";tmpClass = tmpMethod.owner;if ((clazz.accessFlags & FyConst.FY_ACC_SUPER)&& context.classLoader.isSuperClassOf(tmpClass,clazz)&& tmpMethod.name === FyConst.FY_METHOD_INIT) {tmpMethod = context.lookupMethodVirtualByMethod(clazz.superClass, tmpMethod);}if (tmpMethod === undefined) {throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT, \"\");}if (tmpMethod.name !== FyConst.FY_METHOD_INIT&& tmpMethod.owner !== tmpClass) {throw new FyException(FyConst.FY_EXCEPTION_NO_METHOD,tmpMethod.uniqueName);}if (tmpMethod.accessFlags & FyConst.FY_ACC_STATIC) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,tmpMethod.uniqueName);}if (tmpMethod.accessFlags & FyConst.FY_ACC_ABSTRACT) {throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,tmpMethod.uniqueName);}thread.localToFrame(sp, $ip, $ip + 1);if (tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE) {if (tmpMethod.invoke) {return tmpMethod.invoke(context, thread, ops);} else {throw new FyException(undefined,\"Unresolved native handler for \"+ method.uniqueName);}} else {return thread.pushMethod(tmpMethod, ops);}",
 			"pops" : "X-INVOKESPECIAL",
 			"pushes" : "0"
 		},
@@ -679,7 +679,7 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pops" : "-2",
 			"pushes" : "0"
 		},
-		"OP-LSTORE" : {
+		"LSTORE" : {
 			"code" : "ops--;sp -= 2;stack[sb + $1] = stack[sp];stack[sb + $1 + 1] = stack[sp + 1];",
 			"pops" : "-2",
 			"pushes" : "0"

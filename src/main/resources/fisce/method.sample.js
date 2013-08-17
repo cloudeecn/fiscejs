@@ -945,7 +945,13 @@
 					// Local to frame
 					thread.localToFrame(sp, $ip, $ip + 1);
 					if (tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE) {
-						return tmpMethod.invoke(context, thread, ops);
+						if (tmpMethod.invoke) {
+							return tmpMethod.invoke(context, thread, ops);
+						} else {
+							throw new FyException(undefined,
+									"Unresolved native handler for "
+											+ method.uniqueName);
+						}
 					} else {
 						return thread.pushMethod(tmpMethod, ops);
 					}
@@ -1191,7 +1197,7 @@
 					longOps.ushr(sp + 14, stack[sp]);
 					// ###
 				case 163:
-					// ##OP-DSTORE|OP-LSTORE -2 0
+					// ##OP-DSTORE|LSTORE -2 0
 					ops--;
 					sp -= 2;
 					stack[sb + $1] = stack[sp];
