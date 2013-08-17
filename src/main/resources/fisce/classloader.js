@@ -21,6 +21,7 @@
  * @param {FyContext}
  *            context
  */
+
 var FyClassLoader;
 
 (function() {
@@ -480,8 +481,6 @@ var FyClassLoader;
 
 					// init static fields for reflection
 					if (fieldDef.constantValueData) {
-						field.constantValueData = clazz.constants[fieldDef.constantValueData];
-
 						if ((field.accessFlags & FyConst.FY_ACC_STATIC)
 								&& (field.accessFlags & FyConst.FY_ACC_FINAL)) {
 							switch (field.descriptor.charAt(0)) {
@@ -491,19 +490,23 @@ var FyClassLoader;
 							case FyConst.FY_TYPE_CHAR:
 							case FyConst.FY_TYPE_INT:
 							case FyConst.FY_TYPE_FLOAT:
-								this.context.heap.putStaticRaw(clazz,
-										field.posAbs,
-										field.constantValueData.value);
+								this.context.heap
+										.putStaticRaw(
+												clazz,
+												field.posAbs,
+												clazz.constants[fieldDef.constantValueData].value);
 								break;
 							case FyConst.FY_TYPE_DOUBLE:
 							case FyConst.FY_TYPE_LONG:
-								this.context.heap.putStaticRawLongFrom(clazz,
-										field.posAbs,
-										field.constantValueData.value, 0);
+								this.context.heap
+										.putStaticRawLongFrom(
+												clazz,
+												field.posAbs,
+												clazz.constants[fieldDef.constantValueData].value,
+												0);
 								break;
 							case FyConst.FY_TYPE_HANDLE:
-								// Handle type will be lazy loaded in
-								// Field.get()
+								field.constantValueData = clazz.constants[fieldDef.constantValueData];
 								break;
 							}
 						}

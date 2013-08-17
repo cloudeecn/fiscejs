@@ -944,9 +944,9 @@
 
 					// Local to frame
 					thread.localToFrame(sp, $ip, $ip + 1);
-					if(tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE){
+					if (tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE) {
 						return tmpMethod.invoke(context, thread, ops);
-					}else{
+					} else {
 						return thread.pushMethod(tmpMethod, ops);
 					}
 					// ###
@@ -1232,7 +1232,8 @@
 					sp -= $2;
 					lip = $ip;
 					stack[sp] = heap.multiNewArray(context
-							.lookupClassFromConstant(constants[$1]), $2, sp);
+							.lookupClassFromConstant(constants[$1]), $2, stack,
+							sp);
 					sp++;
 					// ###
 				case 169:

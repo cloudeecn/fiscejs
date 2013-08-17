@@ -191,7 +191,7 @@ var FyThread;
 		}
 		return this.yield ? 0 : ops;
 	};
-	
+
 	/**
 	 * @param {FyMethod}
 	 *            method
@@ -211,7 +211,7 @@ var FyThread;
 			// invoke clinit
 			if (clinitClass.clinitThreadId == 0) {
 				// no thread is running it, so let this run
-				clinitClass.clinitThreadId = thread.threadId;
+				clinitClass.clinitThreadId = this.threadId;
 				this.rollbackCurrentIp();
 				this.pushFrame(clinitClass.clinit);
 				return ops;
@@ -398,9 +398,10 @@ var FyThread;
 		var topFrameId = this.getFramesCount() - 1;
 		if (excludeThis) {
 			var thisHandle = this.stack[this.getCurrentStackBase()];
-			for (; topFrameId >= 0; topFrame--) {
-				if (!(this.stack[this.getStackBase(topFrameId)] === thisHandle && this
-						.getFrameMethod(topFrameId).name === FyConst.FY_METHOD_INIT)) {
+			for (; topFrameId >= 0; topFrameId--) {
+				if (!(this.stack[this.getStackBase(topFrameId)] === thisHandle && (this
+						.getFrameMethod(topFrameId).name === FyConst.FY_METHOD_INIT || this
+						.getFrameMethod(topFrameId).name === "fillInStackTrace"))) {
 					break;
 				}
 			}
@@ -592,6 +593,9 @@ var FyThread;
 						}
 					}
 				}
+			}
+			if (this.framePos === this.STACK_SIZE) {
+				throw "TODO: Thread terminated";
 			}
 			if (this.yield) {
 				this.yield = false;

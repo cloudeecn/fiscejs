@@ -1,27 +1,6 @@
 (function() {
 	"use strict";
 
-	var coreHandlers = {};
-
-	/**
-	 * @param {FyContext}
-	 *            context
-	 * @param {FyThread}
-	 *            thread
-	 * @param {Number}
-	 *            ops
-	 */
-	function vmNewArray(context, thread, ops) {
-		// TODO move to Array
-		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
-		clazz = context.lookupClass(FyClassLoader.getArrayName(clazz.name));
-		stack[sb] = context.heap.allocateArray(clazz, stack[sb + 1]);
-		thread.nativeReturn(1);
-		return ops - 5;
-	}
-
 	/**
 	 * @param {FyContext}
 	 *            context

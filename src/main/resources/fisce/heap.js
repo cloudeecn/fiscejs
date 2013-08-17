@@ -410,12 +410,25 @@ var FyObject;
 	 * @param {FyClass}
 	 *            clazz class which this method creates for
 	 * @param {Number}
-	 *            count arrays layers count
+	 *            layers total layers
+	 * @param {Array}
+	 *            counts arrays layers counts
 	 * @param {Number}
 	 *            pos
 	 */
-	FyHeap.prototype.multiNewArray = function(clazz, count, pos) {
-		// TODO
+	FyHeap.prototype.multiNewArray = function(clazz, layers, counts, pos) {
+		var size = counts[pos];
+		var ret = this.allocateArray(clazz, size);
+		var handle;
+		var i;
+		if (layers > 1) {
+			for (i = 0; i < size; i++) {
+				handle = this.multiNewArray(clazz.contentClass, layers - 1,
+						counts, pos + 1);
+				this.putArrayRaw(ret, i, handle);
+			}
+		}
+		return ret;
 	};
 
 	/**
