@@ -10,6 +10,7 @@
 					console.log(clazz);
 					var thread = new FyThread(context, 4096);
 					thread.threadId = 1;
+					thread.priority = 1;
 					var threadHandle = context.heap.allocate(context
 							.lookupClass("java/lang/Thread"));
 					thread

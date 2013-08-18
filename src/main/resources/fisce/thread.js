@@ -36,7 +36,7 @@ var FyThread;
 		this.context = context;
 		this.realStack = new Int32Array(stackSize);
 		this.stack = new Int32Array(this.realStack.buffer, 64, this.STACK_SIZE);
-		this.floatStack = new Int32Array(this.realStack.buffer, 64,
+		this.floatStack = new Float32Array(this.realStack.buffer, 64,
 				this.STACK_SIZE);
 
 		this.typeStack = new Int8Array(this.STACK_SIZE);
@@ -623,7 +623,7 @@ var FyThread;
 	};
 
 	FyThread.prototype.nativeReturnFloat = function(value) {
-		this.stack[this.sp++] = FyPortable.floatToIeee32(value);
+		this.floatStack[this.sp++] = value;
 	};
 
 	FyThread.prototype.nativeReturnDouble = function(value) {
