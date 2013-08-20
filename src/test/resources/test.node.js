@@ -1,9 +1,9 @@
 (function(global) {
 	var fails = 0;
 	var log = console.log.bind(console);
-	console.log = function() {
-
-	};
+//	console.log = function() {
+//
+//	};
 	/**
 	 * @param {String}
 	 *            message
@@ -124,8 +124,12 @@
 	include("fisce/aot.js");
 	include("fisce/aot.data.js");
 	include("aot.test.js");
-
-	include("analyze.js");
+	include("fisce/nh.core.js");
+	include("fisce/nh.math.js");
+	include("fisce/nh.reflect.js");
+	include("fisce/thread.js");
+	include("fisce/threadmanager.js");
+	include("hl.test.js");
 	fisceTests.classDefData = data;
 	fisceTests.iterate(function(message, fun) {
 		test(message, fun);

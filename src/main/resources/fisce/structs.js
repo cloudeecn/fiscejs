@@ -447,7 +447,8 @@ var FyLookupSwitchTarget;
 	 */
 	FyMessage = function() {
 		this.type = 0;
-		this.param = undefined;
+		this.thread = undefined;
+		this.sleepTime = 0;
 		Object.preventExtensions(this);
 	};
 

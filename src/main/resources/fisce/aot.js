@@ -1,3 +1,20 @@
+/**
+ * Copyright 2013 Yuxuan Huang. All rights reserved.
+ * 
+ * This file is part of fiscejs.
+ * 
+ * fiscejs is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or any later version.
+ * 
+ * fiscejs is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with
+ * fiscejs. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 var __FyAOTUtil;
 (function() {
 	"use strict";
@@ -327,12 +344,12 @@ var __FyAOTUtil;
 								+ "\", "
 								+ oprand1
 								+ ", "
-								+ (oprand1 ? "method.owner.constants["
+								+ (oprand1 ? "clazz.constants["
 										+ oprand1 + "]" : "undefined")
 								+ ", "
 								+ oprand2
 								+ ", "
-								+ (oprand2 ? "method.owner.constants["
+								+ (oprand2 ? "clazz.constants["
 										+ oprand2 + "]" : "undefined")
 								+ ", sb, sp, stack.subarray(sb,sb+this.maxLocals+this.maxStack)]);\n");
 			}

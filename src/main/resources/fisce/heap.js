@@ -22,8 +22,7 @@ var FyHeap;
 var FyObject;
 
 (function() {
-	var MAX_OBJECTS = 65536;
-
+	"use strict";
 	FyObject = function() {
 		this.clazz = undefined;
 		this.finalizeStatus = 0;
@@ -47,11 +46,11 @@ var FyObject;
 		this.context = context;
 
 		this.statics = [];
-		this.objects = new Array(MAX_OBJECTS);
+		this.objects = new Array(FyConfig.maxObjects);
 
 		this.toFinalize = [];
 		this.protectMode = false;
-		this.protectedObjects = {};
+		this.protectedObjects = [];
 		this.literials = {};
 		this.references = {};
 		this.toEnqueue = [];
@@ -60,15 +59,6 @@ var FyObject;
 
 		this.usePreservedArea = false;
 
-	};
-
-	FyHeap.prototype.beginProtect = function() {
-		this.protectMode = true;
-	};
-
-	FyHeap.prototype.endProtect = function() {
-		this.protectMode = false;
-		this.protectedObjects = {};
 	};
 
 	/**
@@ -82,7 +72,7 @@ var FyObject;
 				break;
 			}
 			handle++;
-			if (handle >= MAX_OBJECTS) {
+			if (handle >= FyConfig.maxObjects) {
 				handle = 1;
 			}
 			if (handle === this.nextHandle) {
@@ -132,7 +122,11 @@ var FyObject;
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Handle " + toHandle + " already allocated.");
 		}
-		return this._allocate(size, clazz, multiUsageData, toHandle);
+		var ret = this._allocate(size, clazz, multiUsageData, toHandle);
+		if (this.protectMode) {
+			this.protectedObjects.push(ret);
+		}
+		return ret;
 	};
 
 	/**
@@ -146,7 +140,11 @@ var FyObject;
 		if (clazz.type != FyConst.TYPE_OBJECT) {
 			throw "Please use allocateArray to allocate arrays";
 		}
-		return this._allocate(clazz.sizeAbs, clazz, 0, 0);
+		var ret = this._allocate(clazz.sizeAbs, clazz, 0, 0);
+		if (this.protectMode) {
+			this.protectedObjects.push(ret);
+		}
+		return ret;
 	};
 
 	/**
@@ -186,8 +184,21 @@ var FyObject;
 		if (clazz.type !== FyConst.TYPE_ARRAY) {
 			throw "Please use allocate to allocate objects.";
 		}
-		return this._allocate(this.getArraySizeFromLength(clazz, length),
+		var ret = this._allocate(this.getArraySizeFromLength(clazz, length),
 				clazz, length, 0);
+		if (this.protectMode) {
+			this.protectedObjects.push(ret);
+		}
+		return ret;
+	};
+
+	FyHeap.prototype.beginProtect = function() {
+		this.protectMode = true;
+	};
+
+	FyHeap.prototype.endProtect = function() {
+		this.protectMode = false;
+		this.protectedObjects.length = 0;
 	};
 
 	/**
@@ -200,7 +211,7 @@ var FyObject;
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT);
 		}
-		if (handle < 0 || handle > MAX_OBJECTS) {
+		if (handle < 0 || handle > FyConfig.maxObjects) {
 			throw "Illegle handle " + handle;
 		}
 		return this.objects[handle];
@@ -785,4 +796,8 @@ var FyObject;
 		context.heap.putFieldLongFrom(ret, field.posAbs, container, ofs);
 		return ret;
 	};
+
+	FyHeap.prototype.gc = function() {
+		// TODO
+	}
 })();

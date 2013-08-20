@@ -22,7 +22,12 @@ var FyPortable;
 
 var FyConfig = {
 	littleEndian : undefined,
-	debugMode : true,
+	maxObjects : 16384,
+	maxThreads : 16,
+	gcIdv : 20000,
+	gcForceIdv : 120000,
+	stackSize : 16384,
+	debugMode : false,
 	verboseMode : false
 };
 
@@ -73,6 +78,7 @@ var FyConfig = {
 	var darr = new Float64Array(1);
 	var iarr = new Int32Array(darr.buffer);
 
+	darr[0] = 1;
 	if (iarr[0]) {
 		// Big Endian
 		FyConfig.littleEndian = false;
@@ -172,8 +178,8 @@ var FyConfig = {
 	 * @param ofs
 	 */
 	__FyPortable.prototype.doubleToLong = function(doubleValue, container, ofs) {
-		container[ofs] = (doubleValue / 4294967296) >> 0;// Higher
-		container[ofs + 1] = doubleValue >> 0; // Lower
+		container[ofs] = (doubleValue / 4294967296) | 0;// Higher
+		container[ofs + 1] = doubleValue | 0; // Lower
 	};
 
 	__FyPortable.prototype.dcmpg = function(value1, value2) {

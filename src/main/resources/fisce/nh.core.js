@@ -1,3 +1,20 @@
+/**
+ * Copyright 2013 Yuxuan Huang. All rights reserved.
+ * 
+ * This file is part of fiscejs.
+ * 
+ * fiscejs is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU General Public License as published by the Free Software
+ * Foundation, either version 3 of the License, or any later version.
+ * 
+ * fiscejs is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+ * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with
+ * fiscejs. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 (function() {
 	"use strict";
 
@@ -632,8 +649,8 @@
 	function objectWait(context, thread, ops) {
 		var stack = thread.stack;
 		var sb = thread.sp;
-		// TODO
-		thread.nativeReturn();
+		context.threadManager.wait(thread, stack[sb], thread.longOps
+				.longToNumber(sb + 16 + 1));
 		return ops - 1;
 	}
 
@@ -648,8 +665,7 @@
 	function objectNotify(context, thread, ops) {
 		var stack = thread.stack;
 		var sb = thread.sp;
-		// TODO
-		thread.nativeReturn();
+		context.threadManager.notify(thread, stack[sb], false);
 		return ops - 1;
 	}
 
@@ -664,8 +680,7 @@
 	function objectNorifyAll(context, thread, ops) {
 		var stack = thread.stack;
 		var sb = thread.sp;
-		// TODO
-		thread.nativeReturn();
+		context.threadManager.notify(thread, stack[sb], true);
 		return ops - 1;
 	}
 
@@ -693,8 +708,10 @@
 	function threadSetPriority(context, thread, ops) {
 		var stack = thread.stack;
 		var sb = thread.sp;
-		// TODO
-		thread.nativeReturn();
+		var target = context.threadManager._getThreadByHandle(stack[sb]);
+		if (target) {
+			target.priority = stack[sb + 1];
+		}
 		return ops - 1;
 	}
 
@@ -709,8 +726,9 @@
 	function threadIsAlive(context, thread, ops) {
 		var stack = thread.stack;
 		var sb = thread.sp;
-		// TODO
-		thread.nativeReturnInt(1);
+		thread
+				.nativeReturnInt(context.threadManager.isAlive(stack[sb]) ? 1
+						: 0);
 		return ops - 1;
 	}
 
@@ -725,8 +743,7 @@
 	function threadInterrupt(context, thread, ops) {
 		var stack = thread.stack;
 		var sb = thread.sp;
-		// TODO
-		thread.nativeReturn();
+		context.threadManager.interrupt(stack[sb]);
 		return ops - 1;
 	}
 
@@ -741,8 +758,8 @@
 	function threadInterrupted(context, thread, ops) {
 		var stack = thread.stack;
 		var sb = thread.sp;
-		// TODO
-		thread.nativeReturnInt(0);
+		thread.nativeReturnInt(context.threadManager.isInterrupted(stack[sb],
+				stack[sb + 1] ? true : false) ? 1 : 0);
 		return ops - 1;
 	}
 
@@ -757,8 +774,7 @@
 	function threadStart(context, thread, ops) {
 		var stack = thread.stack;
 		var sb = thread.sp;
-		// TODO
-		thread.nativeReturn();
+		context.threadManager.pushThread(stack[sb]);
 		return ops - 1;
 	}
 
@@ -771,10 +787,9 @@
 	 *            ops
 	 */
 	function threadSleep(context, thread, ops) {
-		var stack = thread.stack;
 		var sb = thread.sp;
-		// TODO
-		thread.nativeReturn();
+		context.threadManager.sleep(thread, thread.longOps
+				.longToNumber(sb + 16));
 		return ops - 1;
 	}
 
@@ -788,7 +803,6 @@
 	 */
 	function threadYield(context, thread, ops) {
 		thread.yield = true;
-		thread.nativeReturn();
 		return 0;
 	}
 
@@ -893,4 +907,11 @@
 			threadSleep);
 	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".yield.()V",
 			threadYield);
+
+	// TODO
+	FyContext.registerStaticNH(FyConst.FY_BASE_FINALIZER
+			+ ".getReferencesToEnqueue.()[L" + FyConst.FY_REF + ";",
+			finalizerGetReferencesToEnqueue);
+	FyContext.registerStaticNH(FyConst.FY_BASE_FINALIZER + ".getFinalizee.()[L"
+			+ FyConst.FY_BASE_OBJECT + ";", finalizerGetFinalizee);
 })();

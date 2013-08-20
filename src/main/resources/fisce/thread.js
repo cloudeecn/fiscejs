@@ -58,6 +58,9 @@ var FyThread;
 		this.daemon = false;
 		this.destroyPending = false;
 
+		/**
+		 * @returns {__FyLongOps}
+		 */
 		this.longOps = FyPortable.getLongOps(this.realStack);
 	};
 
@@ -187,7 +190,7 @@ var FyThread;
 			this
 					.monitorEnter((method.accessFlags & FyConst.FY_ACC_STATIC) ? this.context
 							.getClassObjectHandle(method.owner)
-							: this.stack[ret + 1]);
+							: this.stack[this.stack[ret + 1]]);
 		}
 		return this.yield ? 0 : ops;
 	};
@@ -225,7 +228,13 @@ var FyThread;
 		this.sp -= method.paramStackUsage;
 		if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
 			if (method.invoke) {
-				return method.invoke(this.context, this, ops);
+				this.context.heap.beginProtect();
+				ops = method.invoke(this.context, this, ops);
+				this.context.heap.endProtect();
+				if (this.yield) {
+					ops = 0;
+				}
+				return ops;
 			} else {
 				throw new FyException(undefined,
 						"Unresolved native handler for " + method.uniqueName);
@@ -261,7 +270,13 @@ var FyThread;
 		}
 		if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
 			if (method.invoke) {
-				return method.invoke(this.context, this, ops);
+				this.context.heap.beginProtect();
+				ops = method.invoke(this.context, this, ops);
+				this.context.heap.endProtect();
+				if (this.yield) {
+					ops = 0;
+				}
+				return ops;
 			} else {
 				throw new FyException(undefined,
 						"Unresolved native handler for " + method.uniqueName);
@@ -315,50 +330,6 @@ var FyThread;
 			}
 		}
 		return -1;
-	};
-
-	/**
-	 * 
-	 * @param {FyException}
-	 *            exception exception to prepare
-	 * @returns {Number} handle of the throwable
-	 * @deprecated
-	 */
-	FyThread.prototype.__prepareThrowable__ = function(exception) {
-		var context = this.context;
-		var heap = context.heap;
-		/**
-		 * @returns {FyClass}
-		 */
-		var exceptionClass;
-		var ret = 0;
-		var fieldDetailMessage;
-		if (exception.clazz === undefined) {
-			context.panic(exception.message);
-			throw exception;
-		}
-		try {
-
-			exceptionClass = context.lookupClass(exception.clazz);
-			if (context.classLoader.canCast(exceptionClass,
-					context.TOP_THROWABLE)) {
-				throw new FyException(undefined, "Exception " + exception.clazz
-						+ " is not a java.lang.Throwable");
-			}
-
-			fieldDetailMessage = context.getField(FyConst.FY_BASE_THROWABLE
-					+ ".detailMessage.L" + FyConst.FY_BASE_STRING);
-
-			ret = heap.allocate(exceptionClass);
-			heap.putFieldString(ret, fieldDetailMessage.posAbs,
-					exception.message);
-
-			this.fillStackTrace(ret);
-			return ret;
-		} catch (e) {
-			context.panic("Exception occored while processing exception: " + e);
-			throw e;
-		}
 	};
 
 	/**
@@ -538,6 +509,25 @@ var FyThread;
 		this.typeStack[0] = 1;
 	};
 
+	FyThread.prototype.destroy = function() {
+		var heap = this.context.heap;
+		var obj = heap.getObject(this.handle);
+		obj.multiUsageData = 0;
+		this.handle = 0;
+		this.waitForLockId = 0;
+		this.waitForNotifyId = 0;
+		this.nextWakeTime = 0;
+		this.pendingLockCount = 0;
+		this.destroyPending = false;
+		for ( var handle = 1; handle < FyConfig.maxObjects; handle++) {
+			obj = heap.getObject(handle);
+			if (obj !== undefined && obj.monitorOwnerId === this.threadId) {
+				obj.monitorOwnerId = 0;
+				obj.monitorOwnerTimes = 0;
+			}
+		}
+	};
+
 	/**
 	 * Run this thread
 	 * 
@@ -580,7 +570,8 @@ var FyThread;
 								this.monitorExit(context
 										.getClassObjectHandle(method.owner));
 							} else {
-								this.monitorExit(stack[sb]);
+								this.monitorExit(this.stack[this
+										.getCurrentStackBase()]);
 							}
 						}
 						if (method.accessFlags & FyConst.FY_ACC_CLINIT) {
@@ -605,13 +596,14 @@ var FyThread;
 				}
 			}
 			if (this.framePos === this.STACK_SIZE) {
-				throw "TODO: Thread terminated";
+				message.type = FyMessage.message_thread_dead;
+				return;
 			}
 			if (this.yield) {
-				this.yield = false;
 				ops = 0;
 			}
 		}
+		this.yield = false;
 	};
 
 	FyThread.prototype.nativeReturn = function(size) {
@@ -639,18 +631,13 @@ var FyThread;
 	/**
 	 * 
 	 * @param handle
-	 * @returns {Boolean} if returns true, the method will exit and wait for
-	 *          monitor unlocked
 	 */
 	FyThread.prototype.monitorEnter = function(handle) {
-		// TODO
-		// console.log("monitor enter stub");
-		return false;
+		this.context.threadManager.monitorEnter(this, handle);
 	};
 
 	FyThread.prototype.monitorExit = function(handle) {
-		// TODO
-		// console.log("monitor exit stub");
+		this.context.threadManager.monitorExit(this, handle);
 	};
 
 })();

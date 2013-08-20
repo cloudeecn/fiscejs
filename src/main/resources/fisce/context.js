@@ -118,6 +118,7 @@ var FyContext;
 
 		this.classLoader = new FyClassLoader(this);
 		this.heap = new FyHeap(this);
+		this.threadManager = new FyThreadManager(this);
 
 		this.log = function(level, content) {
 			console.log(levels[level] + ": " + content);
@@ -822,9 +823,14 @@ var FyContext;
 	 * 
 	 * @param message
 	 */
-	FyContext.prototype.panic = function(message) {
+	FyContext.prototype.panic = function(message, e) {
 		console.log("ERROR! Virtual machine panic: " + message);
 		console.log(this);
+		if (e) {
+			throw e;
+		} else {
+			throw "Virtual machine panic!";
+		}
 	};
 
 	FyContext.prototype.registerNativeHandler = function(name, func, extraVars,
@@ -860,6 +866,11 @@ var FyContext;
 				stackSize : stackSize
 			};
 		}
+	};
+	
+	FyContext.prototype.bootup=function(bootStrapClassName){
+		var clazz=this.lookupClass(bootStrapClassName);
+		this.threadManager.bootFromMain(clazz);
 	};
 	Object.preventExtensions(FyContext);
 })();

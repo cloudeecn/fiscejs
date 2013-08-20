@@ -175,6 +175,10 @@
 					// ##OP-ILOAD|FLOAD|ALOAD 0 1
 					ops--;
 					stack[sp] = stack[sb + $1];
+					"#!";
+					console.log([ sp, "<==", sb + $1, stack[sp], "<==",
+							stack[sb + $1] ]);
+					"!#";
 					sp++;
 					// ###
 				case 17:
@@ -220,6 +224,10 @@
 					ops--;
 					sp--;
 					stack[sb + $1] = stack[sp];
+					"#!";
+					console.log([ sp, "==>", sb + $1, stack[sp], "==>",
+							stack[sb + $1] ]);
+					"!#";
 					// ###
 				case 35:
 					// ##OP-ATHROW -1 0
@@ -271,15 +279,14 @@
 					// ##OP-CHECKCAST -1 0
 					lip = $ip;
 					ops--;
-					sp--;
-					if (stack[sp] !== 0) {
+					if (stack[sp - 1] !== 0) {
 						if (!context.classLoader.canCast(heap
-								.getObject(stack[sp]).clazz, context
+								.getObject(stack[sp - 1]).clazz, context
 								.lookupClassFromConstant(constants[$1]))) {
 							throw new FyException(
 									FyConst.FY_EXCEPTION_CAST,
 									"Can't case "
-											+ heap.getObject(stack[sp]).clazz.name
+											+ heap.getObject(stack[sp - 1]).clazz.name
 											+ " to "
 											+ context
 													.lookupClassFromConstant(constants[$1]).name);
@@ -946,11 +953,17 @@
 					thread.localToFrame(sp, $ip, $ip + 1);
 					if (tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE) {
 						if (tmpMethod.invoke) {
-							return tmpMethod.invoke(context, thread, ops);
+							heap.beginProtect();
+							ops = tmpMethod.invoke(context, thread, ops);
+							heap.endProtect();
+							if (thread.yield) {
+								ops = 0;
+							}
+							return ops;
 						} else {
 							throw new FyException(undefined,
 									"Unresolved native handler for "
-											+ method.uniqueName);
+											+ tmpMethod.uniqueName);
 						}
 					} else {
 						return thread.pushMethod(tmpMethod, ops);
@@ -1052,8 +1065,8 @@
 					// ##OP-L2F -2 1
 					ops--;
 					sp--;
-					stack[sp - 1] = FyPortable.floatToIeee32(stack[sp - 2]
-							* 4294967296.0 + stack[sp - 1]);
+					stack[sp - 1] = FyPortable.floatToIeee32(stack[sp - 1]
+							* 4294967296.0 + stack[sp]);
 					// ###
 				case 145:
 					// ##OP-L2I -2 1
@@ -1079,6 +1092,9 @@
 					ops--;
 					sp -= 3;
 					longOps.cmp(sp + 15, sp + 17);
+					// since longOps.cmp returns -1/0/1 in long array, simple
+					// convert it to int
+					stack[sp - 1] = stack[sp];
 					// ###
 				case 149:
 					// ##OP-LCONST_0 0 2
@@ -1101,22 +1117,34 @@
 					case 0:
 						// int/float
 						stack[sp] = constants[$1].value;
+						"#!";
+						console.log(stack[sp]);
+						"!#";
 						sp++;
 						break;
 					case 1:
 						stack[sp] = constants[$1].value[0];
 						stack[sp + 1] = constants[$1].value[1];
+						"#!";
+						console.log([ stack[sp], stack[sp + 1] ]);
+						"!#";
 						sp += 2;
 						break;
 					case 2:
 						lip = $ip;
 						stack[sp] = heap.literalWithConstant(constants[$1]);
+						"#!";
+						console.log([ constants[$1], stack[sp] ]);
+						"!#";
 						sp++;
 						break;
 					case 3:
 						lip = $ip;
 						stack[sp] = context.getClassObjectHandle(context
 								.lookupClassFromConstant(constants[$1]));
+						"#!";
+						console.log([ constants[$1], stack[sp] ]);
+						"!#";
 						sp++;
 						break;
 					}
@@ -1135,6 +1163,10 @@
 				case 153:
 					// ##OP-DLOAD|LLOAD 0 2
 					ops--;
+					"#!";
+					console.log(sp + "<==" + (sb + $1) + " "
+							+ [ stack[sb + $1], stack[sb + $1 + 1] ]);
+					"!#";
 					stack[sp] = stack[sb + $1];
 					stack[sp + 1] = stack[sb + $1 + 1];
 					sp += 2;
@@ -1220,7 +1252,8 @@
 					// ##OP-MONITORENTER -1 0
 					ops--;
 					sp--;
-					if (thread.monitorEnter(stack[sp])) {
+					thread.monitorEnter(stack[sp]);
+					if (thread.yield) {
 						ip = $ip;
 						ops = 0;
 						break __fy_outer;
@@ -1231,6 +1264,11 @@
 					ops--;
 					sp--;
 					thread.monitorExit(stack[sp]);
+					if (thread.yield) {
+						ip = $ip + 1;
+						ops = 0;
+						break __fy_outer;
+					}
 					// ###
 				case 168:
 					// ##OP-MULTIANEWARRAY X-MULTIANEWARRAY 1
@@ -1482,45 +1520,11 @@
 				}
 			} catch (e) {
 				if (e instanceof FyException) {
-					(function() {
-						if (!e.clazz) {
-							context.panic(e.toString());
-							throw e;
-						}
-						try {
-							var exceptionClass = context.lookupClass(e.clazz);
-							if (!context.classLoader.canCast(exceptionClass,
-									context.TOP_THROWABLE)) {
-								throw new FyException(undefined, "Exception "
-										+ e.clazz + " is not a "
-										+ context.TOP_THROWABLE);
-							}
-							var detailMessageField = context
-									.getField(FyConst.FY_BASE_THROWABLE
-											+ ".detailMessage.L"
-											+ FyConst.FY_BASE_STRING + ";");
-							thread.currentThrowable = heap.allocate(context
-									.lookupClass(e.clazz));
-							if (!!e.message) {
-								heap.putFieldString(thread.currentThrowable,
-										detailMessageField.posAbs, e.message);
-							}
-							// Local to frame
-							thread.localToFrame(sp, lip, ip);
-							thread.fillStackTrace(thread.currentThrowable,
-									false);
-						} catch (ee) {
-							context.panic(
-									"Exception occored while processing exception: "
-											+ e, ee);
-							throw ee;
-						}
-					})();
+					context.threadManager.pushThrowable(thread, e);
 					break __fy_outer;
 				} else {
 					context.panic("Exception occored while executing thread #"
-							+ thread.threadId);
-					throw e;
+							+ thread.threadId, e);
 				}
 			}
 		}

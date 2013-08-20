@@ -40,17 +40,17 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "1"
 		},
 		"ILOAD" : {
-			"code" : "ops--;stack[sp] = stack[sb + $1];sp++;",
+			"code" : "ops--;stack[sp] = stack[sb + $1];\"#!\";console.log([ sp, \"<==\", sb + $1, stack[sp], \"<==\",stack[sb + $1] ]);\"!#\";sp++;",
 			"pops" : "0",
 			"pushes" : "1"
 		},
 		"FLOAD" : {
-			"code" : "ops--;stack[sp] = stack[sb + $1];sp++;",
+			"code" : "ops--;stack[sp] = stack[sb + $1];\"#!\";console.log([ sp, \"<==\", sb + $1, stack[sp], \"<==\",stack[sb + $1] ]);\"!#\";sp++;",
 			"pops" : "0",
 			"pushes" : "1"
 		},
 		"ALOAD" : {
-			"code" : "ops--;stack[sp] = stack[sb + $1];sp++;",
+			"code" : "ops--;stack[sp] = stack[sb + $1];\"#!\";console.log([ sp, \"<==\", sb + $1, stack[sp], \"<==\",stack[sb + $1] ]);\"!#\";sp++;",
 			"pops" : "0",
 			"pushes" : "1"
 		},
@@ -80,17 +80,17 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "1"
 		},
 		"ISTORE" : {
-			"code" : "ops--;sp--;stack[sb + $1] = stack[sp];",
+			"code" : "ops--;sp--;stack[sb + $1] = stack[sp];\"#!\";console.log([ sp, \"==>\", sb + $1, stack[sp], \"==>\",stack[sb + $1] ]);\"!#\";",
 			"pops" : "-1",
 			"pushes" : "0"
 		},
 		"FSTORE" : {
-			"code" : "ops--;sp--;stack[sb + $1] = stack[sp];",
+			"code" : "ops--;sp--;stack[sb + $1] = stack[sp];\"#!\";console.log([ sp, \"==>\", sb + $1, stack[sp], \"==>\",stack[sb + $1] ]);\"!#\";",
 			"pops" : "-1",
 			"pushes" : "0"
 		},
 		"ASTORE" : {
-			"code" : "ops--;sp--;stack[sb + $1] = stack[sp];",
+			"code" : "ops--;sp--;stack[sb + $1] = stack[sp];\"#!\";console.log([ sp, \"==>\", sb + $1, stack[sp], \"==>\",stack[sb + $1] ]);\"!#\";",
 			"pops" : "-1",
 			"pushes" : "0"
 		},
@@ -125,7 +125,7 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "0"
 		},
 		"CHECKCAST" : {
-			"code" : "lip = $ip;ops--;sp--;if (stack[sp] !== 0) {if (!context.classLoader.canCast(heap.getObject(stack[sp]).clazz, context.lookupClassFromConstant(constants[$1]))) {throw new FyException(FyConst.FY_EXCEPTION_CAST,\"Can't case \"+ heap.getObject(stack[sp]).clazz.name+ \" to \"+ context.lookupClassFromConstant(constants[$1]).name);}}",
+			"code" : "lip = $ip;ops--;if (stack[sp - 1] !== 0) {if (!context.classLoader.canCast(heap.getObject(stack[sp - 1]).clazz, context.lookupClassFromConstant(constants[$1]))) {throw new FyException(FyConst.FY_EXCEPTION_CAST,\"Can't case \"+ heap.getObject(stack[sp - 1]).clazz.name+ \" to \"+ context.lookupClassFromConstant(constants[$1]).name);}}",
 			"pops" : "-1",
 			"pushes" : "0"
 		},
@@ -520,7 +520,7 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "1"
 		},
 		"INVOKESPECIAL" : {
-			"code" : "lip = $ip;ops--;tmpMethod = context.lookupMethodVirtualFromConstant(constants[$1]);sp -= tmpMethod.paramStackUsage + 1;\"#!\";(function() {var out = new Array(tmpMethod.paramStackUsage + 1);for ( var i = 0, max = tmpMethod.paramStackUsage + 1; i < max; i++) {out[i] = stack[sp + i];}console.log(out);})();\"!#\";tmpClass = tmpMethod.owner;if ((clazz.accessFlags & FyConst.FY_ACC_SUPER)&& context.classLoader.isSuperClassOf(tmpClass,clazz)&& tmpMethod.name === FyConst.FY_METHOD_INIT) {tmpMethod = context.lookupMethodVirtualByMethod(clazz.superClass, tmpMethod);}if (tmpMethod === undefined) {throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT, \"\");}if (tmpMethod.name !== FyConst.FY_METHOD_INIT&& tmpMethod.owner !== tmpClass) {throw new FyException(FyConst.FY_EXCEPTION_NO_METHOD,tmpMethod.uniqueName);}if (tmpMethod.accessFlags & FyConst.FY_ACC_STATIC) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,tmpMethod.uniqueName);}if (tmpMethod.accessFlags & FyConst.FY_ACC_ABSTRACT) {throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,tmpMethod.uniqueName);}thread.localToFrame(sp, $ip, $ip + 1);if (tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE) {if (tmpMethod.invoke) {return tmpMethod.invoke(context, thread, ops);} else {throw new FyException(undefined,\"Unresolved native handler for \"+ method.uniqueName);}} else {return thread.pushMethod(tmpMethod, ops);}",
+			"code" : "lip = $ip;ops--;tmpMethod = context.lookupMethodVirtualFromConstant(constants[$1]);sp -= tmpMethod.paramStackUsage + 1;\"#!\";(function() {var out = new Array(tmpMethod.paramStackUsage + 1);for ( var i = 0, max = tmpMethod.paramStackUsage + 1; i < max; i++) {out[i] = stack[sp + i];}console.log(out);})();\"!#\";tmpClass = tmpMethod.owner;if ((clazz.accessFlags & FyConst.FY_ACC_SUPER)&& context.classLoader.isSuperClassOf(tmpClass,clazz)&& tmpMethod.name === FyConst.FY_METHOD_INIT) {tmpMethod = context.lookupMethodVirtualByMethod(clazz.superClass, tmpMethod);}if (tmpMethod === undefined) {throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT, \"\");}if (tmpMethod.name !== FyConst.FY_METHOD_INIT&& tmpMethod.owner !== tmpClass) {throw new FyException(FyConst.FY_EXCEPTION_NO_METHOD,tmpMethod.uniqueName);}if (tmpMethod.accessFlags & FyConst.FY_ACC_STATIC) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,tmpMethod.uniqueName);}if (tmpMethod.accessFlags & FyConst.FY_ACC_ABSTRACT) {throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,tmpMethod.uniqueName);}thread.localToFrame(sp, $ip, $ip + 1);if (tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE) {if (tmpMethod.invoke) {heap.beginProtect();ops = tmpMethod.invoke(context, thread, ops);heap.endProtect();if (thread.yield) {ops = 0;}return ops;} else {throw new FyException(undefined,\"Unresolved native handler for \"+ tmpMethod.uniqueName);}} else {return thread.pushMethod(tmpMethod, ops);}",
 			"pops" : "X-INVOKESPECIAL",
 			"pushes" : "0"
 		},
@@ -580,7 +580,7 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "2"
 		},
 		"L2F" : {
-			"code" : "ops--;sp--;stack[sp - 1] = FyPortable.floatToIeee32(stack[sp - 2]* 4294967296.0 + stack[sp - 1]);",
+			"code" : "ops--;sp--;stack[sp - 1] = FyPortable.floatToIeee32(stack[sp - 1]* 4294967296.0 + stack[sp]);",
 			"pops" : "-2",
 			"pushes" : "1"
 		},
@@ -600,7 +600,7 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "2"
 		},
 		"LCMP" : {
-			"code" : "ops--;sp -= 3;longOps.cmp(sp + 15, sp + 17);",
+			"code" : "ops--;sp -= 3;longOps.cmp(sp + 15, sp + 17);stack[sp - 1] = stack[sp];",
 			"pops" : "-4",
 			"pushes" : "1"
 		},
@@ -615,7 +615,7 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "2"
 		},
 		"LDC" : {
-			"code" : "ops--;switch ($2) {case 0:stack[sp] = constants[$1].value;sp++;break;case 1:stack[sp] = constants[$1].value[0];stack[sp + 1] = constants[$1].value[1];sp += 2;break;case 2:lip = $ip;stack[sp] = heap.literalWithConstant(constants[$1]);sp++;break;case 3:lip = $ip;stack[sp] = context.getClassObjectHandle(context.lookupClassFromConstant(constants[$1]));sp++;break;}",
+			"code" : "ops--;switch ($2) {case 0:stack[sp] = constants[$1].value;\"#!\";console.log(stack[sp]);\"!#\";sp++;break;case 1:stack[sp] = constants[$1].value[0];stack[sp + 1] = constants[$1].value[1];\"#!\";console.log([ stack[sp], stack[sp + 1] ]);\"!#\";sp += 2;break;case 2:lip = $ip;stack[sp] = heap.literalWithConstant(constants[$1]);\"#!\";console.log([ constants[$1], stack[sp] ]);\"!#\";sp++;break;case 3:lip = $ip;stack[sp] = context.getClassObjectHandle(context.lookupClassFromConstant(constants[$1]));\"#!\";console.log([ constants[$1], stack[sp] ]);\"!#\";sp++;break;}",
 			"pops" : "0",
 			"pushes" : "X-LDC"
 		},
@@ -625,12 +625,12 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "2"
 		},
 		"DLOAD" : {
-			"code" : "ops--;stack[sp] = stack[sb + $1];stack[sp + 1] = stack[sb + $1 + 1];sp += 2;",
+			"code" : "ops--;\"#!\";console.log(sp + \"<==\" + (sb + $1) + \" \"+ [ stack[sb + $1], stack[sb + $1 + 1] ]);\"!#\";stack[sp] = stack[sb + $1];stack[sp + 1] = stack[sb + $1 + 1];sp += 2;",
 			"pops" : "0",
 			"pushes" : "2"
 		},
 		"LLOAD" : {
-			"code" : "ops--;stack[sp] = stack[sb + $1];stack[sp + 1] = stack[sb + $1 + 1];sp += 2;",
+			"code" : "ops--;\"#!\";console.log(sp + \"<==\" + (sb + $1) + \" \"+ [ stack[sb + $1], stack[sb + $1 + 1] ]);\"!#\";stack[sp] = stack[sb + $1];stack[sp + 1] = stack[sb + $1 + 1];sp += 2;",
 			"pops" : "0",
 			"pushes" : "2"
 		},
@@ -695,12 +695,12 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "2"
 		},
 		"MONITORENTER" : {
-			"code" : "ops--;sp--;if (thread.monitorEnter(stack[sp])) {ip = $ip;ops = 0;break __fy_outer;}",
+			"code" : "ops--;sp--;thread.monitorEnter(stack[sp]);if (thread.yield) {ip = $ip;ops = 0;break __fy_outer;}",
 			"pops" : "-1",
 			"pushes" : "0"
 		},
 		"MONITOREXIT" : {
-			"code" : "ops--;sp--;thread.monitorExit(stack[sp]);",
+			"code" : "ops--;sp--;thread.monitorExit(stack[sp]);if (thread.yield) {ip = $ip + 1;ops = 0;break __fy_outer;}",
 			"pops" : "-1",
 			"pushes" : "0"
 		},
@@ -779,6 +779,6 @@ var FyAOTUtil = new __FyAOTUtil({
 		"HEADER" : "var clazz = this.owner;var heap = context.heap;var longOps = thread.longOps;var constants = clazz.constants;var stack = thread.stack;var floatStack = thread.floatStack;var ip = thread.getCurrentIp() | 0;var lip = 0 | 0;var sp = thread.sp | 0;var sb = thread.getCurrentStackBase() | 0;var tmpField;var tmpClass;var clinitClass;var tmpMethod;var tmpInt1 = 0 | 0;__fy_outer: while (true) {try {__fy_inner: switch (ip) {",
 		"CLINIT" : "clinitClass = thread.clinit(this.owner.superClass);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {clinitClass.clinitThreadId = thread.threadId;thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}",
 		"OPS" : "if (ops < 0) {lip = $ip;ip = $ip;break __fy_outer;}",
-		"TAIL" : "default:throw new FyException(undefined, \"IP out of sync at \"+ this.uniqueName + \".\" + ip);}} catch (e) {if (e instanceof FyException) {(function() {if (!e.clazz) {context.panic(e.toString());throw e;}try {var exceptionClass = context.lookupClass(e.clazz);if (!context.classLoader.canCast(exceptionClass,context.TOP_THROWABLE)) {throw new FyException(undefined, \"Exception \"+ e.clazz + \" is not a \"+ context.TOP_THROWABLE);}var detailMessageField = context.getField(FyConst.FY_BASE_THROWABLE+ \".detailMessage.L\"+ FyConst.FY_BASE_STRING + \";\");thread.currentThrowable = heap.allocate(context.lookupClass(e.clazz));if (!!e.message) {heap.putFieldString(thread.currentThrowable,detailMessageField.posAbs, e.message);}thread.localToFrame(sp, lip, ip);thread.fillStackTrace(thread.currentThrowable,false);} catch (ee) {context.panic(\"Exception occored while processing exception: \"+ e, ee);throw ee;}})();break __fy_outer;} else {context.panic(\"Exception occored while executing thread #\"+ thread.threadId);throw e;}}}thread.localToFrame(sp, lip, ip);return ops;"
+		"TAIL" : "default:throw new FyException(undefined, \"IP out of sync at \"+ this.uniqueName + \".\" + ip);}} catch (e) {if (e instanceof FyException) {context.threadManager.pushThrowable(thread, e);break __fy_outer;} else {context.panic(\"Exception occored while executing thread #\"+ thread.threadId, e);}}}thread.localToFrame(sp, lip, ip);return ops;"
 	}
 });
