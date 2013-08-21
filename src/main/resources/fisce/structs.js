@@ -97,9 +97,9 @@ var FyLookupSwitchTarget;
 			first -= 256;
 		}
 		if (first >= 0) {
-			return -1;
-		} else if (first >= -16) {
 			return 1;
+		} else if (first >= -16) {
+			return -1;
 		} else if (first >= -32) {
 			return 3;
 		} else if (first >= -64) {

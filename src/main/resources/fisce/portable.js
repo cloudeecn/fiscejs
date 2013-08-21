@@ -27,7 +27,7 @@ var FyConfig = {
 	gcIdv : 20000,
 	gcForceIdv : 120000,
 	stackSize : 16384,
-	debugMode : false,
+	debugMode : true,
 	verboseMode : false
 };
 
@@ -75,15 +75,31 @@ var FyConfig = {
 		};
 	}
 
+	if (typeof String.prototype.startsWith != 'function') {
+		console.log("Polyfill String.startsWith");
+		String.prototype.startsWith = function(str) {
+			return this.slice(0, str.length) == str;
+		};
+	}
+
+	if (typeof String.prototype.endsWith != 'function') {
+		console.log("Polyfill String.endsWith");
+		String.prototype.endsWith = function(str) {
+			return this.slice(-str.length) == str;
+		};
+	}
+
 	var darr = new Float64Array(1);
 	var iarr = new Int32Array(darr.buffer);
 
 	darr[0] = 1;
 	if (iarr[0]) {
 		// Big Endian
+		console.log("Big endian");
 		FyConfig.littleEndian = false;
 	} else {
 		// Little Endian
+		console.log("Little endian");
 		FyConfig.littleEndian = true;
 	}
 

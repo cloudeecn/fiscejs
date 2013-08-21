@@ -527,7 +527,7 @@ public class ClassConverter {
 				new File("../fiscevm/fiscevm-runtime/target/classes"),
 				// ");})(fisceContext);",
 				new OutputStreamWriter(new FileOutputStream(
-						"src/test/resources/rt.json"), "ISO8859-1"));
+						"src/main/resources/test/rt.json"), "ISO8859-1"));
 
 		System.out.println("done");
 	}

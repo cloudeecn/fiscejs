@@ -19,23 +19,9 @@
  * Abstract heap, without implementation of memory operations
  */
 var FyHeap;
-var FyObject;
 
 (function() {
 	"use strict";
-	FyObject = function() {
-		this.clazz = undefined;
-		this.finalizeStatus = 0;
-		this.multiUsageData = 0;
-		this.monitorOwnerId = 0;
-		this.monitorOwnerTimes = 0;
-		this.rawData = undefined;
-		this.data = undefined;
-	};
-
-	FyObject.prototype.clear = function() {
-		FyObject.call(this);
-	};
 
 	/**
 	 * 
@@ -56,9 +42,7 @@ var FyObject;
 		this.toEnqueue = [];
 		this.nextHandle = 1;
 		this.totalObjects = 0;
-
-		this.usePreservedArea = false;
-
+		Object.preventExtensions(this);
 	};
 
 	/**
@@ -77,7 +61,7 @@ var FyObject;
 			}
 			if (handle === this.nextHandle) {
 				if (gced) {
-					throw "Out of memory: handles";
+					throw new FyException(undefined, "Out of memory: handles");
 				} else {
 					this._fetchNextHandle(true);
 				}
@@ -101,6 +85,14 @@ var FyObject;
 	 */
 	FyHeap.prototype._allocate = function(size, clazz, multiUsageData, toHandle) {
 		throw "Abstract method";
+	};
+
+	FyHeap.prototype._release = function(handle) {
+		throw "Abstract method";
+	};
+
+	FyHeap.prototype.release = function(handle) {
+		this.objects[handle] = undefined;
 	};
 
 	/**
@@ -138,7 +130,8 @@ var FyObject;
 	 */
 	FyHeap.prototype.allocate = function(clazz) {
 		if (clazz.type != FyConst.TYPE_OBJECT) {
-			throw "Please use allocateArray to allocate arrays";
+			throw new FyException(undefined,
+					"Please use allocateArray to allocate arrays");
 		}
 		var ret = this._allocate(clazz.sizeAbs, clazz, 0, 0);
 		if (this.protectMode) {
@@ -167,8 +160,8 @@ var FyObject;
 		case FyConst.FY_AT_SHORT:
 			return (length + 1) >> 1;
 		default:
-			throw "Illegal array type " + clazz.arrayType + " for class "
-					+ clazz.name;
+			throw new FyException(undefined, "Illegal array type "
+					+ clazz.arrayType + " for class " + clazz.name);
 		}
 	};
 
@@ -182,7 +175,8 @@ var FyObject;
 	 */
 	FyHeap.prototype.allocateArray = function(clazz, length) {
 		if (clazz.type !== FyConst.TYPE_ARRAY) {
-			throw "Please use allocate to allocate objects.";
+			throw new FyException(undefined,
+					"Please use allocate to allocate objects.");
 		}
 		var ret = this._allocate(this.getArraySizeFromLength(clazz, length),
 				clazz, length, 0);
@@ -211,10 +205,11 @@ var FyObject;
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT);
 		}
-		if (handle < 0 || handle > FyConfig.maxObjects) {
-			throw "Illegle handle " + handle;
+		var ret = this.objects[handle];
+		if (ret === undefined) {
+			throw new FyException(undefined, "Illegal object #" + handle);
 		}
-		return this.objects[handle];
+		return ret;
 	};
 
 	/**
@@ -405,14 +400,6 @@ var FyObject;
 				.lookupClass(FyConst.FY_BASE_STRING));
 		this.putFieldInt(handle, pos, strHandle);
 		this.fillString(strHandle, str);
-	};
-
-	FyHeap.prototype.getClassFromHandle = function(handle) {
-		/**
-		 * @returns {FyObject}
-		 */
-		var obj = this.objects[handle];
-		return obj.clazz;
 	};
 
 	/**

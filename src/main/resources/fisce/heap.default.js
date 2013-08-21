@@ -20,9 +20,24 @@
  * Data View
  * 
  */
+var FyObject;
 
 (function() {
 	"use strict";
+	FyObject = function() {
+		this.clazz = undefined;
+		this.finalizeStatus = 0;
+		this.multiUsageData = 0;
+		this.monitorOwnerId = 0;
+		this.monitorOwnerTimes = 0;
+		this.reference = 0;
+		this.rawData = undefined;
+		this.data = undefined;
+		Object.preventExtensions(this);
+	};
+
+	Object.preventExtensions(FyObject.prototype);
+
 	/**
 	 * Allocate a static storage area for clazz
 	 * 
@@ -34,6 +49,9 @@
 	FyHeap.prototype.allocateStatic = function(clazz) {
 		var id = clazz.classId;
 		this.statics[id] = new Int32Array(clazz.staticSize);
+	};
+
+	FyHeap.prototype._release = function(handle) {
 	};
 
 	/**
@@ -59,7 +77,7 @@
 			handle = this._fetchNextHandle();
 		}
 		if (this.objects[handle]) {
-			throw "Object " + handle + " already exists";
+			throw new FyException("Object " + handle + " already exists");
 		}
 
 		object = this.objects[handle] = new FyObject();
@@ -82,6 +100,7 @@
 				break;
 			case 'L':
 			case 'I':
+			case '[':
 				object.data = new Int32Array(buf);
 				break;
 			case 'F':
@@ -94,7 +113,8 @@
 				object.data = new Float64Array(buf);
 				break;
 			default:
-				throw "Illegal array class: " + clazz.name;
+				throw new FyException(undefined, "Illegal array class: "
+						+ clazz.name);
 			}
 		} else {
 			object.data = object.rawData;
@@ -240,6 +260,11 @@
 		return obj.rawData[pos];
 	};
 
+	FyHeap.prototype.getFieldRawTo = function(handle, pos, target, tpos) {
+		var obj = this.getObject(handle);
+		target[tpos] = obj.rawData[pos];
+	};
+
 	FyHeap.prototype.getFieldRawLongTo = function(handle, pos, tarray, tindex) {
 		var obj = this.getObject(handle);
 		var data = obj.rawData;
@@ -294,6 +319,11 @@
 		obj.rawData[pos] = value;
 	};
 
+	FyHeap.prototype.putFieldRawFrom = function(handle, pos, varray, vindex) {
+		var obj = this.getObject(handle);
+		obj.rawData[pos] = varray[vindex];
+	};
+
 	FyHeap.prototype.putFieldRawLongFrom = function(handle, pos, varray, vindex) {
 		var obj = this.getObject(handle);
 		obj.rawData[pos] = varray[vindex];
@@ -342,6 +372,11 @@
 	FyHeap.prototype.getStaticRaw = function(clazz, pos) {
 		var rawData = this.statics[clazz.classId];
 		return rawData[pos];
+	};
+
+	FyHeap.prototype.getStaticRawTo = function(clazz, pos, tarray, tindex) {
+		var rawData = this.statics[clazz.classId];
+		tarray[tindex] = rawData[pos];
 	};
 
 	FyHeap.prototype.getStaticRawLongTo = function(clazz, pos, tarray, tindex) {
@@ -395,6 +430,11 @@
 	FyHeap.prototype.putStaticRaw = function(clazz, pos, value) {
 		var rawData = this.statics[clazz.classId];
 		rawData[pos] = value;
+	};
+
+	FyHeap.prototype.putStaticRawFrom = function(clazz, pos, varray, vindex) {
+		var rawData = this.statics[clazz.classId];
+		rawData[pos] = varray[vindex];
 	};
 
 	FyHeap.prototype.putStaticRawLongFrom = function(clazz, pos, varray, vindex) {
@@ -464,9 +504,17 @@
 		}
 		if (!this.context.classLoader.canCast(sClass.contentClass,
 				dClass.contentClass)) {
-			throw new FyException(FyConst.FY_EXCEPTION_STORE, "Can't cast "
-					+ sClass.contentClass.name + " to "
-					+ dClass.contentClass.name);
+			if (!this.context.classLoader.canCast(dClass.contentClass,
+					sClass.contentClass)) {
+				throw new FyException(FyConst.FY_EXCEPTION_STORE, "Can't cast "
+						+ dClass.contentClass.name + " to "
+						+ sClass.contentClass.name);
+			}
+			// TODO
+			console.log("TODO: enforce System.arrayCopy's type check");
+			// throw new FyException(FyConst.FY_EXCEPTION_STORE, "Can't cast "
+			// + sClass.contentClass.name + " to "
+			// + dClass.contentClass.name);
 		}
 		if (sPos < 0 || dPos < 0 || (sPos + len > this.arrayLength(sHandle))
 				|| (dPos + len > this.arrayLength(dHandle))) {
@@ -511,9 +559,11 @@
 			ret = this.allocateArray(clazz, len);
 			this.arrayCopy(src, 0, ret, 0, len);
 		} else {
-			throw "Illegal object type " + clazz.type + " for class to clone: "
-					+ clazz.name;
+			throw new FyException(undefined, "Illegal object type "
+					+ clazz.type + " for class to clone: " + clazz.name);
 		}
 		return ret;
 	};
+
+	Object.preventExtensions(FyHeap.prototype);
 })();

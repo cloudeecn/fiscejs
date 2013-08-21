@@ -939,8 +939,9 @@
 		var clazz = context.getClassFromClassObject(stack[sb]);
 		var heap = context.heap;
 		var count = clazz.methods.length;
-		var handle = stack[sb] = heap.allocateArray(FyClassLoader
-				.getArrayName(FyConst.FY_BASE_OBJECT), count);
+		var handle = stack[sb] = heap.allocateArray(
+				context.lookupClass(FyClassLoader
+						.getArrayName(FyConst.FY_BASE_OBJECT)), count);
 		for ( var i = 0; i < count; i++) {
 			heap.putArrayRaw(handle, i, context
 					.getMethodObjectHandle(clazz.methods[i]));
@@ -1270,7 +1271,7 @@
 				+ ".getComponentType.()L" + FyConst.FY_BASE_CLASS + ";",
 				classGetComponentType);
 		FyContext.registerStaticNH(FyConst.FY_BASE_CLASS + ".forName0.(L"
-				+ FyConst.FY_BASE_STRING + ";)L" + FyConst.FY_BASE_CLASS + ";",
+				+ FyConst.FY_BASE_STRING + ";Z)L" + FyConst.FY_BASE_CLASS + ";",
 				classForName);
 		FyContext.registerStaticNH(FyConst.FY_BASE_CLASS + ".newInstance0.()L"
 				+ FyConst.FY_BASE_OBJECT + ";", classNewInstanceO);

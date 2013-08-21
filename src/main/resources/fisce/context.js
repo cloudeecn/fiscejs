@@ -35,7 +35,8 @@ var FyContext;
 	function lookup(array, idx) {
 		if (typeof idx !== "number" || array.length === undefined || idx < 0
 				|| idx >= array.length) {
-			throw "IllegalArgumentException: " + array.length + "[" + idx + "]";
+			throw new FyException(undefined, "IllegalArgumentException: "
+					+ array.length + "[" + idx + "]");
 		}
 		return array[idx];
 	}
@@ -419,7 +420,7 @@ var FyContext;
 	 */
 	FyContext.prototype.lookupFieldVirtualFromConstant = function(constant) {
 		var resolvedField = constant.resolvedField;
-		if (!resolvedField) {
+		if (resolvedField === undefined) {
 			/**
 			 * @returns {FyClass}
 			 */
@@ -825,11 +826,11 @@ var FyContext;
 	 */
 	FyContext.prototype.panic = function(message, e) {
 		console.log("ERROR! Virtual machine panic: " + message);
-		console.log(this);
+		//console.log(this);
 		if (e) {
 			throw e;
 		} else {
-			throw "Virtual machine panic!";
+			throw new Error("Virtual machine panic!");
 		}
 	};
 
@@ -867,9 +868,9 @@ var FyContext;
 			};
 		}
 	};
-	
-	FyContext.prototype.bootup=function(bootStrapClassName){
-		var clazz=this.lookupClass(bootStrapClassName);
+
+	FyContext.prototype.bootup = function(bootStrapClassName) {
+		var clazz = this.lookupClass(bootStrapClassName);
 		this.threadManager.bootFromMain(clazz);
 	};
 	Object.preventExtensions(FyContext);

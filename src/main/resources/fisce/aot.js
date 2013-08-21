@@ -337,20 +337,20 @@ var __FyAOTUtil;
 			if (FyConfig.verboseMode) {
 				code
 						.push("console"
-								+ ".log([this.owner, this.uniqueName,this,"
+								+ ".log([thread.threadId,this.owner, this.uniqueName,this,"
 								+ ip
 								+ ", thread.sp, \""
 								+ opName
 								+ "\", "
 								+ oprand1
 								+ ", "
-								+ (oprand1 ? "clazz.constants["
-										+ oprand1 + "]" : "undefined")
+								+ (oprand1 ? "clazz.constants[" + oprand1 + "]"
+										: "undefined")
 								+ ", "
 								+ oprand2
 								+ ", "
-								+ (oprand2 ? "clazz.constants["
-										+ oprand2 + "]" : "undefined")
+								+ (oprand2 ? "clazz.constants[" + oprand2 + "]"
+										: "undefined")
 								+ ", sb, sp, stack.subarray(sb,sb+this.maxLocals+this.maxStack)]);\n");
 			}
 

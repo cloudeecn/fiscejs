@@ -104,6 +104,7 @@
 			i--;
 			context.heap.putArrayChar(resultHandle, i, resultArr[i]);
 		}
+//		console.log([ "decode", arr, resultArr ]);
 		thread.nativeReturnInt(resultHandle);
 		return ops - len;
 	}
@@ -128,12 +129,15 @@
 		for ( var i = 0; i < len; i++) {
 			resultPos += FyUtils.utf8Encode(context.heap.getArrayChar(src, i
 					+ ofs), resultArr, resultPos);
+//			console.log([ "encode#", context.heap.getArrayChar(src, i
+//					+ ofs) ]);
 		}
 		var resultHandle = context.heap.allocateArray(
 				context.lookupClass("[B"), resultPos);
 		for ( var i = 0; i < resultPos; i++) {
 			context.heap.putArrayByte(resultHandle, i, resultArr[i]);
 		}
+//		console.log([ "encode", resultArr ]);
 		thread.nativeReturnInt(resultHandle);
 		return ops - len;
 	}

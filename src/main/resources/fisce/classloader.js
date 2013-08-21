@@ -249,6 +249,15 @@ var FyClassLoader;
 					field.uniqueName = this.context.pool(clazz.name
 							+ field.fullName);
 					field.owner = clazz;
+					switch (field.descriptor.charCodeAt(0)) {
+					case FyConst.D:
+					case FyConst.J:
+						field.size = 2;
+						break;
+					default:
+						field.size = 1;
+						break;
+					}
 					this.context.registerField(field);
 				}
 			}
@@ -321,7 +330,8 @@ var FyClassLoader;
 	 */
 	FyClassLoader.prototype.phase2 = function(clazz, classDef) {
 		if (!clazz || !clazz.name || clazz.phase !== 1) {
-			throw "Passed illegal class to class loader phase 2";
+			throw new FyException(undefined,
+					"Passed illegal class to class loader phase 2");
 		}
 		clazz.phase = 2;
 		switch (clazz.type) {

@@ -20,7 +20,7 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "1"
 		},
 		"AASTORE" : {
-			"code" : "lip = $ip;ops--;sp -= 3;if (stack[sp] !== 0&& (!context.classLoader.canCast(heap.getClassFromHandle(stack[sp + 2]),heap.getClassFromHandle(stack[sp + 0]).contentClass))) {throw new FyException(FyConst.FY_EXCEPTION_STORE,\"Can't store \"+ heap.getClassFromHandle(stack[sp + 2]).name+ \" to \"+ heap.getClassFromHandle(stack[sp + 0]).name);}heap.putArrayInt(stack[sp + 0], stack[sp + 1],stack[sp + 2]);",
+			"code" : "lip = $ip;ops--;sp -= 3;if (stack[sp + 2] !== 0&& (!context.classLoader.canCast(heap.getObject(stack[sp + 2]).clazz,heap.getObject(stack[sp + 0]).clazz.contentClass))) {throw new FyException(FyConst.FY_EXCEPTION_STORE,\"Can't store \"+ heap.getObject(stack[sp + 2]).clazz.name+ \" to \"+ heap.getObject(stack[sp + 0]).clazz.name);}heap.putArrayInt(stack[sp + 0], stack[sp + 1],stack[sp + 2]);",
 			"pops" : "-3",
 			"pushes" : "0"
 		},
@@ -325,12 +325,12 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "1"
 		},
 		"GETFIELD" : {
-			"code" : "lip = $ip;ops--;tmpField = context.lookupFieldVirtualFromConstant(constants[$1]);if (tmpField.accessFlags & FyConst.FY_ACC_STATIC) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, \"Field \"+ tmpField.uniqueName + \" is static\");}switch (tmpField.descriptor.charCodeAt(0)) {case FyConst.D:case FyConst.J:heap.getFieldRawLongTo(stack[sp - 1], tmpField.posAbs,stack, sp - 1);sp++;break;default:stack[sp - 1] = heap.getFieldRaw(stack[sp - 1],tmpField.posAbs);break;}",
+			"code" : "lip = $ip;ops--;tmpField = context.lookupFieldVirtualFromConstant(constants[$1]);if (tmpField.accessFlags & FyConst.FY_ACC_STATIC) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, \"Field \"+ tmpField.uniqueName + \" is static\");}switch (tmpField.size) {case 2:heap.getFieldRawLongTo(stack[sp - 1],tmpField.posAbs | 0, stack, sp - 1);sp++;break;default:heap.getFieldRawTo(stack[sp - 1], tmpField.posAbs | 0,stack, sp - 1);break;}",
 			"pops" : "-1",
 			"pushes" : "X-GETFIELD"
 		},
 		"GETSTATIC" : {
-			"code" : "lip = $ip;ops--;tmpField = context.lookupFieldVirtualFromConstant(constants[$1]);if (!(tmpField.accessFlags & FyConst.FY_ACC_STATIC)) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, \"Field \"+ tmpField.uniqueName+ \" is not static\");}clinitClass = thread.clinit(tmpField.owner);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {clinitClass.clinitThreadId = thread.threadId;thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}switch (tmpField.descriptor.charCodeAt(0)) {case FyConst.D:case FyConst.J:heap.getStaticRawLongTo(tmpField.owner,tmpField.posAbs, stack, sp);sp += 2;break;default:stack[sp] = heap.getStaticRaw(tmpField.owner,tmpField.posAbs);sp++;break;}",
+			"code" : "lip = $ip;ops--;tmpField = context.lookupFieldVirtualFromConstant(constants[$1]);if (!(tmpField.accessFlags & FyConst.FY_ACC_STATIC)) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, \"Field \"+ tmpField.uniqueName+ \" is not static\");}clinitClass = thread.clinit(tmpField.owner);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {clinitClass.clinitThreadId = thread.threadId;thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}switch (tmpField.size) {case 2:heap.getStaticRawLongTo(tmpField.owner,tmpField.posAbs, stack, sp);sp += 2;break;default:heap.getStaticRawTo(tmpField.owner,tmpField.posAbs | 0, stack, sp | 0);sp++;break;}",
 			"pops" : "0",
 			"pushes" : "X-GETSTATIC"
 		},
@@ -695,12 +695,12 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "2"
 		},
 		"MONITORENTER" : {
-			"code" : "ops--;sp--;thread.monitorEnter(stack[sp]);if (thread.yield) {ip = $ip;ops = 0;break __fy_outer;}",
+			"code" : "ops--;sp--;thread.monitorEnter(stack[sp]);if (thread.yield) {thread.localToFrame(sp, $ip, $ip + 1);return 0;}",
 			"pops" : "-1",
 			"pushes" : "0"
 		},
 		"MONITOREXIT" : {
-			"code" : "ops--;sp--;thread.monitorExit(stack[sp]);if (thread.yield) {ip = $ip + 1;ops = 0;break __fy_outer;}",
+			"code" : "ops--;sp--;thread.monitorExit(stack[sp]);if (thread.yield) {thread.localToFrame(sp, $ip, $ip + 1);return 0;}",
 			"pops" : "-1",
 			"pushes" : "0"
 		},
@@ -735,12 +735,12 @@ var FyAOTUtil = new __FyAOTUtil({
 			"pushes" : "0"
 		},
 		"PUTFIELD" : {
-			"code" : "lip = $ip;ops--;tmpField = context.lookupFieldVirtualFromConstant(constants[$1]);if (tmpField.accessFlags & FyConst.FY_ACC_STATIC) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, \"Field \"+ tmpField.uniqueName + \" is static\");}if ((tmpField.accessFlags & FyConst.FY_ACC_FINAL)&& (this.owner != tmpField.owner)) {throw new FyException(FyConst.FY_EXCEPTION_ACCESS,\"Field \" + tmpField.uniqueName + \" is final\");}switch (tmpField.descriptor.charCodeAt(0)) {case FyConst.D:case FyConst.J:sp -= 3;heap.putFieldRawLongFrom(stack[sp], tmpField.posAbs,stack, sp + 1);break;default:sp -= 2;heap.putFieldRaw(stack[sp], tmpField.posAbs,stack[sp + 1]);break;}",
+			"code" : "lip = $ip;ops--;tmpField = context.lookupFieldVirtualFromConstant(constants[$1 | 0]);if (tmpField.accessFlags & FyConst.FY_ACC_STATIC) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, \"Field \"+ tmpField.uniqueName + \" is static\");}if ((tmpField.accessFlags & FyConst.FY_ACC_FINAL)&& (this.owner != tmpField.owner)) {throw new FyException(FyConst.FY_EXCEPTION_ACCESS,\"Field \" + tmpField.uniqueName + \" is final\");}switch (tmpField.size) {case 2:sp -= 3;heap.putFieldRawLongFrom(stack[sp], tmpField.posAbs,stack, sp + 1);break;default:sp -= 2;heap.putFieldRawFrom(stack[sp], tmpField.posAbs, stack,sp + 1);break;}",
 			"pops" : "X-PUTFIELD",
 			"pushes" : "0"
 		},
 		"PUTSTATIC" : {
-			"code" : "lip = $ip;ops--;tmpField = context.lookupFieldVirtualFromConstant(constants[$1]);if (tmpField.accessFlags & FyConst.FY_ACC_STATIC == 0) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, \"Field \"+ tmpField.uniqueName+ \" is not static\");}if ((tmpField.accessFlags & FyConst.FY_ACC_FINAL)&& (this.owner != tmpField.owner)) {throw new FyException(FyConst.FY_EXCEPTION_ACCESS,\"Field \" + tmpField.uniqueName + \" is final\");}clinitClass = thread.clinit(tmpField.owner);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {clinitClass.clinitThreadId = thread.threadId;thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}switch (tmpField.descriptor.charCodeAt(0)) {case FyConst.D:case FyConst.J:sp -= 2;heap.putStaticRawLongFrom(tmpField.owner,tmpField.posAbs, stack, sp);break;default:sp--;heap.putStaticRaw(tmpField.owner, tmpField.posAbs,stack[sp]);break;}",
+			"code" : "lip = $ip;ops--;tmpField = context.lookupFieldVirtualFromConstant(constants[$1]);if (tmpField.accessFlags & FyConst.FY_ACC_STATIC == 0) {throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, \"Field \"+ tmpField.uniqueName+ \" is not static\");}if ((tmpField.accessFlags & FyConst.FY_ACC_FINAL)&& (this.owner != tmpField.owner)) {throw new FyException(FyConst.FY_EXCEPTION_ACCESS,\"Field \" + tmpField.uniqueName + \" is final\");}clinitClass = thread.clinit(tmpField.owner);if (clinitClass !== undefined) {if (clinitClass.clinitThreadId == 0) {clinitClass.clinitThreadId = thread.threadId;thread.localToFrame(sp, $ip, $ip);thread.pushFrame(clinitClass.clinit);return ops;} else {ops = 0;ip = $ip;break __fy_outer;}}switch (tmpField.size) {case 2:sp -= 2;heap.putStaticRawLongFrom(tmpField.owner,tmpField.posAbs, stack, sp);break;default:sp--;heap.putStaticRawFrom(tmpField.owner,tmpField.posAbs | 0, stack, sp | 0);break;}",
 			"pops" : "X-PUTSTATIC",
 			"pushes" : "0"
 		},

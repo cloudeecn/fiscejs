@@ -26,8 +26,8 @@ var FyField;
 		this.name = "";
 		this.descriptor = "";
 		this.accessFlags = 0;
-		this.posRel = "";
-		this.size = "";
+		this.posRel = 0;
+		this.size = 0;
 
 		/** Filled in by class loader phase 1* */
 		this.fullName = "";

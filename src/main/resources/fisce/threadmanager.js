@@ -44,6 +44,7 @@ var FyThreadManager;
 		this.nextGCTime = 0;
 		this.nextForceGCTime = 0;
 		this.lastThreadId = 0;
+		Object.preventExtensions(this);
 	};
 
 	/**
@@ -72,24 +73,26 @@ var FyThreadManager;
 		var monitor = heap.getObject(monitorId);
 		var owner = monitor.monitorOwnerId;
 		var threadId = thread.threadId;
-//		console.log("Monitor enter at " + thread.getCurrentMethod().uniqueName);
+		// console.log("Monitor enter at " +
+		// thread.getCurrentMethod().uniqueName);
 		if (owner === threadId) {
 			// owned by this thread, add times and go on
-//			console.log("Monitor enter " + threadId + " add " + monitorId
-//					+ ", " + times + " times");
 			monitor.monitorOwnerTimes += times;
+//			console.log([ "enter/add", threadId, monitorId, times,
+//					monitor.monitorOwnerTimes ]);
 		} else if (owner <= 0) {
 			// no owner, get ownership and go on
-//			console.log("Monitor enter " + threadId + " granted " + monitorId
-//					+ ", " + times + " times");
 			monitor.monitorOwnerId = threadId;
 			monitor.monitorOwnerTimes = times;
+//			console.log([ "enter/grant", threadId, monitorId, times,
+//					monitor.monitorOwnerTimes ]);
 		} else {
 			// owned by other thread, register wait and yield
-//			console.log("Monitor enter " + threadId + " yield");
 			thread.waitForLockId = monitorId;
 			thread.pendingLockCount = 1;
 			thread.yield = true;
+//			console.log([ "enter/yield", threadId, monitorId, times,
+//					monitor.monitorOwnerTimes ]);
 		}
 		return times;
 	};
@@ -106,15 +109,20 @@ var FyThreadManager;
 		var threadId = thread.threadId;
 		var monitor = this.context.heap.getObject(monitorId);
 		var owner = monitor.monitorOwnerId;
-//		console.log("Monitor exit at " + thread.getCurrentMethod().uniqueName);
-//		console.log("Monitor exit " + threadId + " " + monitorId + " " + times);
+		// console.log("Monitor exit at " +
+		// thread.getCurrentMethod().uniqueName);
+
 		if (owner !== threadId) {
+//			console.log(new Error().stack);
 			throw new FyException(FyConst.FY_EXCEPTION_MONITOR, "Thread #"
-					+ threadId + ": tries to exit monitor owned by #"
-					+ monitor.monitorOwnerId);
+					+ threadId + ": tries to exit monitor " + monitorId
+					+ " owned by #" + monitor.monitorOwnerId);
 		}
 		monitor.monitorOwnerTimes -= times;
+//		console.log([ "exit", threadId, monitorId, times,
+//				monitor.monitorOwnerTimes ]);
 		if (monitor.monitorOwnerTimes === 0) {
+//			console.log([ "exit/release", threadId, monitorId ]);
 			monitor.monitorOwnerId = 0;
 			thread.yield = true;
 		} else if (monitor.monitorOwnerTimes < 0) {
@@ -140,7 +148,7 @@ var FyThreadManager;
 					+ threadId + ": tries to release monitor owned by #"
 					+ monitor.monitorOwnerId);
 		}
-		return this.monitorExit(thread, monitorId, monitor.monitorOwnerTimes);
+		return this._monitorExit(thread, monitorId, monitor.monitorOwnerTimes);
 	};
 
 	FyThreadManager.prototype._fetchNextThreadId = function() {
@@ -221,6 +229,8 @@ var FyThreadManager;
 	FyThreadManager.prototype.sleep = function(thread, time) {
 		thread.nextWakeTime = Date.now() + time;
 		thread.yield = true;
+//		console.log(thread.threadId + ": Sleep " + time + " => "
+//				+ thread.nextWakeTime + "/" + Date.now());
 	};
 
 	/**
@@ -237,8 +247,8 @@ var FyThreadManager;
 			this.pushThrowable(target, new FyException(
 					FyConst.FY_EXCEPTION_INTR, "interrupted"));
 			target.nextWakeTime = 0;
-			target.interrupted = true;
 		}
+		target.interrupted = true;
 	};
 
 	/**
@@ -276,6 +286,7 @@ var FyThreadManager;
 			throw new FyException(FyConst.FY_EXCEPTION_IMSE, thread.threadId
 					+ "/" + monitor.monitorOwnerId);
 		}
+//		console.log([ "wait", thread.threadId, monitorId, time ]);
 		thread.waitForNotifyId = monitorId;
 		thread.pendingLockCount = this._releaseMonitor(thread, monitorId);
 		if (time <= 0) {
@@ -306,6 +317,8 @@ var FyThreadManager;
 			throw new FyException(FyConst.FY_EXCEPTION_IMSE, thread.threadId
 					+ "/" + monitor.monitorOwnerId);
 		}
+//		console.log([ "notify", thread.threadId, monitorId, all,
+//				monitor.monitorOwnerTimes ]);
 		for ( var i = this.runningThreads.length - 1; i >= 0; i--) {
 			target = this.runningThreads[i];
 			if (target !== undefined && target.waitForNotifyId === monitorId) {
@@ -391,7 +404,7 @@ var FyThreadManager;
 						threadNameHandle);
 		heap.putFieldInt(threadHandle, threadPriorityField.posAbs, 5);
 		thread.threadId = threadId;
-		console.log("main thread id=" + threadId);
+//		console.log("main thread id=" + threadId);
 		this.threads[threadId] = thread;
 		thread.priority = 5;
 		thread.initWithMethod(threadHandle, mainMethod);
@@ -425,6 +438,10 @@ var FyThreadManager;
 		 * @returns {FyField}
 		 */
 		var threadPriorityField;
+		/**
+		 * @returns {FyField}
+		 */
+		var threadNameField;
 		if (this.state !== FyConst.FY_TM_STATE_RUNNING
 				&& this.state !== FyConst.FY_TM_STATE_STOP_PENDING) {
 			throw new FyException(undefined,
@@ -491,6 +508,9 @@ var FyThreadManager;
 							this.nonDaemonRunned = true;
 						}
 						nextWakeUpTime = thread.nextWakeTime;
+//						console.log([ thread.threadId, nextWakeUpTime,
+//								Date.now(), thread.waitForLockId,
+//								thread.waitForNotifyId ]);
 						if (nextWakeUpTime > Date.now()) {
 							if (this.nextWakeUpTimeTotal > nextWakeUpTime) {
 								this.nextWakeUpTimeTotal = nextWakeUpTime;
@@ -505,7 +525,13 @@ var FyThreadManager;
 							if (lock.monitorOwnerId <= 0) {
 								lock.monitorOwnerId = thread.threadId;
 								lock.monitorOwnerTimes = thread.pendingLockCount;
+								thread.waitForLockId = 0;
 							} else {
+								if (lock.monitorOwnerId == thread.threadId) {
+									throw new FyException(undefined,
+											"Illegal monitorHolder for thread "
+													+ thread.threadId);
+								}
 								break;
 							}
 						}

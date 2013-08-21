@@ -138,21 +138,17 @@
 					ops--;
 					sp -= 3;
 					// 2[1]=0
-					if (stack[sp] !== 0
+					if (stack[sp + 2] !== 0
 							&& (!context.classLoader
 									.canCast(
-											heap
-													.getClassFromHandle(stack[sp + 2]),
-											heap
-													.getClassFromHandle(stack[sp + 0]).contentClass))) {
+											heap.getObject(stack[sp + 2]).clazz,
+											heap.getObject(stack[sp + 0]).clazz.contentClass))) {
 						throw new FyException(
 								FyConst.FY_EXCEPTION_STORE,
 								"Can't store "
-										+ heap
-												.getClassFromHandle(stack[sp + 2]).name
+										+ heap.getObject(stack[sp + 2]).clazz.name
 										+ " to "
-										+ heap
-												.getClassFromHandle(stack[sp + 0]).name);
+										+ heap.getObject(stack[sp + 0]).clazz.name);
 					}
 					heap.putArrayInt(stack[sp + 0], stack[sp + 1],
 							stack[sp + 2]);
@@ -572,16 +568,15 @@
 								FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, "Field "
 										+ tmpField.uniqueName + " is static");
 					}
-					switch (tmpField.descriptor.charCodeAt(0)) {
-					case FyConst.D:
-					case FyConst.J:
-						heap.getFieldRawLongTo(stack[sp - 1], tmpField.posAbs,
-								stack, sp - 1);
+					switch (tmpField.size) {
+					case 2:
+						heap.getFieldRawLongTo(stack[sp - 1],
+								tmpField.posAbs | 0, stack, sp - 1);
 						sp++;
 						break;
 					default:
-						stack[sp - 1] = heap.getFieldRaw(stack[sp - 1],
-								tmpField.posAbs);
+						heap.getFieldRawTo(stack[sp - 1], tmpField.posAbs | 0,
+								stack, sp - 1);
 						break;
 					}
 					// ###
@@ -618,16 +613,15 @@
 						}
 					}
 
-					switch (tmpField.descriptor.charCodeAt(0)) {
-					case FyConst.D:
-					case FyConst.J:
+					switch (tmpField.size) {
+					case 2:
 						heap.getStaticRawLongTo(tmpField.owner,
 								tmpField.posAbs, stack, sp);
 						sp += 2;
 						break;
 					default:
-						stack[sp] = heap.getStaticRaw(tmpField.owner,
-								tmpField.posAbs);
+						heap.getStaticRawTo(tmpField.owner,
+								tmpField.posAbs | 0, stack, sp | 0);
 						sp++;
 						break;
 					}
@@ -1254,9 +1248,9 @@
 					sp--;
 					thread.monitorEnter(stack[sp]);
 					if (thread.yield) {
-						ip = $ip;
-						ops = 0;
-						break __fy_outer;
+						// Local to frame
+						thread.localToFrame(sp, $ip, $ip + 1);
+						return 0;
 					}
 					// ###
 				case 167:
@@ -1265,9 +1259,9 @@
 					sp--;
 					thread.monitorExit(stack[sp]);
 					if (thread.yield) {
-						ip = $ip + 1;
-						ops = 0;
-						break __fy_outer;
+						// Local to frame
+						thread.localToFrame(sp, $ip, $ip + 1);
+						return 0;
 					}
 					// ###
 				case 168:
@@ -1370,7 +1364,7 @@
 					lip = $ip;
 					ops--;
 					tmpField = context
-							.lookupFieldVirtualFromConstant(constants[$1]);
+							.lookupFieldVirtualFromConstant(constants[$1 | 0]);
 					if (tmpField.accessFlags & FyConst.FY_ACC_STATIC) {
 						throw new FyException(
 								FyConst.FY_EXCEPTION_INCOMPAT_CHANGE, "Field "
@@ -1382,17 +1376,16 @@
 						throw new FyException(FyConst.FY_EXCEPTION_ACCESS,
 								"Field " + tmpField.uniqueName + " is final");
 					}
-					switch (tmpField.descriptor.charCodeAt(0)) {
-					case FyConst.D:
-					case FyConst.J:
+					switch (tmpField.size) {
+					case 2:
 						sp -= 3;
 						heap.putFieldRawLongFrom(stack[sp], tmpField.posAbs,
 								stack, sp + 1);
 						break;
 					default:
 						sp -= 2;
-						heap.putFieldRaw(stack[sp], tmpField.posAbs,
-								stack[sp + 1]);
+						heap.putFieldRawFrom(stack[sp], tmpField.posAbs, stack,
+								sp + 1);
 						break;
 					}
 					// ###
@@ -1434,17 +1427,16 @@
 						}
 					}
 
-					switch (tmpField.descriptor.charCodeAt(0)) {
-					case FyConst.D:
-					case FyConst.J:
+					switch (tmpField.size) {
+					case 2:
 						sp -= 2;
 						heap.putStaticRawLongFrom(tmpField.owner,
 								tmpField.posAbs, stack, sp);
 						break;
 					default:
 						sp--;
-						heap.putStaticRaw(tmpField.owner, tmpField.posAbs,
-								stack[sp]);
+						heap.putStaticRawFrom(tmpField.owner,
+								tmpField.posAbs | 0, stack, sp | 0);
 						break;
 					}
 					// ###

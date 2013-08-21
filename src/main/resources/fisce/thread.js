@@ -62,6 +62,7 @@ var FyThread;
 		 * @returns {__FyLongOps}
 		 */
 		this.longOps = FyPortable.getLongOps(this.realStack);
+		Object.preventExtensions(this);
 	};
 
 	/**
@@ -299,11 +300,12 @@ var FyThread;
 	};
 
 	FyThread.prototype.getExceptionHandlerIp = function(handle, ip) {
-
 		/**
 		 * @returns {FyMethod}
 		 */
 		var method = this.getCurrentMethod();
+		console.log("GetExceptionHandler ip: " + handle + " " + ip + " "
+				+ method.uniqueName);
 		for ( var i = 0, max = method.exceptionTable.length; i < max; i++) {
 			/**
 			 * @returns {FyExceptionHandler}
@@ -313,18 +315,22 @@ var FyThread;
 			 * @returns {FyObject}
 			 */
 			var obj = this.context.heap.objects[handle];
+			console.log("# " + handler.start + "-" + handler.end + "("
+					+ (handler.catchClass ? handler.catchClass.name : "*")
+					+ ")=>" + handler.handler + " " + obj.clazz.name);
 			if (ip >= handler.start && ip < handler.end) {
-				if (handler.catchClassData) {
+				if (handler.catchClass) {
 					/**
 					 * @returns {FyClass}
 					 */
-					var handlerClass = this.context
-							.lookupClassFromConstant(handler.catchClassData);
+					var handlerClass = handler.catchClass;
 					if (this.context.classLoader.canCast(obj.clazz,
 							handlerClass)) {
+						console.log("!!" + handler.handler);
 						return handler.handler;
 					}
 				} else {
+					console.log("!!" + handler.handler);
 					return handler.handler;
 				}
 			}
@@ -520,7 +526,7 @@ var FyThread;
 		this.pendingLockCount = 0;
 		this.destroyPending = false;
 		for ( var handle = 1; handle < FyConfig.maxObjects; handle++) {
-			obj = heap.getObject(handle);
+			obj = heap.objects[handle];
 			if (obj !== undefined && obj.monitorOwnerId === this.threadId) {
 				obj.monitorOwnerId = 0;
 				obj.monitorOwnerTimes = 0;
@@ -543,6 +549,10 @@ var FyThread;
 		var method;
 		var handlerIp;
 		while (ops > 0) {
+			if (this.framePos === this.STACK_SIZE) {
+				message.type = FyMessage.message_thread_dead;
+				return;
+			}
 			method = this.getCurrentMethod();
 			if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
 				throw new FyException(undefined, "Native method pushed");
@@ -550,18 +560,21 @@ var FyThread;
 			if (!method.invoke) {
 				FyAOTUtil.aot(method);
 			}
-			ops = method.invoke(this.context, this, ops);
 			if (this.currentThrowable) {
+				console
+						.log("!!!Exception occored: "
+								+ this.context.heap
+										.getObject(this.currentThrowable).clazz.name
+								+ " at thread #" + this.threadId);
 				while (true) {
 					method = this.getCurrentMethod();
 					handlerIp = this.getExceptionHandlerIp(
 							this.currentThrowable, this.getCurrentLastIp());
 					if (handlerIp >= 0) {
-						this.sp = this.getCurrentStackBase() + method.maxLocals
-								+ 1;
 						this.localToFrame(this.getCurrentStackBase()
 								+ method.maxLocals, handlerIp, handlerIp);
-						this.stack[this.sp - 1] = this.currentThrowable;
+						this.stack[this.sp] = this.currentThrowable;
+						this.sp++;
 						this.currentThrowable = 0;
 						break;
 					} else {
@@ -595,10 +608,7 @@ var FyThread;
 					}
 				}
 			}
-			if (this.framePos === this.STACK_SIZE) {
-				message.type = FyMessage.message_thread_dead;
-				return;
-			}
+			ops = method.invoke(this.context, this, ops);
 			if (this.yield) {
 				ops = 0;
 			}
