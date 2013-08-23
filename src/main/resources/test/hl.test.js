@@ -6,7 +6,9 @@
 			var context = fisceTests.context();
 			context.bootup(clazz);
 			var message = new FyMessage();
-			while (true) {
+			stop();
+			function testBody() {
+				start();
 				context.threadManager.run(message);
 				switch (message.type) {
 				case FyMessage.message_vm_dead:
@@ -20,15 +22,19 @@
 						throw new FyException(undefined, "Illegal sleep time: "
 								+ sleepTime);
 					}
-					while (Date.now() <= target) {
-						;
+					stop();
+					var delay = target - Date.now();
+					if (delay < 0) {
+						delay = 0;
 					}
+					setTimeout(testBody, delay);
 					break;
 				default:
 					throw new FyException(undefined, "Unknown message type: "
 							+ message.type);
 				}
 			}
+			setTimeout(testBody, 1);
 		};
 		fisceTests.extend(obj);
 		id++;
