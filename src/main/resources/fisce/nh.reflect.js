@@ -133,7 +133,7 @@
 				context.lookupClass(FyClassLoader
 						.getArrayName(FyConst.FY_BASE_CLASS)), max);
 		stack[sb] = handle;
-		for ( var i = 0; i < max; i++) {
+		for (var i = 0; i < max; i++) {
 			var name = method.exceptions[i];
 			context.heap.putArrayInt(handle, i, context
 					.getClassObjectHandle(context.lookupClass(name)));
@@ -203,7 +203,7 @@
 				context.lookupClass(FyClassLoader
 						.getArrayName(FyConst.FY_BASE_CLASS)), max);
 		stack[sb] = handle;
-		for ( var i = 0; i < max; i++) {
+		for (var i = 0; i < max; i++) {
 			var name = method.parameterClassNames[i];
 			context.heap.putArrayInt(handle, i, context
 					.getClassObjectHandle(context.lookupClass(name)));
@@ -265,31 +265,38 @@
 		if (!(method.accessFlags & FyConst.FY_ACC_STATIC)) {
 			stack[sp++] = stack[sb + 1];
 		}
-		for ( var i = 0; i < count; i++) {
+		for (var i = 0; i < count; i++) {
 			var paramType = context.lookupClass(method.parameterClassNames[i]);
 			var paramHandle = heap.getArrayInt(paramsHandle, i);
 			if (paramType.type === FyConst.TYPE_PRIMITIVE) {
 				// unwrap
 				switch (paramType.pType) {
-				case FyConst.Z:
-					stack[sp++] = heap.unwrapBoolean(paramHandle);
+				case 90/*FyConst.Z*/:
+					heap.unwrapBooleanTo(paramHandle, sp++);
 					break;
-				case FyConst.B:
-					stack[sp++] = heap.unwrapByte(paramHandle);
-				case FyConst.S:
-					stack[sp++] = heap.unwrapShort(paramHandle);
-				case FyConst.C:
-					stack[sp++] = heap.unwrapChar(paramHandle);
-				case FyConst.I:
-					stack[sp++] = heap.unwrapInt(paramHandle);
-				case FyConst.F:
-					stack[sp++] = heap.unwrapFloatRaw(paramHandle);
-				case FyConst.J:
-					heap.unwrapLong(paramHandle, stack, sp);
+				case 66/*FyConst.B*/:
+					heap.unwrapByteTo(paramHandle, sp++);
+					break;
+				case 83/*FyConst.S*/:
+					heap.unwrapShortTo(paramHandle, sp++);
+					break;
+				case 67/*FyConst.C*/:
+					heap.unwrapCharTo(paramHandle, sp++);
+					break;
+				case 73/*FyConst.I*/:
+					heap.unwrapIntTo(paramHandle, sp++);
+					break;
+				case 70/*FyConst.F*/:
+					heap.unwrapFloatTo(paramHandle, sp++);
+					break;
+				case 74/*FyConst.J*/:
+					heap.unwrapLongTo(paramHandle, sp);
 					sp += 2;
-				case FyConst.D:
-					heap.unwrapDoubleRaw(paramHandle, stack, sp);
+					break;
+				case 68/*FyConst.D*/:
+					heap.unwrapDoubleTo(paramHandle, sp);
 					sp += 2;
+					break;
 				default:
 					throw new FyException(FyConst.FY_EXCEPTION_ARGU,
 							"Illegal parameter type " + paramType.pType);
@@ -423,40 +430,46 @@
 		thread.nativeReturnInt(handle);
 		// FIXME: stack overflow check
 		// TODO optimize / cache class lookup
-		for ( var i = 0; i < count; i++) {
+		for (var i = 0; i < count; i++) {
 			var paramType = context.lookupClass(method.parameterClassNames[i]);
 			var paramHandle = heap.getArrayInt(paramsHandle, i);
 			if (paramType.type === FyConst.TYPE_PRIMITIVE) {
 				// unwrap
 				switch (paramType.pType) {
-				case FyConst.Z:
-					stack[sp++] = heap.unwrapBoolean(paramHandle);
+				case 90 /*FyConst.Z*/:
+					heap.unwrapBooleanTo(paramHandle, thread.sp++);
 					break;
-				case FyConst.B:
-					stack[sp++] = heap.unwrapByte(paramHandle);
-				case FyConst.S:
-					stack[sp++] = heap.unwrapShort(paramHandle);
-				case FyConst.C:
-					stack[sp++] = heap.unwrapChar(paramHandle);
-				case FyConst.I:
-					stack[sp++] = heap.unwrapInt(paramHandle);
-				case FyConst.F:
-					stack[sp++] = heap.unwrapFloatRaw(paramHandle);
-				case FyConst.J:
-					heap.unwrapLong(paramHandle, stack, sp);
-					sp += 2;
-				case FyConst.D:
-					heap.unwrapDoubleRaw(paramHandle, stack, sp);
-					sp += 2;
+				case 66/*FyConst.B*/:
+					heap.unwrapByteTo(paramHandle, thread.sp++);
+					break;
+				case 83/*FyConst.S*/:
+					heap.unwrapShortTo(paramHandle, thread.sp++);
+					break;
+				case 67/*FyConst.C*/:
+					heap.unwrapCharTo(paramHandle, thread.sp++);
+					break;
+				case 73/*FyConst.I*/:
+					heap.unwrapIntTo(paramHandle, thread.sp++);
+					break;
+				case 70/*FyConst.F*/:
+					heap.unwrapFloatTo(paramHandle, thread.sp++);
+					break;
+				case 74/*FyConst.J*/:
+					heap.unwrapLongTo(paramHandle, thread.sp);
+					thread.sp += 2;
+					break;
+				case 68/*FyConst.D*/:
+					heap.unwrapDoubleTo(paramHandle, thread.sp);
+					thread.sp += 2;
+					break;
 				default:
 					throw new FyException(FyConst.FY_EXCEPTION_ARGU,
 							"Illegal parameter type " + paramType.pType);
 				}
 			} else {
-				stack[sp++] = paramHandle;
+				stack[thread.sp++] = paramHandle;
 			}
 		}
-		thread.sp = sp;
 		return thread.invokeVirtual(method, ops - 1);
 	}
 
@@ -578,7 +591,7 @@
 						field.posAbs));
 			}
 		} else {
-			var type = heap.getObject(stack[sb + 1]).clazz;
+			var type = heap.getObjectClass(stack[sb + 1]);
 			if (!context.classLoader.canCast(type, field.owner)) {
 				throw new FyException(FyConst.FY_EXCEPTION_ARGU,
 						"Can't cast from " + type.name + " to "
@@ -590,98 +603,99 @@
 		return ops - 1;
 	}
 
-	function createFieldGetter(name, type) {
-		/**
-		 * @param {FyContext}
-		 *            context
-		 * @param {FyThread}
-		 *            thread
-		 * @param {Number}
-		 *            ops
-		 */
-		function getter(context, thread, ops) {
-			var heap = context.heap;
-			var stack = thread.stack;
-			var sb = thread.sp;
-			var field = context.getFieldFromFieldObject(stack[sb]);
-			if (field === undefined) {
-				throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
-						"Field not found!");
-			}
-			if (field.type.type !== FyConst.TYPE_PRIMITIVE
-					|| field.type.pType !== type) {
-				throw new FyException(FyConst.FY_EXCEPTION_ARGU, "Field "
-						+ field.uniqueName + " is not " + name + " typed");
-			}
-			if (field.accessFlags & FyConst.FY_ACC_STATIC) {
-				thread.nativeReturnInt(heap.getStaticRaw(field.type,
-						field.posAbs));
-			} else {
-				var type = heap.getObject(stack[sb + 1]).clazz;
-				if (!context.classLoader.canCast(type, field.owner)) {
-					throw new FyException(FyConst.FY_EXCEPTION_ARGU,
-							"Can't cast from " + type.name + " to "
-									+ field.owner.name);
-				}
-				thread.nativeReturnInt(heap.getFieldRaw(stack[sb + 1],
-						field.posAbs));
-			}
-			return ops - 1;
+	/**
+	 * @param {String}
+	 *            name
+	 * @param {Number}
+	 *            type
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function getter(name, type, context, thread, ops) {
+		var heap = context.heap;
+		var stack = thread.stack;
+		var sb = thread.sp;
+		var field = context.getFieldFromFieldObject(stack[sb]);
+		if (field === undefined) {
+			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+					"Field not found!");
 		}
-		;
-		return getter;
+		if (field.type.type !== FyConst.TYPE_PRIMITIVE
+				|| field.type.pType !== type) {
+			throw new FyException(FyConst.FY_EXCEPTION_ARGU, "Field "
+					+ field.uniqueName + " is not " + name + " typed");
+		}
+		if (field.accessFlags & FyConst.FY_ACC_STATIC) {
+			heap.getStaticRaw32To(field.owner, field.posAbs, thread.sp);
+			thread.nativeReturn(1);
+		} else {
+			var type = heap.getObjectClass(stack[sb + 1]);
+			if (!context.classLoader.canCast(type, field.owner)) {
+				throw new FyException(FyConst.FY_EXCEPTION_ARGU,
+						"Can't cast from " + type.name + " to "
+								+ field.owner.name);
+			}
+
+			heap.getFieldRaw32To(stack[sb + 1], field.posAbs, thread.sp);
+			thread.nativeReturn(1);
+		}
+		return ops - 1;
+	}
+	/**
+	 * 
+	 * @param {String}
+	 *            name
+	 * @param {Number}
+	 *            type
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function getterW(name, type, context, thread, ops) {
+		var heap = context.heap;
+		var stack = thread.stack;
+		var sb = thread.sp;
+		var field = context.getFieldFromFieldObject(stack[sb]);
+		if (field === undefined) {
+			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+					"Field not found!");
+		}
+		if (field.type.type !== FyConst.TYPE_PRIMITIVE
+				|| field.type.pType !== type) {
+			throw new FyException(FyConst.FY_EXCEPTION_ARGU, "Field "
+					+ field.uniqueName + " is not " + name + " typed");
+		}
+		if (field.accessFlags & FyConst.FY_ACC_STATIC) {
+			heap.getStaticRaw64To(field.owner, field.posAbs, sb);
+			thread.nativeReturn(2);
+		} else {
+			var type = heap.getObjectClass(stack[sb + 1]);
+			if (!context.classLoader.canCast(type, field.owner)) {
+				throw new FyException(FyConst.FY_EXCEPTION_ARGU,
+						"Can't cast from " + type.name + " to "
+								+ field.owner.name);
+			}
+			heap.getFieldRaw64To(stack[sb + 1], field.posAbs, sb);
+			thread.nativeReturn(2);
+		}
+		return ops - 1;
 	}
 
-	function createFieldGetterWide(name, type) {
-		/**
-		 * @param {FyContext}
-		 *            context
-		 * @param {FyThread}
-		 *            thread
-		 * @param {Number}
-		 *            ops
-		 */
-		function getter(context, thread, ops) {
-			var heap = context.heap;
-			var stack = thread.stack;
-			var sb = thread.sp;
-			var field = context.getFieldFromFieldObject(stack[sb]);
-			if (field === undefined) {
-				throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
-						"Field not found!");
-			}
-			if (field.type.type !== FyConst.TYPE_PRIMITIVE
-					|| field.type.pType !== type) {
-				throw new FyException(FyConst.FY_EXCEPTION_ARGU, "Field "
-						+ field.uniqueName + " is not " + name + " typed");
-			}
-			if (field.accessFlags & FyConst.FY_ACC_STATIC) {
-				heap.getStaticRawLongTo(field.type, field.posAbs, stack, sb);
-				thread.nativeReturn(2);
-			} else {
-				var type = heap.getObject(stack[sb + 1]).clazz;
-				if (!context.classLoader.canCast(type, field.owner)) {
-					throw new FyException(FyConst.FY_EXCEPTION_ARGU,
-							"Can't cast from " + type.name + " to "
-									+ field.owner.name);
-				}
-				heap.getFieldRawLongTo(stack[sb + 1], field.posAbs, stack, sb);
-				thread.nativeReturn(2);
-			}
-			return ops - 1;
-		}
-		;
-		return getter;
-	}
-
-	var fieldGetBoolean = createFieldGetter("boolean", FyConst.Z);
-	var fieldGetByte = createFieldGetter("byte", FyConst.B);
-	var fieldGetShort = createFieldGetter("short", FyConst.S);
-	var fieldGetChar = createFieldGetter("char", FyConst.C);
-	var fieldGetInt = createFieldGetter("int", FyConst.I);
-	var fieldGetFloat = createFieldGetter("float", FyConst.F);
-	var fieldGetLong = createFieldGetterWide("long", FyConst.J);
-	var fieldGetDouble = createFieldGetterWide("double", FyConst.D);
+	var fieldGetBoolean = getter.bind(undefined, "boolean", FyConst.Z);
+	var fieldGetByte = getter.bind(undefined, "byte", FyConst.B);
+	var fieldGetShort = getter.bind(undefined, "short", FyConst.S);
+	var fieldGetChar = getter.bind(undefined, "char", FyConst.C);
+	var fieldGetInt = getter.bind(undefined, "int", FyConst.I);
+	var fieldGetFloat = getter.bind(undefined, "float", FyConst.F);
+	var fieldGetLong = getterW.bind(undefined, "long", FyConst.J);
+	var fieldGetDouble = getterW.bind(undefined, "double", FyConst.D);
 
 	/**
 	 * @param {FyContext}
@@ -812,9 +826,9 @@
 					"Field " + field.uniqueName + " is primitive");
 		}
 		if (field.accessFlags & FyConst.FY_ACC_STATIC) {
-			heap.putStaticInt(field.type, field.posAbs, stack[sb + 2]);
+			heap.putStaticRaw32From(field.owner, field.posAbs, sb + 2);
 		} else {
-			heap.putFieldInt(stack[sb + 1], field.posAbs, stack[sb + 2]);
+			heap.putFieldRaw32From(stack[sb + 1], field.posAbs, sb + 2);
 		}
 		return ops - 1;
 	}
@@ -840,12 +854,11 @@
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Field " + field.uniqueName + " is primitive");
 		}
+
 		if (field.accessFlags & FyConst.FY_ACC_STATIC) {
-			heap.putStaticRawLongFrom(field.type, field.posAbs, stack, sb + 2);
+			heap.putStaticRaw64From(field.owner, field.posAbs, sb + 2);
 		} else {
-			heap
-					.putFieldRawLongFrom(stack[sb + 1], field.posAbs, stack,
-							sb + 2);
+			heap.putFieldRaw64From(stack[sb + 1], field.posAbs, sb + 2);
 		}
 		return ops - 1;
 	}
@@ -942,8 +955,8 @@
 		var handle = stack[sb] = heap.allocateArray(
 				context.lookupClass(FyClassLoader
 						.getArrayName(FyConst.FY_BASE_OBJECT)), count);
-		for ( var i = 0; i < count; i++) {
-			heap.putArrayRaw(handle, i, context
+		for (var i = 0; i < count; i++) {
+			heap.putArrayInt(handle, i, context
 					.getMethodObjectHandle(clazz.methods[i]));
 		}
 		thread.nativeReturn(1);
@@ -964,10 +977,11 @@
 		var clazz = context.getClassFromClassObject(stack[sb]);
 		var heap = context.heap;
 		var count = clazz.fields.length;
-		var handle = stack[sb] = heap.allocateArray(FyClassLoader
-				.getArrayName(FyConst.FY_BASE_OBJECT), count);
-		for ( var i = 0; i < count; i++) {
-			heap.putArrayRaw(handle, i, context
+		var handle = stack[sb] = heap.allocateArray(
+				context.lookupClass(FyClassLoader
+						.getArrayName(FyConst.FY_BASE_OBJECT)), count);
+		for (var i = 0; i < count; i++) {
+			heap.putArrayInt(handle, i, context
 					.getFieldObjectHandle(clazz.fields[i]));
 		}
 		thread.nativeReturn(1);
@@ -1044,9 +1058,11 @@
 		var clazz = context.getClassFromClassObject(stack[sb]);
 		var handle = context.heap.allocate(clazz);
 		thread.nativeReturnInt(handle);
-		stack[thread.sp++] = handle;
+		stack[thread.sp] = handle;
+		// return thread.invokeVirtual(context.lookupMethodVirtual(clazz,
+		// FyConst.FY_METHODF_INIT), ops);
 		return thread.pushMethod(context.lookupMethodVirtual(clazz,
-				FyConst.FY_METHOD_INIT + ".()V"), ops);
+				FyConst.FY_METHODF_INIT), ops);
 	}
 
 	/**
@@ -1061,7 +1077,7 @@
 		var stack = thread.stack;
 		var sb = thread.sp;
 		var clazz = context.getClassFromClassObject(stack[sb]);
-		var objClazz = context.heap.getObject(stack[sb + 1]).clazz;
+		var objClazz = context.heap.getObjectClass(stack[sb + 1]);
 		thread.nativeReturnInt(context.classLoader.canCast(objClazz, clazz) ? 1
 				: 0);
 		return ops - 1;
@@ -1169,7 +1185,7 @@
 				+ ";");
 		stack[sb] = context.heap.allocateArray(classArrayClazz,
 				clazz.interfaces.length);
-		for ( var i = 0, max = clazz.interfaces.length; i < max; i++) {
+		for (var i = 0, max = clazz.interfaces.length; i < max; i++) {
 			var intf = context.getClassObjectHandle(clazz.interfaces[i]);
 			context.heap.putArrayInt(stack[sb], i, intf);
 		}
@@ -1245,12 +1261,13 @@
 		var name = clazz.name;
 		var len = heap.arrayLength(stack[sb + 1]);
 		var sizes = new Array(len);
-		for ( var i = 0; i < len; i++) {
+		for (var i = 0; i < len; i++) {
 			name = FyClassLoader.getArrayName(name);
 			sizes[i] = heap.getArrayInt(stack[sb + 1], i);
 		}
-		thread.nativeReturnInt(heap.multiNewArray(context
-				.lookupArrayClass(clazz), len, sizes, 0));
+		// context.lookupArrayClass(clazz) is wrong here...
+		thread.nativeReturnInt(heap.multiNewArray(context.lookupClass(name),
+				len, sizes, 0));
 		return ops - 5;
 	}
 
@@ -1270,9 +1287,9 @@
 		FyContext.registerStaticNH(FyConst.FY_BASE_CLASS
 				+ ".getComponentType.()L" + FyConst.FY_BASE_CLASS + ";",
 				classGetComponentType);
-		FyContext.registerStaticNH(FyConst.FY_BASE_CLASS + ".forName0.(L"
-				+ FyConst.FY_BASE_STRING + ";Z)L" + FyConst.FY_BASE_CLASS + ";",
-				classForName);
+		FyContext.registerStaticNH(
+				FyConst.FY_BASE_CLASS + ".forName0.(L" + FyConst.FY_BASE_STRING
+						+ ";Z)L" + FyConst.FY_BASE_CLASS + ";", classForName);
 		FyContext.registerStaticNH(FyConst.FY_BASE_CLASS + ".newInstance0.()L"
 				+ FyConst.FY_BASE_OBJECT + ";", classNewInstanceO);
 		FyContext.registerStaticNH(FyConst.FY_BASE_CLASS + ".isInstance.(L"

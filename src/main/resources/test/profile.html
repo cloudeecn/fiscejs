@@ -1,0 +1,137 @@
+<html>
+<head>
+<meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+
+<script type="text/javascript" src="../fisce/fisce.gzjs"></script>
+<script type="text/javascript" src="../js/jquery-1.10.2.minjs"></script>
+
+<script type="text/javascript">
+	if (window.console) {
+		window.oldConsole = window.console;
+	} else {
+		window = oldConsole = {
+			log : function() {
+			}
+		}
+	}
+	window.console = {
+		log : function(param) {
+			$("#console").append(document.createTextNode(param));
+			$("#console").append("\n");
+			window.oldConsole.log.apply(window.oldConsole, arguments);
+		}
+	}
+
+	var tests = [];
+
+	$(document).ready(function($) {
+		var targets = {
+			"../fisce/rt.gzjson" : 1
+		};
+
+		var datas = {};
+
+		function checkTargets() {
+			"use strict";
+			
+			function Exec(context){
+				this.context=context;
+				this.message=new FyMessage();
+				this.fun=function(){
+					try {
+						context.threadManager.run(this.message);
+					} catch (e) {
+						console.log("##HL "+clazz+" end with exception");
+						throw e;
+					}
+					switch (this.message.type) {
+					case FyMessage.message_vm_dead:
+						console.log("##HL "+clazz+" end");
+						return;
+					case FyMessage.message_sleep:
+						var target = performance.now() + Number(this.message.sleepTime);
+						if (target !== target) {
+							// Nan
+							throw new FyException(undefined, "Illegal sleep time: "
+									+ sleepTime);
+						}
+						var delay = target - performance.now();
+						if (delay < 0) {
+							delay = 0;
+						}
+						if (delay > 0) {
+							console.log("sleep " + delay + "ms");
+							setTimeout(this.f2, delay);
+						} else {
+							this.fun();
+						}
+						break;
+					default:
+						console.log("##HL "+clazz+" end with exception");
+						throw new FyException(undefined, "Unknown message type: "
+								+ message.type);
+					}
+				};
+				this.f2=this.fun.bind(this);
+			};
+			
+			var done = true;
+			for ( var target in targets) {
+				console.log("##Checking " + target);
+				if (targets[target]) {
+					console.log("##Checking " + target + "... wait");
+					done = false;
+					break;
+				} else {
+					console.log("##Checking " + target + "... done");
+				}
+			}
+			if (done) {
+				var clazz="com/cirnoworks/fisce/privat/Profile";
+				var context = new FyContext();
+				for ( var idx in datas) {
+					var data=JSON.parse(datas[idx]);
+					context.addClassDef(data);
+				}
+				context
+						.registerNativeHandler(
+								"EXCLUDE/fisce/test/TestService.fail0.(Ljava/lang/String;)V",
+								function(context, thread, ops) {
+									throw new FyException(
+											"java/lang/Error",
+											"Test failed: "
+													+ context.heap
+															.getString(thread.stack[thread.sp]));
+									return 0;
+								});
+				context.bootup(clazz);
+				
+				
+				var exec=new Exec(context);
+				setTimeout(exec.f2, 1);
+			}
+		}
+		
+		for ( var target in targets) {
+			(function(t) {
+				$.ajax({
+					url : target,
+					dataType : "text",
+					success : function(data) {
+						targets[t] = 0;
+						datas[t] = data;
+						checkTargets();
+					},
+					fail : function() {
+						targets[t] = 2;
+					}
+				});
+			})(target);
+		}
+	});
+</script>
+</head>
+<body>
+	<pre id="console"></pre>
+</body>
+</html>

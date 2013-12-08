@@ -58,7 +58,7 @@
 					equal(methodHashMapGet, context
 							.lookupMethodVirtualByMethod(classHashMap,
 									methodMapGet));
-					equal(1, sizeOf(classHashMap.virtualTable));
+					equal(1, classHashMap.virtualTable.size);
 					equal(methodHashMapGet, context
 							.lookupMethodVirtualByMethod(classHashMap,
 									methodMapGet));
@@ -66,7 +66,7 @@
 					equal(methodHashMapGet, context
 							.lookupMethodVirtualByMethod(classHashMap,
 									methodAbstractMapGet));
-					equal(2, sizeOf(classHashMap.virtualTable));
+					equal(2, classHashMap.virtualTable.size);
 					equal(methodHashMapGet, context
 							.lookupMethodVirtualByMethod(classHashMap,
 									methodAbstractMapGet));
@@ -74,7 +74,7 @@
 					equal(methodIdentityHashMapGet, context
 							.lookupMethodVirtualByMethod(classIdentityHashMap,
 									methodMapGet));
-					equal(1, sizeOf(classIdentityHashMap.virtualTable));
+					equal(1, classIdentityHashMap.virtualTable.size);
 					equal(methodIdentityHashMapGet, context
 							.lookupMethodVirtualByMethod(classIdentityHashMap,
 									methodMapGet));
@@ -82,7 +82,7 @@
 					equal(methodIdentityHashMapGet, context
 							.lookupMethodVirtualByMethod(classIdentityHashMap,
 									methodAbstractMapGet));
-					equal(2, sizeOf(classIdentityHashMap.virtualTable));
+					equal(2, classIdentityHashMap.virtualTable.size);
 					equal(methodIdentityHashMapGet, context
 							.lookupMethodVirtualByMethod(classIdentityHashMap,
 									methodAbstractMapGet));
@@ -97,8 +97,8 @@
 							.lookupMethodVirtualFromConstant(constant);
 
 					ok(constant.resolvedMethod);
-					ok(!constant.className);
-					ok(!constant.nameAndType);
+					//ok(!constant.className);
+					//ok(!constant.nameAndType);
 
 					ok(methodJspTagMethod1);
 
@@ -112,8 +112,8 @@
 					var methodIterationTagMethod1 = context
 							.lookupMethodVirtualFromConstant(constant);
 					ok(constant.resolvedMethod);
-					ok(!constant.className);
-					ok(!constant.nameAndType);
+//					ok(!constant.className);
+//					ok(!constant.nameAndType);
 					ok(methodIterationTagMethod1);
 
 					equal(methodJspTagMethod1, methodIterationTagMethod1);
@@ -125,8 +125,8 @@
 					var methodAbstractTestTagMethod1 = context
 							.lookupMethodVirtualFromConstant(constant);
 					ok(constant.resolvedMethod);
-					ok(!constant.className);
-					ok(!constant.nameAndType);
+//					ok(!constant.className);
+//					ok(!constant.nameAndType);
 					ok(methodAbstractTestTagMethod1);
 
 					equal(methodJspTagMethod1, methodAbstractTestTagMethod1);
@@ -146,8 +146,8 @@
 					var fieldIterationTagStatic1 = context
 							.lookupFieldVirtualFromConstant(constant);
 					ok(constant.resolvedField);
-					ok(!constant.className);
-					ok(!constant.nameAndType);
+//					ok(!constant.className);
+//					ok(!constant.nameAndType);
 					ok(fieldIterationTagStatic1);
 					equal(fieldIterationTagStatic1, context
 							.lookupFieldVirtualFromConstant(constant));
@@ -159,8 +159,8 @@
 					var fieldJspTagStatic1 = context
 							.lookupFieldVirtualFromConstant(constant);
 					ok(constant.resolvedField);
-					ok(!constant.className);
-					ok(!constant.nameAndType);
+//					ok(!constant.className);
+//					ok(!constant.nameAndType);
 					ok(fieldJspTagStatic1);
 					equal(fieldJspTagStatic1, context
 							.lookupFieldVirtualFromConstant(constant));

@@ -12,13 +12,13 @@
 	var rightH = 0 | 0;
 	var rightL = 0 | 0;
 	var pos = 0 | 0;
-	for ( var leftHPos = 0; leftHPos < len; leftHPos++) {
+	for (var leftHPos = 0; leftHPos < len; leftHPos++) {
 		leftH = data[leftHPos];
-		for ( var leftLPos = 0; leftLPos < len; leftLPos++) {
+		for (var leftLPos = 0; leftLPos < len; leftLPos++) {
 			leftL = data[leftLPos];
-			for ( var rightHPos = 0; rightHPos < len; rightHPos++) {
+			for (var rightHPos = 0; rightHPos < len; rightHPos++) {
 				rightH = data[rightHPos];
-				for ( var rightLPos = 0; rightLPos < len; rightLPos++) {
+				for (var rightLPos = 0; rightLPos < len; rightLPos++) {
 					rightL = data[rightLPos];
 					pos = leftHPos * len * len * len + leftLPos * len * len
 							+ rightHPos * len + rightLPos;
@@ -34,7 +34,7 @@
 	var stack = new Int32Array(65536);
 
 	function testLong(op, mode) {
-		var lop = FyCreateLongOps(window, mode, stack);
+		var lop = FyCreateLongOps(window, mode, stack, 0);
 		var resultData = eval("FyLongTestData_" + op);
 
 		var pos = 0 | 0;
@@ -66,7 +66,7 @@
 		"   Long ops" : function() {
 			for ( var opid in ops) {
 				var op = ops[opid];
-				for ( var mode = 0; mode < 3; mode++) {
+				for (var mode = 0; mode < 3; mode++) {
 					testLong(op, mode);
 				}
 			}
@@ -81,7 +81,7 @@
 			var begin, end, time;
 
 			begin = performance.now();
-			for ( var i = 0; i < times * vlen; i++) {
+			for (var i = 0; i < times * vlen; i++) {
 				stack[1] = stack[2] + stack[3];
 				stack[1] = stack[2] + stack[3];
 				stack[1] = stack[2] + stack[3];
@@ -99,7 +99,7 @@
 					+ intValue);
 
 			begin = performance.now();
-			for ( var i = 0; i < times * vlen; i++) {
+			for (var i = 0; i < times * vlen; i++) {
 				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack, 2)
 						+ FyPortable.ieee64ToDouble(stack, 4), stack, 6);
 				FyPortable.doubleToIeee64(FyPortable.ieee64ToDouble(stack, 2)
@@ -127,7 +127,7 @@
 					+ doubleValue);
 
 			begin = performance.now();
-			for ( var i = 0; i < times * vlen; i++) {
+			for (var i = 0; i < times * vlen; i++) {
 				stack[2] = FyPortable.floatToIeee32(FyPortable
 						.ieee32ToFloat(stack[0])
 						+ FyPortable.ieee32ToFloat(stack[1]));
@@ -164,8 +164,8 @@
 			ok(true, times * vlen * 10 + " floats adds costs " + time + "ms "
 					+ doubleValue);
 
-			for ( var mode = 0; mode < 3; mode++) {
-				var lop = FyCreateLongOps(window, mode, stack);
+			for (var mode = 0; mode < 3; mode++) {
+				var lop = FyCreateLongOps(window, mode, stack, 0);
 				for ( var opid in ops) {
 					var op = ops[opid];
 					var lopop = lop[op];
@@ -179,7 +179,7 @@
 						stack[19] = values[(pos << 2) + 2];
 						stack[20] = values[(pos << 2) + 3];
 
-						for ( var i = 0; i < times; i++) {
+						for (var i = 0; i < times; i++) {
 							lopop.call(lop, 17, 19);
 							lopop.call(lop, 17, 19);
 							lopop.call(lop, 17, 19);

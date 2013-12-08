@@ -24,8 +24,12 @@
 
 						handle = heap.allocateArray(context
 								.lookupClass(arrayName), length);
-						equal(length, heap.arrayLength(handle), type
-								+ "[] length");
+						if (length = heap.arrayLength(handle)) {
+							ok(true, type + "[] length=" + length);
+						} else {
+							ok(false, type + "[] length="
+									+ heap.arrayLength(handle) + "/" + length);
+						}
 						for (i = 0; i < length; i++) {
 							setter.call(heap, handle, i, eval(func));
 						}
@@ -88,7 +92,8 @@
 					test("char", "((i*0x101)&0xffff)");
 
 					test("int", "((i&1)?1:-1)*((i*0x1010101)&0x7fffffff)");
-					test("float",
+					test(
+							"float",
 							"FyPortable.ieee32ToFloat(FyPortable.floatToIeee32(((i&1)?1:-1)*i*1.234*1000000))");
 
 					test("double", "((i&1)?1:-1)*i*1.234*1000000");
@@ -150,9 +155,8 @@
 									+ data[i * 2] + "," + data[i * 2 + 1] + "]");
 						}
 
-						handle3 = heap.allocateArray(context
-								.lookupClass("[J"), heap
-								.arrayLength(handle) + 10);
+						handle3 = heap.allocateArray(context.lookupClass("[J"),
+								heap.arrayLength(handle) + 10);
 						heap.arrayCopy(handle, 1, handle3, 6, heap
 								.arrayLength(handle) - 1);
 						for (i = 1; i < length; i++) {
@@ -221,33 +225,36 @@
 					heap.putFieldShort(handle, shortField.posAbs, -5566);
 
 					heap.putFieldInt(handle, intField.posAbs, 0x12345678);
-					heap.putFieldFloat(handle, floatField, 8.75766E10);
+					heap.putFieldFloat(handle, floatField.posAbs, 8.75766E10);
 
 					heap.putFieldLongFrom(handle, longField.posAbs, [ 0,
 							0x12345678, 0x90abcdef ], 1);
 					heap.putFieldDouble(handle, doubleField.posAbs,
 							1.2345678901E98);
 
+					var pos = heap.allocatePerm(2);
+
 					equal(true, heap.getFieldBoolean(handle,
 							booleanField.posAbs), "boolean field operation");
-					equal(1, heap.getFieldRaw(handle, booleanField.posAbs),
-							"boolean field raw operation");
+					heap.getFieldRaw32To(handle, booleanField.posAbs, pos);
+					equal(1, heap.get32(pos), "boolean field raw operation");
 
 					equal(-3, heap.getFieldByte(handle, byteField.posAbs),
 							"byte field operation");
-					equal(-3 & 0xff,
-							heap.getFieldRaw(handle, byteField.posAbs),
+					heap.getFieldRaw32To(handle, byteField.posAbs, pos);
+					equal(-3 & 0xff, heap.get32(pos),
 							"byte field raw operation");
 
 					equal(0x5678, heap.getFieldChar(handle, charField.posAbs),
 							"char field operation");
-					equal(0x5678, heap.getFieldRaw(handle, charField.posAbs),
-							"char field raw operation");
+					heap.getFieldRaw32To(handle, charField.posAbs, pos);
+					equal(0x5678, heap.get32(pos), "char field raw operation");
 
 					equal(-5566, heap.getFieldShort(handle, shortField.posAbs),
 							"short field operation");
-					equal(-5566 & 0xffff, heap.getFieldRaw(handle,
-							shortField.posAbs), "short field raw operation");
+					heap.getFieldRaw32To(handle, shortField.posAbs, pos);
+					equal(-5566 & 0xffff, heap.get32(pos),
+							"short field raw operation");
 
 					var longPair = [ 0, 0, 0 ];
 					var longResult = heap.getFieldLongTo(handle,
@@ -271,24 +278,26 @@
 							"Cloned object has different handles");
 					equal(true, heap.getFieldBoolean(handle2,
 							booleanField.posAbs), "boolean field operation");
-					equal(1, heap.getFieldRaw(handle2, booleanField.posAbs),
-							"boolean field raw operation");
+					heap.getFieldRaw32To(handle2, booleanField.posAbs, pos);
+					equal(1, heap.get32(pos), "boolean field raw operation");
 
 					equal(-3, heap.getFieldByte(handle2, byteField.posAbs),
 							"byte field operation");
-					equal(-3 & 0xff,
-							heap.getFieldRaw(handle2, byteField.posAbs),
+					heap.getFieldRaw32To(handle2, byteField.posAbs, pos);
+					equal(-3 & 0xff, heap.get32(pos),
 							"byte field raw operation");
 
 					equal(0x5678, heap.getFieldChar(handle2, charField.posAbs),
 							"char field operation");
-					equal(0x5678, heap.getFieldRaw(handle2, charField.posAbs),
-							"char field raw operation");
+					heap.getFieldRaw32To(handle2, charField.posAbs, pos);
+					equal(0x5678, heap.get32(pos), "char field raw operation");
 
-					equal(-5566, heap.getFieldShort(handle2, shortField.posAbs),
+					equal(-5566,
+							heap.getFieldShort(handle2, shortField.posAbs),
 							"short field operation");
-					equal(-5566 & 0xffff, heap.getFieldRaw(handle2,
-							shortField.posAbs), "short field raw operation");
+					heap.getFieldRaw32To(handle2, shortField.posAbs, pos);
+					equal(-5566 & 0xffff, heap.get32(pos),
+							"short field raw operation");
 
 					var longPair = [ 0, 0, 0 ];
 					var longResult = heap.getFieldLongTo(handle2,
@@ -300,11 +309,11 @@
 					equal(1.2345678901E98, heap.getFieldDouble(handle2,
 							doubleField.posAbs), "double value");
 					ok(
-							heap.getFieldLongTo(handle2, doubleField.posAbs, [],
-									1)[1], "double raw value high");
+							heap.getFieldLongTo(handle2, doubleField.posAbs,
+									[], 1)[1], "double raw value high");
 					ok(
-							heap.getFieldLongTo(handle2, doubleField.posAbs, [],
-									1)[2], "double raw value low");
+							heap.getFieldLongTo(handle2, doubleField.posAbs,
+									[], 1)[2], "double raw value low");
 
 				},
 				"   Heap.static" : function() {
@@ -344,6 +353,9 @@
 					ok(longStatic, "long static loaded");
 					ok(doubleStatic, "double static loaded");
 
+					// allocat 2 dwords for tmp var
+					var pos = heap.allocatePerm(2);
+
 					heap.putStaticBoolean(booleanStatic.owner,
 							booleanStatic.posAbs, true);
 					heap.putStaticByte(byteStatic.owner, byteStatic.posAbs, -3);
@@ -355,33 +367,56 @@
 
 					heap.putStaticInt(intStatic.owner, intStatic.posAbs,
 							0x12345678);
-					heap.putStaticFloat(clazz, floatStatic, 8.75766E10);
+					heap.putStaticFloat(floatStatic.owner, floatStatic.posAbs,
+							8.75766E10);
 
 					heap.putStaticLongFrom(longStatic.owner, longStatic.posAbs,
 							[ 0, 0x12345678, 0x90abcdef ], 1);
 					heap.putStaticDouble(doubleStatic.owner,
 							doubleStatic.posAbs, 1.2345678901E98);
 
-					equal(true, heap.getStaticBoolean(clazz,
+					var fields = [ booleanStatic, byteStatic, shortStatic,
+							charStatic, intStatic, floatStatic ];
+
+					for ( var idx in fields) {
+						var f = fields[idx];
+						heap.getStaticRaw32To(f.owner, f.posAbs, pos);
+						console.log(f.owner.name + "(" + f.owner.staticPos
+								+ ")[" + f.posAbs + "]=" + heap.get32(pos)
+								+ "(" + f.type.name + ")");
+					}
+					fields = [ longStatic, doubleStatic ];
+					for ( var idx in fields) {
+						var f = fields[idx];
+						heap.getStaticRaw64To(f.owner, f.posAbs, pos);
+						console.log(f.owner.name + "(" + f.owner.staticPos
+								+ ")[" + f.posAbs + "]=" + "["
+								+ heap.get32(pos) + ", " + heap.get32(pos + 1)
+								+ "]" + "(" + f.type.name + ")");
+					}
+					equal(true, heap.getStaticBoolean(booleanStatic.owner,
 							booleanStatic.posAbs), "boolean static operation");
-					equal(1, heap.getStaticRaw(booleanStatic.owner,
-							booleanStatic.posAbs),
-							"boolean static raw operation");
+					heap.getStaticRaw32To(booleanStatic.owner,
+							booleanStatic.posAbs, pos);
+					equal(1, heap.get32(pos), "boolean static raw operation");
 
 					equal(-3, heap.getStaticByte(byteStatic.owner,
 							byteStatic.posAbs), "byte static operation");
-					equal(-3 & 0xff, heap.getStaticRaw(byteStatic.owner,
-							byteStatic.posAbs), "byte static raw operation");
+					heap.getStaticRaw32To(byteStatic.owner, byteStatic.posAbs, pos);
+					equal(-3 & 0xff, heap.get32(pos),
+							"byte static raw operation");
 
 					equal(0x5678, heap.getStaticChar(charStatic.owner,
 							charStatic.posAbs), "char static operation");
-					equal(0x5678, heap.getStaticRaw(charStatic.owner,
-							charStatic.posAbs), "char static raw operation");
+					heap.getStaticRaw32To(charStatic.owner, charStatic.posAbs, pos);
+					equal(0x5678, heap.get32(pos), "char static raw operation");
 
 					equal(-5566, heap.getStaticShort(shortStatic.owner,
 							shortStatic.posAbs), "short static operation");
-					equal(-5566 & 0xffff, heap.getStaticRaw(shortStatic.owner,
-							shortStatic.posAbs), "short static raw operation");
+					heap.getStaticRaw32To(shortStatic.owner, shortStatic.posAbs,
+							pos);
+					equal(-5566 & 0xffff, heap.get32(pos),
+							"short static raw operation");
 
 					var longPair = [ 0, 0, 0 ];
 					var longResult = heap.getStaticLongTo(longStatic.owner,
@@ -405,7 +440,8 @@
 					var heap = context.heap;
 
 					var str = "asdfghjkl";
-					var handle = heap.allocate(context.lookupClass(FyConst.FY_BASE_STRING));
+					var handle = heap.allocate(context
+							.lookupClass(FyConst.FY_BASE_STRING));
 					heap.fillString(handle, str);
 					ok(handle, "String made handle=" + handle);
 					equal(heap.getString(handle), str, "String got");

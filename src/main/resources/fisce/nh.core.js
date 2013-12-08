@@ -33,7 +33,7 @@
 		var level = stack[sb];
 		var content = context.heap.getString(stack[sb + 1]);
 		context.log(level, content);
-		thread.nativeReturn();
+
 		return ops - 1;
 	}
 
@@ -50,7 +50,7 @@
 		var sb = thread.sp;
 		thread.currentThrowable = stack[sb];
 		context.panic("Explicted FiScEVM.throwOut called");
-		thread.nativeReturn();
+
 		return ops - 1;
 	}
 
@@ -67,7 +67,7 @@
 		var sb = thread.sp;
 		// TODO
 		context.panic("Exited with code: " + stack[sb]);
-		thread.nativeReturn();
+
 		return ops - 1;
 	}
 
@@ -104,7 +104,7 @@
 			i--;
 			context.heap.putArrayChar(resultHandle, i, resultArr[i]);
 		}
-//		console.log([ "decode", arr, resultArr ]);
+		// console.log([ "decode", arr, resultArr ]);
 		thread.nativeReturnInt(resultHandle);
 		return ops - len;
 	}
@@ -126,18 +126,18 @@
 		var len = stack[sb + 3];
 		var resultPos = 0;
 		var resultArr = new Array(len * 3);
-		for ( var i = 0; i < len; i++) {
+		for (var i = 0; i < len; i++) {
 			resultPos += FyUtils.utf8Encode(context.heap.getArrayChar(src, i
 					+ ofs), resultArr, resultPos);
-//			console.log([ "encode#", context.heap.getArrayChar(src, i
-//					+ ofs) ]);
+			// console.log([ "encode#", context.heap.getArrayChar(src, i
+			// + ofs) ]);
 		}
 		var resultHandle = context.heap.allocateArray(
 				context.lookupClass("[B"), resultPos);
-		for ( var i = 0; i < resultPos; i++) {
+		for (var i = 0; i < resultPos; i++) {
 			context.heap.putArrayByte(resultHandle, i, resultArr[i]);
 		}
-//		console.log([ "encode", resultArr ]);
+		// console.log([ "encode", resultArr ]);
 		thread.nativeReturnInt(resultHandle);
 		return ops - len;
 	}
@@ -229,7 +229,7 @@
 		i++;
 		// TODO put breakpoint here
 		i++;
-		thread.nativeReturn();
+
 		return ops - 1;
 	}
 
@@ -242,12 +242,8 @@
 	 *            ops
 	 */
 	function finalizerGetFinalizee(context, thread, ops) {
-		var stack = thread.stack;
-		var sb = thread.sp;
-		// TODO
-		thread.nativeReturnInt(context.heap.allocateArray(
-				context.lookupClass(FyClassLoader
-						.getArrayName(FyConst.FY_BASE_OBJECT)), 0));
+		var heap = context.heap;
+		thread.nativeReturnInt(heap.getFinalizee());
 		return ops - 1;
 	}
 
@@ -260,12 +256,8 @@
 	 *            ops
 	 */
 	function finalizerGetReferencesToEnqueue(context, thread, ops) {
-		var stack = thread.stack;
-		var sb = thread.sp;
-		// TODO
-		thread.nativeReturnInt(context.heap.allocateArray(
-				context.lookupClass(FyClassLoader
-						.getArrayName(FyConst.FY_BASE_OBJECT)), 0));
+		var heap = context.heap;
+		thread.nativeReturnInt(heap.getReferencesToEnqueue());
 		return ops - 1;
 	}
 
@@ -317,7 +309,7 @@
 		var stack = thread.stack;
 		var sb = thread.sp;
 		thread.fillStackTrace(stack[sb], true);
-		thread.nativeReturn();
+
 		return ops - 1;
 	}
 
@@ -361,7 +353,7 @@
 				displayBuffer = [];
 			}
 		}
-		thread.nativeReturn();
+
 		return ops - 1;
 	}
 
@@ -375,7 +367,7 @@
 	 */
 	function systemSetIn(context, thread, ops) {
 		// TODO: stub
-		thread.nativeReturn();
+
 		return ops - 1;
 	}
 
@@ -389,7 +381,7 @@
 	 */
 	function systemSetOut(context, thread, ops) {
 		// TODO: stub
-		thread.nativeReturn();
+
 		return ops - 1;
 	}
 
@@ -403,7 +395,7 @@
 	 */
 	function systemSetErr(context, thread, ops) {
 		// TODO: stub
-		thread.nativeReturn();
+
 		return ops - 1;
 	}
 
@@ -431,7 +423,6 @@
 	 */
 	function systemSetProperty(context, thread, ops) {
 		// TODO: stub
-		thread.nativeReturn();
 		return ops - 1;
 	}
 
@@ -444,8 +435,7 @@
 	 *            ops
 	 */
 	function systemGC(context, thread, ops) {
-		// TODO: stub
-		thread.nativeReturn();
+		context.heap.gc(0);
 		return ops - 1;
 	}
 
@@ -459,7 +449,7 @@
 	 */
 	function systemExit(context, thread, ops) {
 		// TODO
-		thread.nativeReturn();
+		throw "exited";
 		return ops - 1;
 	}
 
@@ -476,7 +466,6 @@
 		var sb = thread.sp;
 		context.heap.arrayCopy(stack[sb], stack[sb + 1], stack[sb + 2],
 				stack[sb + 3], stack[sb + 4]);
-		thread.nativeReturn();
 		return ops - 1;
 	}
 
@@ -622,8 +611,8 @@
 	function objectGetClass(context, thread, ops) {
 		var stack = thread.stack;
 		var sb = thread.sp;
-		var obj = context.heap.getObject(stack[sb]);
-		thread.nativeReturnInt(context.getClassObjectHandle(obj.clazz));
+		thread.nativeReturnInt(context.getClassObjectHandle(context.heap
+				.getObjectClass(stack[sb])));
 		return ops - 1;
 	}
 
@@ -654,7 +643,7 @@
 		var stack = thread.stack;
 		var sb = thread.sp;
 		context.threadManager.wait(thread, stack[sb], thread.longOps
-				.longToNumber(sb + 16 + 1));
+				.longToNumber(sb + 1));
 		return ops - 1;
 	}
 
@@ -792,8 +781,51 @@
 	 */
 	function threadSleep(context, thread, ops) {
 		var sb = thread.sp;
-		context.threadManager.sleep(thread, thread.longOps
-				.longToNumber(sb + 16));
+		context.threadManager.sleep(thread, thread.longOps.longToNumber(sb));
+		return ops - 1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function refRegister(context, thread, ops) {
+		var heap = context.heap;
+		var stack = thread.stack;
+		heap.registerReference(stack[thread.sp], stack[thread.sp + 1]);
+		return ops - 1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function refClear(context, thread, ops) {
+		var heap = context.heap;
+		var stack = thread.stack;
+		heap.clearReference(stack[thread.sp]);
+		return ops - 1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function refGet(context, thread, ops) {
+		thread.nativeReturnInt(context.heap
+				.getReferent(thread.stack[thread.sp]));
 		return ops - 1;
 	}
 
@@ -810,6 +842,120 @@
 		return 0;
 	}
 
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function proxyDefineClass(context, thread, ops) {
+		context.lookupClass("com/cirnoworks/fisce/js/ProxyHelper");
+		var method = context
+				.getMethod("com/cirnoworks/fisce/js/ProxyHelper.defineClass.(Ljava/lang/ClassLoader;Ljava/lang/String;[B)Ljava/lang/Class;");
+		// thread.sp += 3;
+		return thread.pushMethod(method, ops - 1);
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function risBind(context, thread, ops) {
+		var heap = context.heap;
+		var stack = thread.stack;
+		var sb = thread.sp;
+		var nameHandle = stack[sb + 1];
+		var pos = stack[sb + 2];
+		if (nameHandle === 0) {
+			throw new FyException(FyConst.FY_EXCEPTION_NPT, "name");
+		}
+		var name = heap.getString(nameHandle);
+//		console.log("#VFS bind #" + stack[sb] + " to " + name);
+		context.vfs.bind(stack[sb], name, pos);
+		return ops-1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function risRead(context, thread, ops) {
+		var stack = thread.stack;
+		var sb = thread.sp;
+		thread.nativeReturnInt(context.vfs.read(stack[sb]));
+		return ops-1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function risReadTo(context, thread, ops) {
+		var heap = context.heap;
+		var _heap8 = heap._heap8;
+		var stack = thread.stack;
+		var sb = thread.sp;
+		var targetHandle = stack[sb + 1];
+		var pos = stack[sb + 2];
+		var len = stack[sb + 3];
+		if (targetHandle === 0) {
+			throw new FyException(FyConst.FY_EXCEPTION_NPT, "b");
+		}
+		if (pos + len > heap.arrayLength(targetHandle)) {
+			throw new FyException(FyConst.FY_EXCEPTION_AIOOB, pos + "+" + len
+					+ "/" + heap.arrayLength(targetHandle));
+		}
+		var heapPos = (heap.arrayPos(targetHandle) << 2) + pos;
+		thread.nativeReturnInt(context.vfs.readTo(stack[sb], _heap8, heapPos,
+				len));
+		return ops - 1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function risClose(context, thread, ops) {
+		var stack = thread.stack;
+		var sb = thread.sp;
+//		console.log("#VFS close #" + stack[sb]);
+		context.vfs.close(stack[sb]);
+		return ops - 1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function proxyHelperDefineClass(context, thread, ops) {
+		var str = context.heap.getString(thread.stack[thread.sp]);
+		var data = JSON.parse(str);
+		context.addClassDef(data);
+		return ops - 1;
+	}
+
 	FyContext.registerStaticNH(
 			"com/cirnoworks/fisce/privat/SystemInputStream.read0.()I",
 			systemInputStreamRead0);
@@ -819,8 +965,12 @@
 
 	FyContext.registerStaticNH(FyConst.FY_BASE_DOUBLE
 			+ ".longBitsToDouble.(J)D", doubleLongBitsToDouble);
+	FyContext.registerStaticNH(FyConst.FY_BASE_DOUBLE
+			+ ".doubleToRawLongBits.(D)J", doubleLongBitsToDouble);
 	FyContext.registerStaticNH(FyConst.FY_BASE_FLOAT + ".intBitsToFloat.(I)F",
 			floatIntBitsToFloat);
+	FyContext.registerStaticNH(FyConst.FY_BASE_FLOAT
+			+ ".floatToRawIntBits.(F)I", floatIntBitsToFloat);
 	FyContext.registerStaticNH(FyConst.FY_BASE_STRING + ".intern.()L"
 			+ FyConst.FY_BASE_STRING + ";", stringIntern);
 
@@ -912,10 +1062,39 @@
 	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".yield.()V",
 			threadYield);
 
-	// TODO
+	FyContext.registerStaticNH(FyConst.FY_REF + ".register.(L"
+			+ FyConst.FY_BASE_OBJECT + ";)V", refRegister);
+	FyContext.registerStaticNH(FyConst.FY_REF + ".clear0.()V", refClear);
+	FyContext.registerStaticNH(FyConst.FY_REF + ".get0.()L"
+			+ FyConst.FY_BASE_OBJECT + ";", refGet);
+
 	FyContext.registerStaticNH(FyConst.FY_BASE_FINALIZER
 			+ ".getReferencesToEnqueue.()[L" + FyConst.FY_REF + ";",
 			finalizerGetReferencesToEnqueue);
 	FyContext.registerStaticNH(FyConst.FY_BASE_FINALIZER + ".getFinalizee.()[L"
 			+ FyConst.FY_BASE_OBJECT + ";", finalizerGetFinalizee);
+	FyContext.registerStaticNH("java/lang/reflect/Proxy.defineClassImpl.(L"
+			+ FyConst.FY_BASE_CLASSLOADER + ";L" + FyConst.FY_BASE_STRING
+			+ ";[B)L" + FyConst.FY_BASE_CLASS + ";", proxyDefineClass);
+
+	FyContext.registerStaticNH(
+			"com/cirnoworks/fisce/js/ProxyHelper.defineClassViaJSON.(L"
+					+ FyConst.FY_BASE_STRING + ";)V", proxyHelperDefineClass);
+	FyContext
+			.registerStaticNH(
+					"com/cirnoworks/fisce/privat/ResourceInputStream.bind0.(Ljava/lang/String;I)V",
+					risBind);
+	FyContext.registerStaticNH(
+			"com/cirnoworks/fisce/privat/ResourceInputStream.read0.()I",
+			risRead);
+	FyContext.registerStaticNH(
+			"com/cirnoworks/fisce/privat/ResourceInputStream.read0.([BII)I",
+			risReadTo);
+	FyContext.registerStaticNH(
+			"com/cirnoworks/fisce/privat/ResourceInputStream.close0.()V",
+			risClose);
+
+	FyContext.registerStaticNH("com/cirnoworks/fisce/privat/FiScEVM.save.()V",
+			function() {/* TODO */
+			});
 })();

@@ -63,7 +63,7 @@ var FyContext;
 			walked = {};
 		}
 
-		for ( var i = 0, max = clazz.interfaces.length; i < max; i++) {
+		for (var i = 0, max = clazz.interfaces.length; i < max; i++) {
 			/**
 			 * @returns {FyClass}
 			 */
@@ -78,7 +78,7 @@ var FyContext;
 			}
 		}
 
-		for ( var i = 0, max = toWalk.length; i < max; i++) {
+		for (var i = 0, max = toWalk.length; i < max; i++) {
 			ret = walkInterfaces(toWalk[i], fun, $this, walked);
 			if (ret !== undefined) {
 				return ret;
@@ -95,10 +95,11 @@ var FyContext;
 		return undefined;
 	}
 
-	FyContext = function() {
+	FyContext = function(namespace) {
 		var levels = [ "D", "I", "W", "E" ];
 		this.settings = {};
 		this.classDef = {};
+		this.dynamicClassDef = {};
 
 		/* Classes begins from 1 */
 		this.classes = [ undefined ];
@@ -116,10 +117,12 @@ var FyContext;
 		this.mapFieldIdToHandle = {};
 
 		this.nativeHandlers = {};
+		this.nativeAOT = {};
 
 		this.classLoader = new FyClassLoader(this);
 		this.heap = new FyHeap(this);
 		this.threadManager = new FyThreadManager(this);
+		this.vfs = new FyVFS(namespace);
 
 		this.log = function(level, content) {
 			console.log(levels[level] + ": " + content);
@@ -203,6 +206,12 @@ var FyContext;
 
 	FyContext.staticNativeHandlers = {};
 
+	FyContext.staticNativeAOT = {};
+
+	FyContext.registerStaticNA = function(name, func) {
+		this.staticNativeAOT[name] = func;
+	};
+
 	FyContext.registerStaticNH = function(name, func, extraVars, extraStack) {
 		this.staticNativeHandlers[name] = {
 			func : func,
@@ -240,6 +249,11 @@ var FyContext;
 		}
 	};
 
+	FyContext.prototype.addDynamicClassDef = function(name, strData) {
+		this.dynamicClassDef[name] = strData;
+		this.addClassDef(JSON.parse(strData));
+	};
+
 	FyContext.prototype.addClassDef = function(data) {
 		/**
 		 * @returns {Array}
@@ -254,7 +268,7 @@ var FyContext;
 		 */
 		var classes = data.classes;
 
-		for ( var i = 1; i < constants.length; i++) {
+		for (var i = 1; i < constants.length; i++) {
 			var constant = constants[i];
 
 			if (constant.name !== undefined) {
@@ -276,7 +290,7 @@ var FyContext;
 			}
 		}
 
-		for ( var i = 0; i < classes.length; i++) {
+		for (var i = 0; i < classes.length; i++) {
 			var def = classes[i];
 
 			// name
@@ -289,14 +303,14 @@ var FyContext;
 
 			// constant pool
 			{
-				for ( var j = 0; j < def.constants.length; j++) {
+				for (var j = 0; j < def.constants.length; j++) {
 					def.constants[j] = lookup(constants, def.constants[j]);
 				}
 			}
 
 			// fields
 			{
-				for ( var j = 0; j < def.fields.length; j++) {
+				for (var j = 0; j < def.fields.length; j++) {
 					var field = def.fields[j];
 					field.name = this.pool(lookup(strings, field.name));
 					field.descriptor = this.pool(lookup(strings,
@@ -306,7 +320,7 @@ var FyContext;
 
 			// methods
 			{
-				for ( var j = 0; j < def.methods.length; j++) {
+				for (var j = 0; j < def.methods.length; j++) {
 					var method = def.methods[j];
 
 					method.name = this.pool(lookup(strings, method.name));
@@ -318,12 +332,17 @@ var FyContext;
 					method.returnType = this.pool(lookup(strings,
 							method.returnType));
 
-					for ( var k = 0; k < method.exceptions.length; k++) {
+					for ( var key in method.frames) {
+						method.frames[key] = this.pool(lookup(strings,
+								method.frames[key]));
+					}
+
+					for (var k = 0; k < method.exceptions.length; k++) {
 						method.exceptions[k] = this.pool(lookup(strings,
 								method.exceptions[k]));
 					}
 
-					for ( var k = 0; k < method.parameterClassNames.length; k++) {
+					for (var k = 0; k < method.parameterClassNames.length; k++) {
 						method.parameterClassNames[k] = this.pool(lookup(
 								strings, method.parameterClassNames[k]));
 					}
@@ -439,8 +458,8 @@ var FyContext;
 						constant.className + "." + constant.nameAndType
 								+ " not found");
 			}
-			delete constant.className;
-			delete constant.nameAndType;
+			// delete constant.className;
+			// delete constant.nameAndType;
 		}
 		return resolvedField;
 	};
@@ -535,24 +554,23 @@ var FyContext;
 	FyContext.prototype.lookupMethodVirtualByMethod = function(clazz, method) {
 		var mid = method.methodId;
 		/**
-		 * @returns {FyMethodd}
+		 * @returns {Number}
 		 */
-		var ret = clazz.virtualTable[mid];
-		if (ret === undefined) {
-			ret = this.lookupMethodVirtual(clazz, method.fullName);
-			if (ret === undefined
-					|| (ret.accessFlags & FyConst.FY_ACC_ABSTRACT)) {
+		var ret = clazz.virtualTable.get(mid);
+		if (ret === -1) {
+			var m = this.lookupMethodVirtual(clazz, method.fullName);
+			if (m === undefined || (m.accessFlags & FyConst.FY_ACC_ABSTRACT)) {
 				throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT, clazz.name
 						+ method.fullName);
 			}
-			if (ret.accessFlags & FyConst.FY_ACC_STATIC) {
+			if (m.accessFlags & FyConst.FY_ACC_STATIC) {
 				throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 						"Method " + clazz.name + method.fullName
 								+ " changed to static");
 			}
-			clazz.virtualTable[mid] = ret;
+			clazz.virtualTable.put(mid, ret = m.methodId);
 		}
-		return ret;
+		return this.methods[ret];
 	};
 
 	/**
@@ -573,7 +591,7 @@ var FyContext;
 		var first = true;
 		while (clazz) {
 			var interfaces = clazz.interfaces;
-			for ( var i = 0, max = interfaces.length; i < max; i++) {
+			for (var i = 0, max = interfaces.length; i < max; i++) {
 				/**
 				 * @returns {FyClass}
 				 */
@@ -620,8 +638,8 @@ var FyContext;
 						constant.className + "." + constant.nameAndType
 								+ " not found");
 			}
-			delete constant.className;
-			delete constant.nameAndType;
+			// delete constant.className;
+			// delete constant.nameAndType;
 		}
 		return resolvedMethod;
 	};
@@ -637,6 +655,9 @@ var FyContext;
 		if (cid === undefined) {
 			cid = this.classes.length;
 			this.mapClassNameToId[clazz.name] = cid;
+		} else if (this.classes[cid]) {
+			throw new FyException(undefined, "Duplicated class define: "
+					+ clazz.name);
 		}
 		clazz.classId = cid;
 		this.classes[cid] = clazz;
@@ -693,6 +714,8 @@ var FyContext;
 	FyContext.prototype.lookupArrayClass = function(clazz) {
 		if (clazz.type === FyConst.TYPE_OBJECT) {
 			return this.lookupClass("[L" + clazz.name + ";");
+		} else if (clazz.type === FyConst.TYPE_ARRAY) {
+			return this.lookupClass("[" + clazz.name);
 		} else {
 			return this.lookupClass("["
 					+ FyContext.mapPrimitivesRev[clazz.name]);
@@ -713,7 +736,7 @@ var FyContext;
 				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 						constant.name);
 			}
-			delete constant.name;
+			// delete constant.name;
 		}
 		return constant.resolvedClass;
 	};
@@ -729,7 +752,7 @@ var FyContext;
 			var clcl = this.lookupClass(FyConst.FY_BASE_CLASS);
 			this.heap.beginProtect();
 			handle = this.heap.allocate(clcl);
-			this.heap.getObject(handle).multiUsageData = clazz.classId;
+			this.heap.setObjectMultiUsageData(handle, clazz.classId);
 			this.mapClassIdToHandle[clazz.classId] = handle;
 		}
 		return handle;
@@ -741,13 +764,13 @@ var FyContext;
 	 * @returns {FyClass}
 	 */
 	FyContext.prototype.getClassFromClassObject = function(handle) {
-		var obj = this.heap.getObject(handle);
-		if (obj.clazz !== this.TOP_CLASS) {
+		if (this.heap.getObjectClass(handle) !== this.TOP_CLASS) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
-					"Object #" + handle + "(" + obj.clazz.name
+					"Object #" + handle + "("
+							+ this.heap.getObjectClass(handle).name
 							+ ") is not a class object");
 		}
-		return this.classes[obj.multiUsageData];
+		return this.classes[this.heap.getObjectMultiUsageData(handle)];
 	};
 
 	/**
@@ -766,7 +789,7 @@ var FyContext;
 				handle = this.heap.allocate(this
 						.lookupClass(FyConst.FY_REFLECT_METHOD));
 			}
-			this.heap.getObject(handle).multiUsageData = method.methodId;
+			this.heap.setObjectMultiUsageData(handle, method.methodId);
 			this.mapMethodIdToHandle[method.methodId] = handle;
 		}
 		return handle;
@@ -778,13 +801,14 @@ var FyContext;
 	 * @returns {FyMethod}
 	 */
 	FyContext.prototype.getMethodFromMethodObject = function(handle) {
-		var obj = this.heap.getObject(handle);
-		if (obj.clazz !== this.TOP_METHOD && obj.clazz !== this.TOP_CONSTRUCTOR) {
+		if (this.heap.getObjectClass(handle) !== this.TOP_METHOD
+				&& this.heap.getObjectClass(handle) !== this.TOP_CONSTRUCTOR) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
-					"Object #" + handle + "(" + obj.clazz.name
+					"Object #" + handle + "("
+							+ this.heap.getObjectClass(handle).name
 							+ ") is not a method or constructor object");
 		}
-		return this.methods[obj.multiUsageData];
+		return this.methods[this.heap.getObjectMultiUsageData(handle)];
 	};
 
 	/**
@@ -798,7 +822,7 @@ var FyContext;
 			this.heap.beginProtect();
 			handle = this.heap.allocate(this
 					.lookupClass(FyConst.FY_REFLECT_FIELD));
-			this.heap.getObject(handle).multiUsageData = field.fieldId;
+			this.heap.setObjectMultiUsageData(handle, field.fieldId);
 			this.mapFieldIdToHandle[field.fieldId] = handle;
 		}
 		return handle;
@@ -809,13 +833,13 @@ var FyContext;
 	 * @returns {FyField}
 	 */
 	FyContext.prototype.getFieldFromFieldObject = function(handle) {
-		var obj = this.heap.getObject(handle);
-		if (obj.clazz !== this.TOP_FIELD) {
+		if (this.heap.getObjectClass(handle) !== this.TOP_FIELD) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
-					"Object #" + handle + "(" + obj.clazz.name
+					"Object #" + handle + "("
+							+ this.heap.getObjectClass(handle).name
 							+ ") is not a field object");
 		}
-		return this.fields[obj.multiUsageData];
+		return this.fields[this.heap.getObjectMultiUsageData(handle)];
 	};
 
 	/**
@@ -825,8 +849,25 @@ var FyContext;
 	 * @param message
 	 */
 	FyContext.prototype.panic = function(message, e) {
-		console.log("ERROR! Virtual machine panic: " + message);
-		//console.log(this);
+		console.log("###PANIC: " + message);
+		console.log(e);
+		console.log("#PANIC context:" + this);
+		console.log("#PANIC Thread dump:");
+		var detailMessageField = this.getField(FyConst.FY_BASE_THROWABLE
+				+ ".detailMessage.L" + FyConst.FY_BASE_STRING + ";");
+		for (var i = 0; i < FyConfig.maxThreads; i++) {
+			/**
+			 * @returns {FyThread}
+			 */
+			var thread = this.threadManager.threads[i];
+			if (thread !== undefined) {
+				console.log("Thread #" + i);
+				if (thread.currentThrowable) {
+					console.log("	Exception occored: ");
+				}
+			}
+		}
+		// console.log(this);
 		if (e) {
 			throw e;
 		} else {
@@ -834,11 +875,15 @@ var FyContext;
 		}
 	};
 
+	FyContext.prototype.registerNativeAOT = function(name, func) {
+		this.nativeAOT[name] = func;
+	};
+
 	FyContext.prototype.registerNativeHandler = function(name, func, extraVars,
 			stackSize) {
 		if (typeof name === "object") {
 			if (name.length) {
-				for ( var i = 0, max = name.length; i < max; i++) {
+				for (var i = 0, max = name.length; i < max; i++) {
 					this.nativeHandlers[name.name] = {
 						func : name.func,
 						extraVars : name.extraVars,
@@ -870,6 +915,17 @@ var FyContext;
 	};
 
 	FyContext.prototype.bootup = function(bootStrapClassName) {
+		this.lookupClass(FyConst.FY_BASE_OBJECT);
+		this.lookupClass(FyConst.FY_BASE_THROWABLE);
+		this.lookupClass("[Z");
+		this.lookupClass("[B");
+		this.lookupClass("[S");
+		this.lookupClass("[C");
+		this.lookupClass("[F");
+		this.lookupClass("[I");
+		this.lookupClass("[J");
+		this.lookupClass("[D");
+
 		var clazz = this.lookupClass(bootStrapClassName);
 		this.threadManager.bootFromMain(clazz);
 	};

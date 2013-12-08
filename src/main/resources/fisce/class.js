@@ -17,11 +17,12 @@
 
 var FyClass;
 (function() {
+	"use strict";
 	/**
 	 * @returns {FyClass}
 	 */
 	var dummyClass = undefined;
-	
+
 	/**
 	 * @returns {FyMethod}
 	 */
@@ -49,6 +50,7 @@ var FyClass;
 		this.methods = [];
 		this.sizeRel = 0;
 		this.staticSize = 0;
+		this.staticPos = 0;
 
 		this.phase = 0;
 
@@ -79,7 +81,7 @@ var FyClass;
 		this.fieldAbs = [];
 		/* END GC Only */
 
-		this.virtualTable = {};
+		this.virtualTable = new HashMapI(-1, 3, 0.75);
 
 		/** Array only* */
 		this.contentClass = dummyClass;

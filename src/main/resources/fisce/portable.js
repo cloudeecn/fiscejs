@@ -22,13 +22,18 @@ var FyPortable;
 
 var FyConfig = {
 	littleEndian : undefined,
-	maxObjects : 16384,
+	maxObjects : 32768,
 	maxThreads : 16,
-	gcIdv : 20000,
-	gcForceIdv : 120000,
+	gcIdv : 5000,
+	gcForceIdv : 10000,
+	heapSize : 2097152,
+	edenSize : 131072,
+	copySize : 32768,
 	stackSize : 16384,
 	debugMode : true,
-	verboseMode : false
+	verboseMode : false,
+	aggresiveGC : false,
+	_ : undefined
 };
 
 // now
@@ -216,8 +221,8 @@ var FyConfig = {
 		}
 	};
 
-	__FyPortable.prototype.getLongOps = function(stack) {
-		return FyCreateLongOps(this, 0, stack);
+	__FyPortable.prototype.getLongOps = function(stack, tmpBegin) {
+		return FyCreateLongOps(this, 0, stack, tmpBegin);
 	};
 
 	__FyPortable.prototype.now = function() {

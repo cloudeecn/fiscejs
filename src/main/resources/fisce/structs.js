@@ -317,6 +317,7 @@ var FyLookupSwitchTarget;
 		/* Methods */
 		this.FY_METHOD_INIT = "<init>";
 		this.FY_METHOD_CLINIT = "<clinit>";
+		this.FY_METHODF_INIT = ".<init>.()V";
 		this.FY_METHODF_MAIN = ".main.([L" + this.FY_BASE_STRING + ";)V";
 		this.FY_METHODF_RUN = ".run.()V";
 		this.FY_METHODF_FINALIZE = ".finalize.()V";

@@ -15,22 +15,27 @@ var __FyLongOpsAsmString;
  *            stack
  * @returns {__FyLongOps}
  */
-function FyCreateLongOps(global, mode, stack) {
+function FyCreateLongOps(global, mode, stack, tmpOps) {
 	if (!Function) {
 		mode = 0;
 	}
+	mode = 0;
 	switch (mode) {
 	case 0:
-		return new __FyLongOps(global, stack);
+		return new __FyLongOps(global, stack, tmpOps);
 	case 1:
 		return new Function('a', 'b', 'c', 'return ('
 				+ __FyLongOpsAsmString.replace(/\#\#use asm\#\#/, 'use asm')
-				+ "(a,b,c))")(global, undefined, stack.buffer);
+				+ "(a,b,c))")(global, {
+			tmpOps : tmpOps
+		}, stack.buffer);
 
 	case 2:
 		return new Function('a', 'b', 'c', 'return ('
 				+ __FyLongOpsAsmString.replace(/\#\#use asm\#\#/, '')
-				+ "(a,b,c))")(global, undefined, stack.buffer);
+				+ "(a,b,c))")(global, {
+			tmpOps : tmpOps
+		}, stack.buffer);
 
 	}
 }
@@ -38,6 +43,7 @@ function FyCreateLongOps(global, mode, stack) {
 function __FyLongOpAsm(global, env, buffer) {
 	"##use asm##";
 	// var a={};
+	throw "Unsupported yet";
 	var stack = new global.Int32Array(buffer);
 	var imul = global.Math.imul;
 	var floor = global.Math.floor;
@@ -572,20 +578,20 @@ __FyLongOpsAsmString = __FyLongOpAsm.toString();
  * @param stack
  * @returns
  */
-function __FyLongOps(global, stack) {
+function __FyLongOps(global, stack, tmpOps) {
 	this.global = global;
 	this.stack = stack;
 
 	this.TWO_PWR_63_DBL_ = 9223372036854776000.0;
 
-	this.tmp0 = 0;
-	this.tmp1 = 2;
+	this.tmp0 = tmpOps;
+	this.tmp1 = tmpOps + 2;
 
-	this.tmp2 = 4;
-	this.tmp3 = 6;
+	this.tmp2 = tmpOps + 4;
+	this.tmp3 = tmpOps + 6;
 
-	this.tmp4 = 8;
-	this.tmp5 = 10;
+	this.tmp4 = tmpOps + 8;
+	this.tmp5 = tmpOps + 10;
 }
 
 __FyLongOps.prototype.fmax = function(value1, value2) {

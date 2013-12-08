@@ -2,34 +2,35 @@
 <head>
 <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
 
-<script type="text/javascript" src="jquery-1.10.1.min.js"></script>
-<link rel="stylesheet" href="qunit-1.12.0.css">
-<script type="text/javascript" src="qunit-1.12.0.js"></script>
+<script type="text/javascript" src="../fisce/aot.js"></script>
 
-<script type="text/javascript" src="test.js"></script>
-
-<!-- 
 <script type="text/javascript" src="../fisce/portable.js"></script>
 <script type="text/javascript" src="../fisce/long.asm.js"></script>
+<script type="text/javascript" src="../fisce/hashmapi.js"></script>
+<script type="text/javascript" src="../fisce/vfs.js"></script>
 <script type="text/javascript" src="../fisce/structs.js"></script>
 <script type="text/javascript" src="../fisce/method.js"></script>
 <script type="text/javascript" src="../fisce/field.js"></script>
 <script type="text/javascript" src="../fisce/class.js"></script>
 <script type="text/javascript" src="../fisce/context.js"></script>
 <script type="text/javascript" src="../fisce/heap.js"></script>
-<script type="text/javascript" src="../fisce/heap.default.js"></script>
 <script type="text/javascript" src="../fisce/classloader.js"></script>
 <script type="text/javascript" src="../fisce/thread.js"></script>
 <script type="text/javascript" src="../fisce/threadmanager.js"></script>
-<script type="text/javascript" src="../fisce/aot.js"></script>
+<script type="text/javascript" src="../fisce/aot.native.js"></script>
 <script type="text/javascript" src="../fisce/aot.data.js"></script>
 <script type="text/javascript" src="../fisce/nh.core.js"></script>
 <script type="text/javascript" src="../fisce/nh.reflect.js"></script>
 <script type="text/javascript" src="../fisce/nh.math.js"></script>
- -->
-<script type="text/javascript" src="fisce.min.js"></script>
+
+<script type="text/javascript" src="../js/jquery-1.10.2.minjs"></script>
+<link rel="stylesheet" href="qunit-1.12.0.css">
+<script type="text/javascript" src="qunit-1.12.0.js"></script>
+
+<script type="text/javascript" src="test.js"></script>
 
 <script type="text/javascript" src="portable.test.js"></script>
+<script type="text/javascript" src="hashmapi.test.js"></script>
 <script type="text/javascript" src="long.test.add.js"></script>
 <script type="text/javascript" src="long.test.cmp.js"></script>
 <script type="text/javascript" src="long.test.sub.js"></script>
@@ -55,29 +56,93 @@
 	}
 	window.console = {
 		log : function(param) {
-			$("#console").text($("#console").text() + "\n" + param);
+			$("#console").append(param);
+			$("#console").append("\n");
 			window.oldConsole.log.apply(window.oldConsole, arguments);
 		}
 	}
-	jQuery(document).ready(function($) {
-		$.ajax({
-			url : "rt.json",
-			dataType : "text",
-			success : function(data) {
-				fisceTests.classDefData = data;
-				fisceTests.iterate(function(message, fun) {
-					setTimeout(test, 1, message, fun);
-					//test(message, fun);
-				});
-			}
-		});
-	});
+
+	var tests = [];
+
+	$(document).ready(
+			function($) {
+				var targets = {
+					"../fisce/rt.gzjson" : 1,
+					"../fisce/rt-vfs.gzjson" : 2
+				};
+
+				var datas = {};
+				var vfs = {};
+
+				function checkTargets() {
+					var done = true;
+					for ( var target in targets) {
+						console.log("##Checking " + target);
+						if (targets[target]) {
+							console.log("##Checking " + target + "... wait");
+							done = false;
+							break;
+						} else {
+							console.log("##Checking " + target + "... done");
+						}
+					}
+					if (done) {
+						fisceTests.classDefData = datas;
+						fisceTests.vfsData = vfs;
+						fisceTests.iterate(function(message, fun) {
+							tests.push({
+								message : message,
+								fun : fun
+							});
+						});
+						setTimeout(doTest, 1);
+					}
+				}
+
+				for ( var target in targets) {
+					(function(t) {
+						$.ajax({
+							url : target,
+							dataType : "text",
+							success : function(data) {
+								switch (targets[t]) {
+								case 1:
+									console.log("Add "+t+" to datas");
+									datas[t] = data;
+									break;
+								case 2:
+									console.log("Add "+t+" to vfs");
+									vfs[t] = data;
+									break;
+								default:
+									throw "Illegal target type: " + targets[t]
+											+ " for target " + t;
+								}
+								targets[t] = 0;
+								checkTargets();
+							},
+							fail : function() {
+								targets[t] = -1;
+								ok(false, t + " not found!");
+							}
+						});
+					})(target);
+				}
+
+			});
+
+	function doTest() {
+		if (tests.length > 0) {
+			var obj = tests.splice(0, 1)[0];
+			test(obj.message, obj.fun);
+			setTimeout(doTest, 1);
+		}
+	}
 </script>
 </head>
 <body>
-	<pre id="console"></pre>
 	<div id="qunit"></div>
 	<div id="qunit-fixture"></div>
-
+	<pre id="console"></pre>
 </body>
 </html>
