@@ -2,6 +2,7 @@ package com.cirnoworks.fisce.js;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +31,7 @@ public class FiScEJSListener implements ServletContextListener {
 	private final static Logger log = LoggerFactory
 			.getLogger(FiScEJSListener.class);
 
-	private static List<String> paths(ServletContext context, String... paths) {
+	public static List<String> paths(ServletContext context, String... paths) {
 		List<String> result = Arrays.asList(paths);
 		for (int i = paths.length; i-- > 0;) {
 			result.set(i, context.getRealPath(result.get(i)));
@@ -43,15 +44,12 @@ public class FiScEJSListener implements ServletContextListener {
 		log.info("Initializing fiscejs...");
 		long begin = System.nanoTime();
 		ServletContext context = sce.getServletContext();
+		File basePath = new File(context.getRealPath("/fisce"));
+		basePath.mkdirs();
 		try {
-			ClassConverter cc = new ClassConverter();
-			cc.multiBegin();
-
-			ClassConverterUtil
-					.convert(
-							paths(context, "/WEB-INF/runtime.jar",
-									"/WEB-INF/jsgen.jar"), "/fisce/rt.gzjson",
-							"/fisce/rt-vfs.gzjson");
+			ClassConverterUtil.convert(paths(context, "/WEB-INF/runtime.jar"),
+					context.getRealPath("/fisce/rt.gzjson"),
+					context.getRealPath("/fisce/rt-vfs.gzjson"));
 
 			{
 				String aotOutputPath = context
@@ -123,11 +121,15 @@ public class FiScEJSListener implements ServletContextListener {
 						.setOptionsForCompilationLevel(options);
 				ArrayList<SourceFile> inputs = new ArrayList<SourceFile>();
 				char[] buf = new char[65536];
-				StringBuilder sb=new StringBuilder(65536);
+				StringBuilder sb = new StringBuilder(65536);
 				for (String fileName : files) {
 					sb.setLength(0);
 					InputStream is = FiScEJSListener.class
 							.getResourceAsStream("/fisce/" + fileName);
+					if (is == null) {
+						is = new FileInputStream(context.getRealPath("/fisce/"
+								+ fileName));
+					}
 					BufferedReader br = new BufferedReader(
 							new InputStreamReader(is, "utf-8"));
 					try {
@@ -135,7 +137,8 @@ public class FiScEJSListener implements ServletContextListener {
 						while ((read = br.read(buf)) >= 0) {
 							sb.append(buf, 0, read);
 						}
-						SourceFile input = SourceFile.fromCode(fileName, sb.toString());
+						SourceFile input = SourceFile.fromCode(fileName,
+								sb.toString());
 						inputs.add(input);
 					} finally {
 						try {
@@ -145,7 +148,7 @@ public class FiScEJSListener implements ServletContextListener {
 									+ fileName, e);
 						}
 					}
-					
+
 				}
 				SourceFile extern = SourceFile.fromCode("externs.js",
 						"function alert(x) {}");

@@ -33,7 +33,7 @@ public class FiScEJSFilter implements Filter {
 	public void init(FilterConfig filterConfig) throws ServletException {
 		ServletContext context = filterConfig.getServletContext();
 		uriPattern = Pattern.compile("^" + context.getContextPath()
-				+ "/(fisce|test)/(\\w+[\\w.]*)$");
+				+ "/(fisce|test)/(\\w[\\w-.]*)$");
 	}
 
 	@Override
