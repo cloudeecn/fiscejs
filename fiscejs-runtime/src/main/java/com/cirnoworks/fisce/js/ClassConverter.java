@@ -1,19 +1,12 @@
 package com.cirnoworks.fisce.js;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.analysis.BasicValue;
@@ -67,6 +60,8 @@ public class ClassConverter {
 	};
 
 	private void convert(InputStream is, StringBuilder sb) throws IOException {
+		StringBuilder tmp = new StringBuilder(64);
+
 		ClassReader cr = new ClassReader(is);
 		ClassData clazz = new ClassData(cr);
 		cr.accept(clazz, ClassReader.EXPAND_FRAMES);
@@ -204,7 +199,13 @@ public class ClassConverter {
 				}
 
 				int[] code = method.getCode();
-				if (code != null) {
+				if (code == null) {
+					SimpleJSONUtil.add(sb, 3, "\"maxStack\"", 0, true);
+					SimpleJSONUtil.add(sb, 3, "\"maxLocals\"", 0, true);
+					SimpleJSONUtil.add(sb, 3, "\"code\"", "[]", true);
+					SimpleJSONUtil.add(sb, 3, "\"opsCheck\"", "{}", true);
+					SimpleJSONUtil.add(sb, 3, "\"frames\"", "{}", true);
+				} else {
 
 					SimpleJSONUtil.add(sb, 3, "\"maxStack\"",
 							(int) method.getMaxStack(), true);
@@ -227,13 +228,13 @@ public class ClassConverter {
 					SimpleJSONUtil.add(sb, 3, "]", true);
 					{
 						SimpleJSONUtil.add(sb, 3, "\"opsCheck\"", "{", false);
-						boolean[] check = method.getCheckOps();
+						int[] check = method.getCheckOps();
 						boolean checked = false;
 						for (int j = 0, maxj = check.length; j < maxj; j++) {
-							if (check[j]) {
+							if (check[j] >= 0) {
 								SimpleJSONUtil.add(sb, 4,
-										"\"" + String.valueOf(j) + "\"", true,
-										true);
+										"\"" + String.valueOf(j) + "\"",
+										check[j], true);
 								checked = true;
 							}
 						}
@@ -247,29 +248,27 @@ public class ClassConverter {
 						SimpleJSONUtil.add(sb, 3, "\"frames\"", "{", false);
 						boolean[] hints = method.getHintFrame();
 						boolean hinted = false;
+
 						for (int j = 0, maxj = hints.length; j < maxj; j++) {
 							if (hints[j]) {
+								tmp.setLength(0);
 								hinted = true;
-								SimpleJSONUtil.addIndent(sb, 4);
-								sb.append('"');
-								sb.append(j);
-								sb.append('"');
-								sb.append(" : [");
 								Frame<BasicValue> frame = method.getRawFrames()[j];
 								for (int k = 0, maxk = frame.getLocals(); k < maxk; k++) {
 									BasicValue v = frame.getLocal(k);
-									sb.append(v.isReference() ? '1' : '0');
-									sb.append(',');
+									tmp.append(v.isReference() ? '1' : '0');
 								}
 								for (int k = 0, maxk = frame.getStackSize(); k < maxk; k++) {
 									BasicValue v = frame.getStack(k);
-									sb.append(v.isReference() ? '1' : '0');
-									sb.append(',');
+									tmp.append(v.isReference() ? '1' : '0');
+									if (v.getSize() == 2) {
+										tmp.append('0');
+									}
 								}
-								if (frame.getLocals() + frame.getStackSize() > 0) {
-									sb.setLength(sb.length() - 1);
-								}
-								sb.append("],\n");
+								SimpleJSONUtil.add(sb, 4,
+										"\"" + String.valueOf(j) + "\"",
+										stringPool.poolString(tmp.toString()),
+										true);
 							}
 						}
 						if (hinted) {
@@ -369,9 +368,9 @@ public class ClassConverter {
 	}
 
 	public String singleConvert(InputStream is) throws IOException {
-		StringBuilder sb = new StringBuilder();
-		convert(is, sb);
-		return sb.toString();
+		multiBegin();
+		multiPush(is);
+		return multiFinish();
 	}
 
 	public void multiBegin() {
@@ -431,104 +430,4 @@ public class ClassConverter {
 		return ret;
 	}
 
-	public static void convertJar(InputStream is, Writer os) throws IOException {
-		convertJar(null, is, null, os);
-	}
-
-	public static void convertJar(String prefix, InputStream is,
-			String postfix, Writer os) throws IOException {
-		ClassConverter converter = new ClassConverter();
-		converter.multiBegin();
-		final ZipInputStream jar = new ZipInputStream(is);
-		try {
-			ZipEntry entry;
-			while ((entry = jar.getNextEntry()) != null) {
-				if (entry.getName().endsWith(".class")) {
-					converter.multiPush(jar);
-				}
-				jar.closeEntry();
-			}
-		} finally {
-			try {
-				jar.close();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		String out = converter.multiFinish();
-		if (prefix != null) {
-			os.write(prefix);
-		}
-		os.write(out);
-		if (postfix != null) {
-			os.write(postfix);
-		}
-		os.flush();
-	}
-
-	private static void walkDirectory(File directory, ClassConverter cc)
-			throws IOException {
-		for (File file : directory.listFiles()) {
-			if (file.isDirectory()) {
-				walkDirectory(file, cc);
-			} else if (file.isFile()) {
-				if (file.getName().endsWith(".class")) {
-					// A class file
-					FileInputStream fis = null;
-					try {
-						fis = new FileInputStream(file);
-						cc.multiPush(fis);
-					} finally {
-						try {
-							if (fis != null) {
-								fis.close();
-							}
-						} catch (IOException e) {
-							System.err.println("Warning: Can't close file "
-									+ file);
-						}
-					}
-				}
-			} else {
-				System.err.println("Warning: Unknown file type " + file);
-			}
-		}
-	}
-
-	public static String convertDirectory(File directory) throws IOException {
-		if (directory == null || !directory.isDirectory()) {
-			throw new IOException(directory + " is not a directory!");
-		}
-		ClassConverter cc = new ClassConverter();
-		cc.multiBegin();
-		walkDirectory(directory, cc);
-		return cc.multiFinish();
-	}
-
-	public static void convertDirectory(File directory, Writer wr)
-			throws IOException {
-		convertDirectory(null, directory, null, wr);
-	}
-
-	public static void convertDirectory(String prefix, File directory,
-			String postfix, Writer wr) throws IOException {
-		if (prefix != null) {
-			wr.write(prefix);
-		}
-		wr.write(convertDirectory(directory));
-		if (postfix != null) {
-			wr.write(postfix);
-		}
-		wr.flush();
-	}
-
-	public static void main(String[] args) throws Exception {
-		ClassConverter.convertDirectory(// "(function(context){context.addClassDef(",
-				new File("../fiscevm/fiscevm-runtime/target/classes"),
-				// ");})(fisceContext);",
-				new OutputStreamWriter(new FileOutputStream(
-						"src/main/resources/test/rt.json"), "ISO8859-1"));
-
-		System.out.println("done");
-	}
 }

@@ -2,11 +2,9 @@ package com.cirnoworks.fisce.js;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
@@ -155,7 +153,7 @@ public class AOTGenerator {
 	public static void main(String[] args) throws Exception {
 		StringBuilder sb = new StringBuilder();
 		InputStream is = new FileInputStream(
-				"src/main/resources/fisce/method.sample.js");
+				"src/main/webapp/js/fisce/method.sample.js");
 		try {
 			generateMacros(is, sb);
 		} finally {
@@ -167,11 +165,10 @@ public class AOTGenerator {
 		}
 		System.out.println(sb);
 		PrintWriter pw = new PrintWriter(
-				"src/main/resources/fisce/aot.data.js");
+				"src/main/webapp/js/fisce/aot.data.js");
 		try {
 			pw.println("/**");
 			pw.println(" * AOT Template");
-			pw.println(" * Generated from src/main/resources/fisce/method.sample.js");
 			pw.println(" */");
 			pw.print("var FyAOTUtil = new __FyAOTUtil(");
 			pw.print(sb);
