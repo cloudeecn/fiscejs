@@ -29,10 +29,13 @@ public class FiScEJSFilter implements Filter {
 	private final FileTypeMap mimeTypes = MimetypesFileTypeMap
 			.getDefaultFileTypeMap();
 
+	private boolean production = false;
+
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
 		ServletContext context = filterConfig.getServletContext();
 		if ("true".equals(context.getInitParameter("production"))) {
+			production = true;
 			uriPattern = Pattern.compile("^" + context.getContextPath()
 					+ "/fisce/(\\w[\\w-.]*)$");
 		} else {
@@ -49,13 +52,22 @@ public class FiScEJSFilter implements Filter {
 		String uri = req.getRequestURI();
 		Matcher matcher = uriPattern.matcher(uri);
 		if (matcher.matches()) {
-			String dir = matcher.group(1);
-			String fileName = matcher.group(2);
+			String dir, fileName;
+			if (production) {
+				dir = "fisce";
+				fileName = matcher.group(1);
+			} else {
+				dir = matcher.group(1);
+				fileName = matcher.group(2);
+			}
 			InputStream is = FiScEJSFilter.class.getResourceAsStream("/" + dir
 					+ "/" + fileName);
 			if (is == null) {
+				log.info("fiscejs: " + uri
+						+ " served by underling filter chain");
 				chain.doFilter(request, response);
 			} else {
+				log.info("fiscejs: " + uri + " served by classloader");
 				try {
 					resp.setContentType(mimeTypes.getContentType(fileName));
 					byte[] buf = new byte[65536];
@@ -78,6 +90,7 @@ public class FiScEJSFilter implements Filter {
 				}
 			}
 		} else {
+			log.info("fiscejs: " + uri + " served by underling filter chain #1");
 			chain.doFilter(request, response);
 		}
 	}

@@ -1,7 +1,8 @@
-hashmapi.js
-vfs.js
+aot.js
 portable.js
 long.asm.js
+hashmapi.js
+vfs.js
 structs.js
 method.js
 field.js
@@ -11,7 +12,6 @@ heap.js
 classloader.js
 thread.js
 threadmanager.js
-aot.js
 aot.native.js
 aot.data.js
 nh.core.js
