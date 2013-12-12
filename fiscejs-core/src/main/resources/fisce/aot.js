@@ -328,7 +328,7 @@ var __FyAOTUtil;
 						+ " is not implemented");
 			}
 
-			//TODO not all statments needs case
+			// TODO not all statments needs case
 			code.push("case ");
 			code.push(ip);
 			code.push(": ");
@@ -363,6 +363,17 @@ var __FyAOTUtil;
 								+ (oprand2 ? "clazz.constants[" + oprand2 + "]"
 										: "undefined")
 								+ ", sb, sp, stack.subarray(sb,sb+_m_.maxLocals+_m_.maxStack)]);\n");
+			}
+
+			if (FyConfig.debugMode) {
+				code
+						.push("if(sp<sb+"
+								+ method.maxLocals
+								+ "){throw new FyException(undefined,'Buffer underflow');}\n");
+				code
+						.push("if(sp>sb+"
+								+ (method.maxLocals + method.maxStack)
+								+ "){throw new FyException(undefined,'Buffer overflow');}\n");
 			}
 
 			if (ip === 0 && method.name === FyConst.FY_METHOD_CLINIT) {
@@ -597,6 +608,8 @@ var __FyAOTUtil;
 						+ ";tmpMethod=context.methods[" + tmpMethod.methodId
 						+ "];");
 				code.push("sp-=" + (tmpMethod.paramStackUsage + 1) + ";");
+				code
+						.push("if(stack[sp]===0){throw new FyException(FyConst.FY_EXCEPTION_NPT,'');}");
 				if (tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE) {
 					var fun = context.nativeAOT[tmpMethod.uniqueName];
 					if (!fun) {

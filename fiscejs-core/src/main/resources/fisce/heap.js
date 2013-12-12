@@ -101,7 +101,7 @@ function FyHeap(_context) {
 	var _oldReleasedSize = 0;
 	var _marks = [];
 	var _from = [];
-
+	
 	/**
 	 * @param gced
 	 * @returns {Number}

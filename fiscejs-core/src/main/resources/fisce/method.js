@@ -62,6 +62,20 @@ var FyMethod;
 
 		Object.preventExtensions(this);
 	};
+	
+	FyMethod.prototype.getLineNumber = function(ip){
+		if (this.accessFlags & FyConst.FY_ACC_NATIVE) {
+			return -1;
+		} else if (this.lineNumberTable) {
+			for (var j = this.lineNumberTable.length - 1; j >= 0; j--) {
+				var ln = this.lineNumberTable[j];
+				if (ip > ln.start) {
+					return ln.line;
+					break;
+				}
+			}
+		}
+	};
 
 	FyMethod.prototype.toString = function() {
 		return "{Method}" + this.uniqueName;

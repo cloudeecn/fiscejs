@@ -433,17 +433,7 @@ var FyThread;
 					heap.putFieldString(steHandle, fileNameField.posAbs,
 							method.owner.sourceFile);
 
-					if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
-						lineNumber = -2;
-					} else if (method.lineNumberTable) {
-						for (var j = method.lineNumberTable.length - 1; j >= 0; j--) {
-							var ln = method.lineNumberTable[j];
-							if (lip > ln.start) {
-								lineNumber = ln.line;
-								break;
-							}
-						}
-					}
+					lineNumber = method.getLineNumber(lip);
 					heap.putFieldInt(steHandle, lineNumberField.posAbs,
 							lineNumber);
 				});
@@ -621,17 +611,28 @@ var FyThread;
 						this.popFrame(0);
 						if (this.framePos >= this.top) {
 							// 全部弹出了……显示stacktrace
+							var data=this.context.dumpStackTrace(this.currentThrowable);
+							console.log("Uncaught exception occored");
+							for(var idx in data){
+								console.log(data[idx]);
+							}
+							message.type = FyMessage.message_thread_dead;
+							return;
+							//this.context.panic("Uncaught exception occored", undefined);
 							/*
-							 * throw new FyException( undefined, "Uncatched
-							 * exception: " + this.context.heap
-							 * .getObjectClass(this.currentThrowable));
-							 */
+							throw new FyException(
+									undefined,
+									"Uncatched exception: "
+											+ this.context.heap
+													.getObjectClass(this.currentThrowable));
+
 							method = this.context
 									.getMethod(FyConst.FY_BASE_THROWABLE
 											+ ".printStackTrace.()V");
 							this.pushFrame(method);
 							this.stack[this.getCurrentStackBase()] = this.currentThrowable;
 							this.currentThrowable = 0;
+							*/
 						}
 					}
 				}

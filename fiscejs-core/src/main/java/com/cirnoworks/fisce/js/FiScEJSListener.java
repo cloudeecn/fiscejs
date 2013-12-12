@@ -44,6 +44,7 @@ public class FiScEJSListener implements ServletContextListener {
 		log.info("Initializing fiscejs...");
 		long begin = System.nanoTime();
 		ServletContext context = sce.getServletContext();
+		String production = context.getInitParameter("production");
 		File basePath = new File(context.getRealPath("/fisce"));
 		basePath.mkdirs();
 		try {
@@ -88,7 +89,7 @@ public class FiScEJSListener implements ServletContextListener {
 				}
 			}
 
-			{
+			if ("true".equals(production)) {
 				File fiscePath = new File(context.getRealPath("/fisce/"));
 				File compiledFile = new File(fiscePath, "fisce.gzjs");
 				ArrayList<String> files = new ArrayList<String>();

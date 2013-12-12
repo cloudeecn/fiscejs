@@ -679,6 +679,23 @@ var FyContext;
 	};
 
 	/**
+	 * @param name
+	 *            {String}
+	 * @returns {FyClass}
+	 */
+	FyContext.prototype.lookupClassPhase1 = function(name) {
+		var clazz = this.getClass(name);
+		if (clazz === undefined) {
+			if (!name) {
+				throw new FyException(undefined, "Class name for load is null!");
+			}
+			clazz = this.classLoader.loadClass(name);
+			this.registerClass(clazz);
+		}
+		return clazz;
+	};
+
+	/**
 	 * Get or load class with class name
 	 * 
 	 * @param {string}
@@ -686,21 +703,9 @@ var FyContext;
 	 * @returns {FyClass} class to return
 	 */
 	FyContext.prototype.lookupClass = function(name) {
-		var clazz = this.getClass(name);
-		if (clazz === undefined) {
-			var classDef = undefined;
-			if (!name) {
-				throw new FyException(undefined, "Class name for load is null!");
-			}
-			clazz = this.classLoader.loadClass(name);
-			this.registerClass(clazz);
-
-			if (clazz.type == FyConst.TYPE_OBJECT) {
-				classDef = this.classDef[name];
-			}
-			this.classLoader.phase2(clazz, classDef);
-			this.lookupClass(FyConst.FY_BASE_CLASS);
-		}
+		
+		var clazz = this.classLoader.lookupAndPend(name);
+		this.classLoader.fixPending();
 		return clazz;
 	};
 
@@ -720,6 +725,25 @@ var FyContext;
 			return this.lookupClass("["
 					+ FyContext.mapPrimitivesRev[clazz.name]);
 		}
+	};
+
+	/**
+	 * Lookup class from constant phase1
+	 * 
+	 * @param constant
+	 *            the constant entry
+	 * @returns {FyClass}
+	 */
+	FyContext.prototype.lookupClassFromConstantPhase1 = function(constant) {
+		if (!constant.resolvedClass) {
+			constant.resolvedClass = this.lookupClassPhase1(constant.name);
+			if (!constant.resolvedClass) {
+				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
+						constant.name);
+			}
+			// delete constant.name;
+		}
+		return constant.resolvedClass;
 	};
 
 	/**
@@ -803,10 +827,14 @@ var FyContext;
 	FyContext.prototype.getMethodFromMethodObject = function(handle) {
 		if (this.heap.getObjectClass(handle) !== this.TOP_METHOD
 				&& this.heap.getObjectClass(handle) !== this.TOP_CONSTRUCTOR) {
-			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
-					"Object #" + handle + "("
-							+ this.heap.getObjectClass(handle).name
-							+ ") is not a method or constructor object");
+			if (this.heap.getObjectClass(handle) === undefined) {
+				throw new FyException(undefined, "Illegal object #" + handle);
+			} else {
+				throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
+						"Object #" + handle + "("
+								+ this.heap.getObjectClass(handle).name
+								+ ") is not a method or constructor object");
+			}
 		}
 		return this.methods[this.heap.getObjectMultiUsageData(handle)];
 	};
@@ -842,6 +870,92 @@ var FyContext;
 		return this.fields[this.heap.getObjectMultiUsageData(handle)];
 	};
 
+	FyContext.prototype.dumpStackTrace = function(throwable) {
+		var heap = this.heap;
+
+		var detailMessageField = this.getField(FyConst.FY_BASE_THROWABLE
+				+ ".detailMessage.L" + FyConst.FY_BASE_STRING + ";");
+		var causeField = this.getField(FyConst.FY_BASE_THROWABLE + ".cause.L"
+				+ FyConst.FY_BASE_THROWABLE + ";");
+		var stesField = this.getField(FyConst.FY_BASE_THROWABLE
+				+ ".stackTrace.[L" + FyConst.FY_BASE_STACKTHREADELEMENT + ";");
+
+		this.lookupClass(FyConst.FY_BASE_STACKTHREADELEMENT);
+		var steDeclaringClass = this
+				.getField(FyConst.FY_BASE_STACKTHREADELEMENT
+						+ ".declaringClass.L" + FyConst.FY_BASE_STRING + ";");
+		var steMethodName = this.getField(FyConst.FY_BASE_STACKTHREADELEMENT
+				+ ".methodName.L" + FyConst.FY_BASE_STRING + ";");
+		var steFileName = this.getField(FyConst.FY_BASE_STACKTHREADELEMENT
+				+ ".fileName.L" + FyConst.FY_BASE_STRING + ";");
+		var steLineNumber = this.getField(FyConst.FY_BASE_STACKTHREADELEMENT
+				+ ".lineNumber.I");
+		var data = [];
+		var first = true;
+		var dumped = {};
+		while (throwable > 0) {
+			if (dumped[throwable]) {
+				break;
+			}
+			dumped[throwable] = true;
+			console.log("#dump throwable=" + throwable);
+			var throwableClass = heap.getObjectClass(throwable);
+			if (throwableClass === undefined) {
+				data.push("###Illegal throwable handle #" + throwable);
+				throwable = 0;
+				break;
+			}
+			var messageHandle = heap.getFieldInt(throwable,
+					detailMessageField.posAbs);
+			var message;
+			if (messageHandle > 0) {
+				message = heap.getString(messageHandle);
+			} else {
+				message = "";
+			}
+			if (first) {
+				data.push(" Exception occored " + throwableClass.name + ": "
+						+ message);
+				first = false;
+			} else {
+				data.push(" Caused by " + throwableClass.name + ": " + message);
+			}
+			var stesHandle = heap.getFieldInt(throwable, stesField.posAbs);
+			if (stesHandle > 0) {
+				var stesLength = heap.arrayLength(stesHandle);
+				for (var i = 0; i < stesLength; i++) {
+					var ste = heap.getArrayInt(stesHandle, i);
+					if (ste > 0) {
+						var clazzHandle = heap.getFieldInt(ste,
+								steDeclaringClass.posAbs);
+						var methodHandle = heap.getFieldInt(ste,
+								steMethodName.posAbs);
+						var fileNameHandle = heap.getFieldInt(ste,
+								steFileName.posAbs);
+						var lineNumber = heap.getFieldInt(ste,
+								steLineNumber.posAbs);
+						var className = "<unknown>";
+						var methodName = "<unknown>";
+						var fileName = "<unknown>";
+						if (clazzHandle > 0) {
+							className = heap.getString(clazzHandle);
+						}
+						if (methodHandle > 0) {
+							methodName = heap.getString(methodHandle);
+						}
+						if (fileNameHandle > 0) {
+							fileName = heap.getString(fileNameHandle);
+						}
+						data.push("    at " + className + "." + methodName
+								+ "(" + fileName + ":" + lineNumber + ")");
+					}
+				}
+			}
+			throwable = heap.getFieldInt(throwable, causeField.posAbs);
+		}
+		return data;
+	};
+
 	/**
 	 * Panic the whole virtual machine and try to dump virtual machine data as
 	 * much as possible
@@ -849,23 +963,44 @@ var FyContext;
 	 * @param message
 	 */
 	FyContext.prototype.panic = function(message, e) {
-		console.log("###PANIC: " + message);
-		console.log(e);
-		console.log("#PANIC context:" + this);
-		console.log("#PANIC Thread dump:");
-		var detailMessageField = this.getField(FyConst.FY_BASE_THROWABLE
-				+ ".detailMessage.L" + FyConst.FY_BASE_STRING + ";");
-		for (var i = 0; i < FyConfig.maxThreads; i++) {
-			/**
-			 * @returns {FyThread}
-			 */
-			var thread = this.threadManager.threads[i];
-			if (thread !== undefined) {
-				console.log("Thread #" + i);
-				if (thread.currentThrowable) {
-					console.log("	Exception occored: ");
+		var data = [];
+		try {
+			data.push("###PANIC: " + message);
+			data.push(e);
+			data.push("#PANIC context:" + this);
+			data.push("#PANIC Thread dump:");
+
+			for (var i = 0; i < FyConfig.maxThreads; i++) {
+				/**
+				 * @returns {FyThread}
+				 */
+				var thread = this.threadManager.threads[i];
+				if (thread !== undefined) {
+					data.push("Thread #" + i);
+					thread.walkFrames(function(frameId, methodId, sb, ip, lip) {
+						/**
+						 * @returns {FyMethod}
+						 */
+						var method = this.methods[methodId];
+						var lineNumber = method.getLineNumber(lip);
+						data.push("  frame #" + frameId + ": "
+								+ method.owner.name.replace(/\//g, ".") + "."
+								+ method.name + " line " + lineNumber);
+					});
+					if (thread.currentThrowable) {
+						var throwable = thread.currentThrowable | 0;
+						if (throwable > 0) {
+							data.push.apply(data, this
+									.dumpStackTrace(throwable));
+						}
+					}
 				}
 			}
+		} catch (ee) {
+			console.log(ee);
+		}
+		for ( var idx in data) {
+			console.log(data[idx]);
 		}
 		// console.log(this);
 		if (e) {

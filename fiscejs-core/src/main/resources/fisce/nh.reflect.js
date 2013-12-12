@@ -255,6 +255,7 @@
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Method not found!");
 		}
+		console.log("###Invoke by reflection: " + method.uniqueName);
 		var count = paramsHandle ? heap.arrayLength(paramsHandle) : 0;
 		if (count !== method.parameterCount) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
@@ -262,7 +263,25 @@
 		}
 		// FIXME: stack overflow check
 		// TODO optimize / cache class lookup
-		if (!(method.accessFlags & FyConst.FY_ACC_STATIC)) {
+		if (method.accessFlags & FyConst.FY_ACC_STATIC) {
+			var clinitClass = thread.clinit(method.owner);
+			if (clinitClass !== undefined) {
+				// invoke clinit
+				if (clinitClass.clinitThreadId == 0) {
+					// no thread is running it, so let this run
+					clinitClass.clinitThreadId = thread.threadId;
+					thread.rollbackCurrentIp();
+					thread.sp += 3;
+					thread.pushFrame(clinitClass.clinit);
+					return ops;
+				} else {
+					// wait for other thread clinit
+					thread.rollbackCurrentIp();
+					thread.sp += 3;
+					return 0;
+				}
+			}
+		} else {
 			stack[sp++] = stack[sb + 1];
 		}
 		for (var i = 0; i < count; i++) {
@@ -271,29 +290,29 @@
 			if (paramType.type === FyConst.TYPE_PRIMITIVE) {
 				// unwrap
 				switch (paramType.pType) {
-				case 90/*FyConst.Z*/:
+				case 90/* FyConst.Z */:
 					heap.unwrapBooleanTo(paramHandle, sp++);
 					break;
-				case 66/*FyConst.B*/:
+				case 66/* FyConst.B */:
 					heap.unwrapByteTo(paramHandle, sp++);
 					break;
-				case 83/*FyConst.S*/:
+				case 83/* FyConst.S */:
 					heap.unwrapShortTo(paramHandle, sp++);
 					break;
-				case 67/*FyConst.C*/:
+				case 67/* FyConst.C */:
 					heap.unwrapCharTo(paramHandle, sp++);
 					break;
-				case 73/*FyConst.I*/:
+				case 73/* FyConst.I */:
 					heap.unwrapIntTo(paramHandle, sp++);
 					break;
-				case 70/*FyConst.F*/:
+				case 70/* FyConst.F */:
 					heap.unwrapFloatTo(paramHandle, sp++);
 					break;
-				case 74/*FyConst.J*/:
+				case 74/* FyConst.J */:
 					heap.unwrapLongTo(paramHandle, sp);
 					sp += 2;
 					break;
-				case 68/*FyConst.D*/:
+				case 68/* FyConst.D */:
 					heap.unwrapDoubleTo(paramHandle, sp);
 					sp += 2;
 					break;
@@ -436,29 +455,29 @@
 			if (paramType.type === FyConst.TYPE_PRIMITIVE) {
 				// unwrap
 				switch (paramType.pType) {
-				case 90 /*FyConst.Z*/:
+				case 90 /* FyConst.Z */:
 					heap.unwrapBooleanTo(paramHandle, thread.sp++);
 					break;
-				case 66/*FyConst.B*/:
+				case 66/* FyConst.B */:
 					heap.unwrapByteTo(paramHandle, thread.sp++);
 					break;
-				case 83/*FyConst.S*/:
+				case 83/* FyConst.S */:
 					heap.unwrapShortTo(paramHandle, thread.sp++);
 					break;
-				case 67/*FyConst.C*/:
+				case 67/* FyConst.C */:
 					heap.unwrapCharTo(paramHandle, thread.sp++);
 					break;
-				case 73/*FyConst.I*/:
+				case 73/* FyConst.I */:
 					heap.unwrapIntTo(paramHandle, thread.sp++);
 					break;
-				case 70/*FyConst.F*/:
+				case 70/* FyConst.F */:
 					heap.unwrapFloatTo(paramHandle, thread.sp++);
 					break;
-				case 74/*FyConst.J*/:
+				case 74/* FyConst.J */:
 					heap.unwrapLongTo(paramHandle, thread.sp);
 					thread.sp += 2;
 					break;
-				case 68/*FyConst.D*/:
+				case 68/* FyConst.D */:
 					heap.unwrapDoubleTo(paramHandle, thread.sp);
 					thread.sp += 2;
 					break;

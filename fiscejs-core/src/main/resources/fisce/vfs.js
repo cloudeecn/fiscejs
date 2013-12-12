@@ -72,18 +72,19 @@ var FyVFS;
 			p += 3;
 			i += 4;
 		}
-//		console.log("#VFS Entry created");
-//		console.log(this);
+		// console.log("#VFS Entry created");
+		// console.log(this);
 	}
 
 	VFSEntry.prototype.read = function() {
 		if (this.pos >= this.len) {
-//			console.log("#VFS read done");
+			// console.log("#VFS read done");
 			return -1;
 		}
 		var ret = this.content[this.pos++];
-//		console.log("#VFS read pos=" + this.pos + " len=" + this.len + " got="
-//				+ ret);
+		// console.log("#VFS read pos=" + this.pos + " len=" + this.len + "
+		// got="
+		// + ret);
 		return ret;
 	};
 
@@ -92,20 +93,20 @@ var FyVFS;
 			for (var i = len; i--;) {
 				target[pos + i] = this.content[this.pos + i];
 			}
-//			console.log("#VFS readTo pos=" + this.pos + " len=" + this.len
-//					+ " toLen=" + len);
+			// console.log("#VFS readTo pos=" + this.pos + " len=" + this.len
+			// + " toLen=" + len);
 			this.pos += len;
 			return len;
 		} else if ((this.len - this.pos) <= 0) {
-//			console.log("#VFS readTo done");
+			// console.log("#VFS readTo done");
 			return -1;
 		} else {
 			var realLen = this.len - this.pos;
 			for (var i = realLen; i--;) {
 				target[pos + i] = this.content[this.pos + i];
 			}
-//			console.log("#VFS readTo pos=" + this.pos + " len=" + this.len
-//					+ " toLen=" + realLen);
+			// console.log("#VFS readTo pos=" + this.pos + " len=" + this.len
+			// + " toLen=" + realLen);
 			this.pos = this.len;
 			return realLen;
 		}
@@ -117,12 +118,15 @@ var FyVFS;
 	};
 
 	function createKey(namespace, name) {
+		if (!name.startsWith("/")) {
+			name = "/" + name;
+		}
 		return "vfs_" + namespace + "_" + name;
 	}
 
 	FyVFS.prototype.add = function(json) {
 		for ( var name in json) {
-			var key = createKey(this.namespace, "/" + name);
+			var key = createKey(this.namespace, name);
 			localStorage.setItem(key, json[name]);
 		}
 	};
