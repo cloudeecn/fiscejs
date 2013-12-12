@@ -174,7 +174,7 @@ public class ClassConverterUtil {
 	}
 
 	public static void convert(Iterable<String> jarPaths, String jsonPath,
-			String vfsPath) throws IOException {
+			String vfsPath, boolean jsonp) throws IOException {
 		File runtimeJsFile = new File(jsonPath);
 
 		File vfsJsFile = new File(vfsPath);
@@ -215,8 +215,13 @@ public class ClassConverterUtil {
 				OutputStreamWriter writerv = new OutputStreamWriter(gosv,
 						"utf-8");
 
-				ClassConverterUtil.convertJars(iss, null, null, writerr, null,
-						null, writerv);
+				if (jsonp) {
+					ClassConverterUtil.convertJars(iss, "context.addClassDef(", ");", writerr,
+							"context.vfs.add(", ");", writerv);
+				} else {
+					ClassConverterUtil.convertJars(iss, null, null, writerr,
+							null, null, writerv);
+				}
 				writerr.close();
 				writerv.close();
 				gosr.close();

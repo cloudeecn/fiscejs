@@ -37,6 +37,11 @@ public class ClassConverterPlugin extends AbstractMojo {
 	 */
 	private String outputVFSFilename;
 
+	/**
+	 * @parameter default-value=false
+	 */
+	private boolean jsonp;
+
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		ArrayList<FileInputStream> in = new ArrayList<FileInputStream>(
@@ -54,7 +59,7 @@ public class ClassConverterPlugin extends AbstractMojo {
 				outputDirFile.mkdirs();
 			}
 			ClassConverterUtil.convert(Arrays.asList(jars), outputDir
-					+ outputFilename, outputDir + outputVFSFilename);
+					+ outputFilename, outputDir + outputVFSFilename, jsonp);
 		} catch (IOException e) {
 			throw new MojoExecutionException("Exception occored", e);
 		} finally {
