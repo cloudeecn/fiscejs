@@ -14,7 +14,7 @@
 				+ "}"
 				+ "if ("
 				+ method.maxLocals
-				+ " < stack[sp + 2] + stack[sp]) {"
+				+ " < stack[sp + 3]) {"
 				+ "throw new FyException(FyConst.FY_EXCEPTION_AIOOB,'Current method doesn\\\'t have ' + stack[sp + 3]+ ' params.');"
 				+ "}"
 				+ "heap.memcpy32(sb + stack[sp], _heap[stack[sp + 1]] + stack[sp + 2]+ "

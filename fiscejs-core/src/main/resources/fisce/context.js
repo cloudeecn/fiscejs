@@ -125,7 +125,9 @@ var FyContext;
 		this.vfs = new FyVFS(namespace);
 
 		this.log = function(level, content) {
-			console.log(levels[level] + ": " + content);
+			if (FyConfig.debugMode || level > 0) {
+				console.log(levels[level] + ": " + content);
+			}
 		};
 
 		/** Special types* */
@@ -703,7 +705,7 @@ var FyContext;
 	 * @returns {FyClass} class to return
 	 */
 	FyContext.prototype.lookupClass = function(name) {
-		
+
 		var clazz = this.classLoader.lookupAndPend(name);
 		this.classLoader.fixPending();
 		return clazz;
@@ -964,10 +966,12 @@ var FyContext;
 	 */
 	FyContext.prototype.panic = function(message, e) {
 		var data = [];
+		var context = this;
 		try {
 			data.push("###PANIC: " + message);
-			data.push(e);
-			data.push("#PANIC context:" + this);
+			data.push(""+e);
+			data.push("#PANIC context:");
+			data.push(this);
 			data.push("#PANIC Thread dump:");
 
 			for (var i = 0; i < FyConfig.maxThreads; i++) {
@@ -977,27 +981,44 @@ var FyContext;
 				var thread = this.threadManager.threads[i];
 				if (thread !== undefined) {
 					data.push("Thread #" + i);
-					thread.walkFrames(function(frameId, methodId, sb, ip, lip) {
-						/**
-						 * @returns {FyMethod}
-						 */
-						var method = this.methods[methodId];
-						var lineNumber = method.getLineNumber(lip);
-						data.push("  frame #" + frameId + ": "
-								+ method.owner.name.replace(/\//g, ".") + "."
-								+ method.name + " line " + lineNumber);
-					});
-					if (thread.currentThrowable) {
-						var throwable = thread.currentThrowable | 0;
-						if (throwable > 0) {
-							data.push.apply(data, this
-									.dumpStackTrace(throwable));
+					try {
+						thread.walkFrames(function(frameId, methodId, sb, ip,
+								lip) {
+							/**
+							 * @returns {FyMethod}
+							 */
+							var method = context.methods[methodId];
+							var lineNumber = method.getLineNumber(lip);
+							data
+									.push("  frame #"
+											+ frameId
+											+ ": "
+											+ method.owner.name.replace(/\//g,
+													".") + "." + method.name
+											+ " line " + lineNumber);
+						});
+					} catch (ex) {
+						console.log("Exception occored while dumping frames:");
+						console.log(ex.toString());
+					}
+					try {
+						if (thread.currentThrowable) {
+							var throwable = thread.currentThrowable | 0;
+							if (throwable > 0) {
+								data.push.apply(data, this
+										.dumpStackTrace(throwable));
+							}
 						}
+					} catch (ex) {
+						console
+								.log("Exception occored while dumping exception:");
+						console.log(ex.toString());
 					}
 				}
 			}
 		} catch (ee) {
-			console.log(ee);
+			console.log("Exception occored while processing panic data:");
+			console.log(ee.toString());
 		}
 		for ( var idx in data) {
 			console.log(data[idx]);

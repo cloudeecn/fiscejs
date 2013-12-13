@@ -101,7 +101,7 @@ function FyHeap(_context) {
 	var _oldReleasedSize = 0;
 	var _marks = [];
 	var _from = [];
-	
+
 	/**
 	 * @param gced
 	 * @returns {Number}
@@ -478,9 +478,9 @@ function FyHeap(_context) {
 			handle = _fetchNextHandle();
 		}
 
-//		 if (handle === 2875) {
-//			 new FyException();
-//		 }
+		// if (handle === 2875) {
+		// new FyException();
+		// }
 
 		if (_objectExists(handle)) {
 			// TODO confirm
@@ -665,9 +665,9 @@ function FyHeap(_context) {
 		if (handle === 0) {
 			throw new FyException(undefined, "GC Internal error #1");
 		}
-//		if(handle===4096){
-//			new FyException(undefined,undefined);
-//		}
+		// if(handle===4096){
+		// new FyException(undefined,undefined);
+		// }
 		_from.push(handle);
 	};
 
@@ -1900,7 +1900,7 @@ function FyHeap(_context) {
 						+ sClass.contentClass.name);
 			}
 			// TODO
-			console.log("TODO: enforce System.arrayCopy's type check");
+			context.log(0, "TODO: enforce System.arrayCopy's type check");
 			// throw new FyException(FyConst.FY_EXCEPTION_STORE, "Can't cast "
 			// + sClass.contentClass.name + " to "
 			// + dClass.contentClass.name);

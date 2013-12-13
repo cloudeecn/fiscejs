@@ -255,7 +255,7 @@
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Method not found!");
 		}
-		console.log("###Invoke by reflection: " + method.uniqueName);
+		context.log(0, "###Invoke by reflection: " + method.uniqueName);
 		var count = paramsHandle ? heap.arrayLength(paramsHandle) : 0;
 		if (count !== method.parameterCount) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,

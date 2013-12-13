@@ -318,14 +318,14 @@ var FyThread;
 		 * @returns {FyMethod}
 		 */
 		var method = this.getCurrentMethod();
-		console.log("GetExceptionHandler ip: " + handle + " " + ip + " "
+		context.log(0, "GetExceptionHandler ip: " + handle + " " + ip + " "
 				+ method.uniqueName);
 		for (var i = 0, max = method.exceptionTable.length; i < max; i++) {
 			/**
 			 * @returns {FyExceptionHandler}
 			 */
 			var handler = method.exceptionTable[i];
-			console.log("# " + handler.start + "-" + handler.end + "("
+			context.log(0, "# " + handler.start + "-" + handler.end + "("
 					+ (handler.catchClass ? handler.catchClass.name : "*")
 					+ ")=>" + handler.handler + " "
 					+ heap.getObjectClass(handle).name);
@@ -337,11 +337,11 @@ var FyThread;
 					var handlerClass = handler.catchClass;
 					if (this.context.classLoader.canCast(heap
 							.getObjectClass(handle), handlerClass)) {
-						console.log("!!" + handler.handler);
+						context.log(0, "!!" + handler.handler);
 						return handler.handler;
 					}
 				} else {
-					console.log("!!" + handler.handler);
+					context.log(0, "!!" + handler.handler);
 					return handler.handler;
 				}
 			}
@@ -578,7 +578,7 @@ var FyThread;
 				FyAOTUtil.aot(this, method);
 			}
 			if (this.currentThrowable) {
-				console.log("!!!Exception occored #"
+				context.log(0, "!!!Exception occored #"
 						+ this.currentThrowable
 						+ ": "
 						+ this.context.heap
@@ -611,28 +611,27 @@ var FyThread;
 						this.popFrame(0);
 						if (this.framePos >= this.top) {
 							// 全部弹出了……显示stacktrace
-							var data=this.context.dumpStackTrace(this.currentThrowable);
-							console.log("Uncaught exception occored");
-							for(var idx in data){
-								console.log(data[idx]);
+							var data = this.context
+									.dumpStackTrace(this.currentThrowable);
+							context.log(2, "Uncaught exception occored");
+							for ( var idx in data) {
+								context.log(2, data[idx]);
 							}
 							message.type = FyMessage.message_thread_dead;
 							return;
-							//this.context.panic("Uncaught exception occored", undefined);
+							// this.context.panic("Uncaught exception occored",
+							// undefined);
 							/*
-							throw new FyException(
-									undefined,
-									"Uncatched exception: "
-											+ this.context.heap
-													.getObjectClass(this.currentThrowable));
-
-							method = this.context
-									.getMethod(FyConst.FY_BASE_THROWABLE
-											+ ".printStackTrace.()V");
-							this.pushFrame(method);
-							this.stack[this.getCurrentStackBase()] = this.currentThrowable;
-							this.currentThrowable = 0;
-							*/
+							 * throw new FyException( undefined, "Uncatched
+							 * exception: " + this.context.heap
+							 * .getObjectClass(this.currentThrowable));
+							 * 
+							 * method = this.context
+							 * .getMethod(FyConst.FY_BASE_THROWABLE +
+							 * ".printStackTrace.()V"); this.pushFrame(method);
+							 * this.stack[this.getCurrentStackBase()] =
+							 * this.currentThrowable; this.currentThrowable = 0;
+							 */
 						}
 					}
 				}
@@ -725,9 +724,6 @@ var FyThread;
 							if (FyConfig.debugMode
 									&& ((value < 0 || value > FyConfig.maxObjects) || (heap
 											.getObjectClass(value) === undefined))) {
-								for (var j = 0; j < imax; j++) {
-									console.log("#" + stack[j + sb]);
-								}
 								throw new FyException(undefined,
 										"Illegal handle #" + value + " @" + i
 												+ " threadId="
