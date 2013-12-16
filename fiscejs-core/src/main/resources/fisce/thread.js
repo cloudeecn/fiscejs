@@ -318,14 +318,14 @@ var FyThread;
 		 * @returns {FyMethod}
 		 */
 		var method = this.getCurrentMethod();
-		context.log(0, "GetExceptionHandler ip: " + handle + " " + ip + " "
+		this.context.log(0, "GetExceptionHandler ip: " + handle + " " + ip + " "
 				+ method.uniqueName);
 		for (var i = 0, max = method.exceptionTable.length; i < max; i++) {
 			/**
 			 * @returns {FyExceptionHandler}
 			 */
 			var handler = method.exceptionTable[i];
-			context.log(0, "# " + handler.start + "-" + handler.end + "("
+			this.context.log(0, "# " + handler.start + "-" + handler.end + "("
 					+ (handler.catchClass ? handler.catchClass.name : "*")
 					+ ")=>" + handler.handler + " "
 					+ heap.getObjectClass(handle).name);
@@ -337,11 +337,11 @@ var FyThread;
 					var handlerClass = handler.catchClass;
 					if (this.context.classLoader.canCast(heap
 							.getObjectClass(handle), handlerClass)) {
-						context.log(0, "!!" + handler.handler);
+						this.context.log(0, "!!" + handler.handler);
 						return handler.handler;
 					}
 				} else {
-					context.log(0, "!!" + handler.handler);
+					this.context.log(0, "!!" + handler.handler);
 					return handler.handler;
 				}
 			}
@@ -578,7 +578,7 @@ var FyThread;
 				FyAOTUtil.aot(this, method);
 			}
 			if (this.currentThrowable) {
-				context.log(0, "!!!Exception occored #"
+				this.context.log(0, "!!!Exception occored #"
 						+ this.currentThrowable
 						+ ": "
 						+ this.context.heap
@@ -613,9 +613,9 @@ var FyThread;
 							// 全部弹出了……显示stacktrace
 							var data = this.context
 									.dumpStackTrace(this.currentThrowable);
-							context.log(2, "Uncaught exception occored");
+							this.context.log(2, "Uncaught exception occored");
 							for ( var idx in data) {
-								context.log(2, data[idx]);
+								this.context.log(2, data[idx]);
 							}
 							message.type = FyMessage.message_thread_dead;
 							return;

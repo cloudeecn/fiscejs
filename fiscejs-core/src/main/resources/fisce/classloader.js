@@ -138,6 +138,7 @@ var FyClassLoader;
 	 *            name
 	 */
 	FyClassLoader.prototype.loadClass = function(name) {
+		// console.log("Load " + name);
 		/**
 		 * tell eclipse JSDT clazz is a FyClass
 		 * 
@@ -163,6 +164,7 @@ var FyClassLoader;
 		} else {
 			// Normal class
 			var classDef = this.context.classDef[name];
+			this.context.classDef[name] = undefined;
 			if (!classDef) {
 				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 						"Class not found: " + name);
@@ -175,10 +177,6 @@ var FyClassLoader;
 			if (clazz.staticSize > 0) {
 				clazz.staticPos = this.context.heap
 						.allocateStatic(clazz.staticSize);
-				console.log("clear static area" + clazz.staticPos + "-"
-						+ (clazz.staticPos + clazz.staticSize));
-				this.context.heap
-						.memset32(clazz.staticPos, clazz.staticSize, 0);
 			}
 			{// Constants
 				var constantDefs = classDef.constants;
@@ -404,6 +402,8 @@ var FyClassLoader;
 					"Passed illegal class to class loader phase 2");
 		}
 
+		// console.log("Load phase2 " + clazz.name);
+
 		switch (clazz.type) {
 		case 2/* FyConst.TYPE_ARRAY */:
 			break;
@@ -561,6 +561,7 @@ var FyClassLoader;
 			if (clazz.superClass && clazz.superClass.phase < 3) {
 				this.fixPendingSingle(clazz.superClass);
 			}
+			// console.log("Load phase3 " + clazz.name);
 			if (clazz.superClass && clazz.superClass.sizeAbs > 0) {
 				var len = clazz.superClass.sizeAbs;
 				for (var i = 0; i < len; i++) {

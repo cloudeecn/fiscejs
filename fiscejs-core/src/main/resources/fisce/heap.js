@@ -1919,7 +1919,7 @@ function FyHeap(_context) {
 						+ sClass.contentClass.name);
 			}
 			// TODO
-			context.log(0, "TODO: enforce System.arrayCopy's type check");
+			_context.log(0, "TODO: enforce System.arrayCopy's type check");
 			// throw new FyException(FyConst.FY_EXCEPTION_STORE, "Can't cast "
 			// + sClass.contentClass.name + " to "
 			// + dClass.contentClass.name);
