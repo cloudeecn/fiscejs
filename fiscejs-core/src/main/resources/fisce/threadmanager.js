@@ -232,10 +232,10 @@ var FyThreadManager;
 	 *            time
 	 */
 	FyThreadManager.prototype.sleep = function(thread, time) {
-		thread.nextWakeTime = Date.now() + time;
+		thread.nextWakeTime = performance.now() + time;
 		thread.yield = true;
 		// console.log(thread.threadId + ": Sleep " + time + " => "
-		// + thread.nextWakeTime + "/" + Date.now());
+		// + thread.nextWakeTime + "/" + performance.now());
 	};
 
 	/**
@@ -297,7 +297,7 @@ var FyThreadManager;
 		if (time <= 0) {
 			thread.nextWakeTime = 0x7fffffffffff;
 		} else {
-			thread.nextWakeTime = Date.now() + time;
+			thread.nextWakeTime = performance.now() + time;
 		}
 		thread.yield = true;
 	};
@@ -413,8 +413,8 @@ var FyThreadManager;
 		thread.initWithMethod(threadHandle, mainMethod);
 		this.runningThreads.push(thread);
 		this.state = FyConst.FY_TM_STATE_RUN_PENDING;
-		this.nextGCTime = Date.now() + FyConfig.gcIdv;
-		this.nextForceGCTime = Date.now() + FyConfig.gcForceIdv;
+		this.nextGCTime = performance.now() + FyConfig.gcIdv;
+		this.nextForceGCTime = performance.now() + FyConfig.gcForceIdv;
 	};
 
 	/**
@@ -514,9 +514,9 @@ var FyThreadManager;
 						}
 						nextWakeUpTime = thread.nextWakeTime;
 						// console.log([ thread.threadId, nextWakeUpTime,
-						// Date.now(), thread.waitForLockId,
+						// performance.now(), thread.waitForLockId,
 						// thread.waitForNotifyId ]);
-						if (nextWakeUpTime > Date.now()) {
+						if (nextWakeUpTime > performance.now()) {
 							if (this.nextWakeUpTimeTotal > nextWakeUpTime) {
 								this.nextWakeUpTimeTotal = nextWakeUpTime;
 							}
@@ -570,7 +570,7 @@ var FyThreadManager;
 						if (!this.nonDaemonRunned) {
 							this.state = FyConst.FY_TM_STATE_DEAD;
 						} else {
-							now = Date.now();
+							now = performance.now();
 							sleepTime = this.nextWakeUpTimeTotal - now;
 							if ((sleepTime > 10 && now > this.nextGCTime)
 									|| now > this.nextForceGCTime) {
@@ -579,7 +579,7 @@ var FyThreadManager;
 										+ FyConfig.gcForceIdv;
 								this.context.log(0, "Call GC due to timeout");
 								heap.gc(0);
-								now = Date.now();
+								now = performance.now();
 								sleepTime = this.nextWakeUpTimeTotal - now;
 							}
 							this.nextWakeUpTimeTotal = 0x7fffffffffff;

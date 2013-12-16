@@ -420,21 +420,42 @@ var FyLookupSwitchTarget;
 		Object.preventExtensions(this);
 	};
 
-	/**
-	 * FyException
-	 * 
-	 * @param {String}
-	 *            clazz Class name for inner class
-	 * @param {String}
-	 *            msg message
-	 */
-	FyException = function(clazz, message) {
-		this.name = "FyException";
-		this.clazz = clazz;
-		this.message = message;
-		this.stack = new Error().stack;
-		Object.preventExtensions(this);
-	};
+	if (FyConfig.debugMode) {
+		/**
+		 * FyException
+		 * 
+		 * @param {String}
+		 *            clazz Class name for inner class
+		 * @param {String}
+		 *            msg message
+		 */
+		FyException = function(clazz, message) {
+			this.name = "FyException";
+			this.clazz = clazz;
+			this.message = message;
+			this.stack = new Error().stack;
+			if (clazz === undefined) {
+				clazz = undefined;
+			}
+			Object.preventExtensions(this);
+		};
+	} else {
+		/**
+		 * FyException
+		 * 
+		 * @param {String}
+		 *            clazz Class name for inner class
+		 * @param {String}
+		 *            msg message
+		 */
+		FyException = function(clazz, message) {
+			this.name = "FyException";
+			this.clazz = clazz;
+			this.message = message;
+			this.stack = new Error().stack;
+			Object.preventExtensions(this);
+		};
+	}
 
 	// FyException.prototype = new Error();
 	FyException.prototype.constructor = FyException;

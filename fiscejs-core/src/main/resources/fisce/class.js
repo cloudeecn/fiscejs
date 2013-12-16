@@ -33,7 +33,7 @@ var FyClass;
 	 * @param {Number}
 	 *            type
 	 */
-	FyClass = function(type) {
+	FyClass = function(type, classDef) {
 		this.name = "";
 		this.sourceFile = undefined;
 
@@ -89,6 +89,10 @@ var FyClass;
 
 		/** primitive only */
 		this.pType = undefined;
+
+		/** classDef, will be removed in phase2 */
+		this.classDef = classDef;
+
 		Object.preventExtensions(this);
 	};
 

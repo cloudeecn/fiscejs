@@ -166,6 +166,7 @@ function FyHeap(_context) {
 			_heap[pos + i] = value;
 		}
 	};
+	this.memset32 = _memset32;
 
 	var _beginProtect = function() {
 		_protectMode = 1;
@@ -665,6 +666,10 @@ function FyHeap(_context) {
 		if (handle === 0) {
 			throw new FyException(undefined, "GC Internal error #1");
 		}
+		
+		// if (FyConfig.debugMode && (handle < 0 || handle > FyConfig.maxObjects)) {
+		//	throw new FyException(undefined, "Illegal handle #" + handle);
+		//}
 		// if(handle===4096){
 		// new FyException(undefined,undefined);
 		// }
@@ -820,6 +825,13 @@ function FyHeap(_context) {
 						if (!_marks[handle2]) {
 							// console.log("!!Add #" + handle + "[" + i + "]="
 							// + handle2);
+							if (FyConfig.debugMode
+									&& (handle2 < 0 || handle2 > FyConfig.maxObjects)) {
+								throw new FyException("Illegal handle #"
+										+ handle2 + " in "
+										+ _getObjectClass(handle).name + "#"
+										+ handle + "[" + i + "]");
+							}
 							_from.push(handle2);
 						}
 					}
@@ -848,6 +860,13 @@ function FyHeap(_context) {
 						if (!_marks[handle2]) {
 							// console.log("!!Add #" + handle + "[" + field.name
 							// + "]=" + handle2);
+							if (FyConfig.debugMode
+									&& (handle2 < 0 || handle2 > FyConfig.maxObjects)) {
+								throw new FyException("Illegal handle #"
+										+ handle2 + " in "
+										+ _getObjectClass(handle).name + "#"
+										+ handle + "." + field.fullName);
+							}
 							_from.push(handle2);
 						}
 					} else {

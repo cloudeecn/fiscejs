@@ -147,7 +147,7 @@ var FyClassLoader;
 		if (name.charAt(0) === FyConst.FY_TYPE_ARRAY) {
 			// Array
 			name = this.context.pool(name);
-			clazz = new FyClass(FyConst.TYPE_ARRAY);
+			clazz = new FyClass(FyConst.TYPE_ARRAY, undefined);
 			clazz.name = name;
 			clazz.arrayType = FyClassLoader.getArrayContentType(name);
 			clazz.superClass = this.lookupAndPend(FyConst.FY_BASE_OBJECT);
@@ -156,7 +156,7 @@ var FyClassLoader;
 		} else if (FyContext.mapPrimitivesRev[name]) {
 			// Primitive
 			name = this.context.pool(name);
-			clazz = new FyClass(FyConst.TYPE_PRIMITIVE);
+			clazz = new FyClass(FyConst.TYPE_PRIMITIVE, undefined);
 			clazz.name = name;
 			clazz.pType = FyContext.mapPrimitivesRev[name].charCodeAt(0);
 			clazz.superClass = this.lookupAndPend(FyConst.FY_BASE_OBJECT);
@@ -168,13 +168,17 @@ var FyClassLoader;
 						"Class not found: " + name);
 			}
 			name = this.context.pool(name);
-			clazz = new FyClass(FyConst.TYPE_OBJECT);
+			clazz = new FyClass(FyConst.TYPE_OBJECT, classDef);
 
 			FyUtils.simpleClone(classDef, clazz, [ "name", "sourceFile",
 					"accessFlags", "sizeRel", "staticSize", "phase" ]);
 			if (clazz.staticSize > 0) {
 				clazz.staticPos = this.context.heap
 						.allocateStatic(clazz.staticSize);
+				console.log("clear static area" + clazz.staticPos + "-"
+						+ (clazz.staticPos + clazz.staticSize));
+				this.context.heap
+						.memset32(clazz.staticPos, clazz.staticSize, 0);
 			}
 			{// Constants
 				var constantDefs = classDef.constants;
@@ -322,7 +326,7 @@ var FyClassLoader;
 								this.context.heap
 										.putStaticInt(
 												clazz,
-												field.posAbs,
+												field.posRel,
 												clazz.constants[fieldDef.constantValueData].value);
 								break;
 							case 68/* FyConst.D */:
@@ -330,7 +334,7 @@ var FyClassLoader;
 								this.context.heap
 										.putStaticLongFrom(
 												clazz,
-												field.posAbs,
+												field.posRel,
 												clazz.constants[fieldDef.constantValueData].value,
 												0);
 								break;
@@ -394,7 +398,7 @@ var FyClassLoader;
 	 * @param {FyClass}
 	 *            clazz
 	 */
-	FyClassLoader.prototype.phase2 = function(clazz, classDef) {
+	FyClassLoader.prototype.phase2 = function(clazz) {
 		if (!clazz || !clazz.name || clazz.phase !== 1) {
 			throw new FyException(undefined,
 					"Passed illegal class to class loader phase 2");
@@ -407,6 +411,7 @@ var FyClassLoader;
 			break;
 		case 0/* FyConst.TYPE_OBJECT */: {
 			// Count method params already done.
+			var classDef = clazz.classDef;
 			{
 				var interfaceDatas = classDef.interfaceDatas;
 				var len = interfaceDatas.length;
@@ -588,6 +593,7 @@ var FyClassLoader;
 				}
 			}
 		}
+		clazz.classDef = undefined;
 		clazz.phase = 3;
 	};
 
