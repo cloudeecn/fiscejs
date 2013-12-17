@@ -26,8 +26,8 @@ var FyThreadManager;
 	 */
 	FyThreadManager = function(context) {
 		this.context = context;
-		this.pricmds = [ 0, 1000, 2500, 5000, 10000, 20000, 40000, 80000, 160000,
-				320000, 640000 ];
+		this.pricmds = [ 0, 1000, 2500, 5000, 10000, 20000, 40000, 80000,
+				160000, 320000, 640000 ];
 		this.threads = new Array(FyConfig.maxThreads);
 		this.currentThread = undefined;
 		this.runningThreads = [];
@@ -482,10 +482,6 @@ var FyThreadManager;
 		var thread;
 		var nextWakeUpTime, now, sleepTime;
 		var lockId;
-		/**
-		 * @returns {FyObject}
-		 */
-		var lock;
 		if (this.state !== FyConst.FY_TM_STATE_RUN_PENDING
 				&& this.state !== FyConst.FY_TM_STATE_RUNNING
 				&& this.state !== FyConst.FY_TM_STATE_STOP_PENDING) {
@@ -542,6 +538,7 @@ var FyThreadManager;
 							}
 						}
 						this.lastThreadId = thread.threadId;
+						message.thread = thread;
 						thread.run(message, this.pricmds[thread.priority] | 0);
 						heap.endProtect();
 						switch (message.type | 0) {
@@ -554,14 +551,13 @@ var FyThreadManager;
 						case 1/* FyMessage.message_none */:
 							break;
 						case 4/* FyMessage.message_exception */:
-						case 3/* FyMessage.message_invoke_native */:
-							// TODO
-							// unimplemented (may be no need)
 							this.context.panic("Illegal message type "
 									+ message.type);
 						case 2/* FyMessage.message_thread_dead */:
 							thread.destroyPending = true;
 							break;
+						case 3/* FyMessage.message_invoke_native */:
+							return;
 						default:
 							this.context.panic("Illegal message type "
 									+ message.type);

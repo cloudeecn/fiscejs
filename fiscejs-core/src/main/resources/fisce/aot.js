@@ -554,9 +554,12 @@ var __FyAOTUtil;
 											+ ");ops=tmpMethod.invoke(context,thread,ops);heap.endProtect();return ops;");
 
 						} else {
-							throw new FyException(undefined,
-									"Unresolved native handler for "
-											+ tmpMethod.uniqueName);
+							code
+									.push("thread.localToFrame(sp,"
+											+ ip
+											+ ","
+											+ (ip + 1)
+											+ ");thread.pendingNative=tmpMethod;return ops;");
 						}
 					} else {
 						code.push("thread.localToFrame(sp," + ip + ","
@@ -626,9 +629,12 @@ var __FyAOTUtil;
 										+ ");ops=tmpMethod.invoke(context,thread,ops);heap.endProtect();return ops;");
 
 					} else {
-						throw new FyException(undefined,
-								"Unresolved native handler for "
-										+ tmpMethod.uniqueName);
+						code
+								.push("thread.localToFrame(sp,"
+										+ ip
+										+ ","
+										+ (ip + 1)
+										+ ");thread.pendingNative=tmpMethod;return ops;");
 					}
 				} else {
 					code.push("thread.localToFrame(sp," + ip + "," + (ip + 1)
@@ -670,9 +676,12 @@ var __FyAOTUtil;
 										+ ");ops=tmpMethod.invoke(context,thread,ops);heap.endProtect();return ops;");
 
 					} else {
-						throw new FyException(undefined,
-								"Unresolved native handler for "
-										+ tmpMethod.uniqueName);
+						code
+								.push("thread.localToFrame(sp,"
+										+ ip
+										+ ","
+										+ (ip + 1)
+										+ ");thread.pendingNative=tmpMethod;return ops;");
 					}
 				} else {
 					code.push("thread.localToFrame(sp," + ip + "," + (ip + 1)

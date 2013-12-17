@@ -57,6 +57,8 @@ var FyThread;
 		this.daemon = false;
 		this.destroyPending = false;
 
+		this.pendingNative = undefined;
+
 		/**
 		 * @returns {__FyLongOps}
 		 */
@@ -244,8 +246,8 @@ var FyThread;
 				}
 				return ops;
 			} else {
-				throw new FyException(undefined,
-						"Unresolved native handler for " + method.uniqueName);
+				this.pendingNative = method;
+				return ops;
 			}
 		} else {
 			return this.pushMethod(method, ops);
@@ -290,8 +292,7 @@ var FyThread;
 				}
 				return ops;
 			} else {
-				throw new FyException(undefined,
-						"Unresolved native handler for " + method.uniqueName);
+				this.pendingNative = method;
 			}
 		} else {
 			return this.pushMethod(method, ops);
@@ -318,8 +319,8 @@ var FyThread;
 		 * @returns {FyMethod}
 		 */
 		var method = this.getCurrentMethod();
-		this.context.log(0, "GetExceptionHandler ip: " + handle + " " + ip + " "
-				+ method.uniqueName);
+		this.context.log(0, "GetExceptionHandler ip: " + handle + " " + ip
+				+ " " + method.uniqueName);
 		for (var i = 0, max = method.exceptionTable.length; i < max; i++) {
 			/**
 			 * @returns {FyExceptionHandler}

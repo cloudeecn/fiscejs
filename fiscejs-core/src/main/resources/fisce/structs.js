@@ -471,6 +471,7 @@ var FyLookupSwitchTarget;
 		this.type = 0;
 		this.thread = undefined;
 		this.sleepTime = 0;
+		this.nativeMethod = undefined;
 		Object.preventExtensions(this);
 	};
 
