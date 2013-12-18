@@ -124,6 +124,7 @@ function FyHeap(_context) {
 				}
 			}
 		}
+		_nextHandle = handle + 1;
 		return handle;
 	};
 
@@ -472,9 +473,6 @@ function FyHeap(_context) {
 	 */
 	var _allocateInternal = function(size, clazz, multiUsageData, toHandle, bid) {
 		var handle = toHandle;
-		if (FyConfig.aggresiveGC) {
-			_gc(0);
-		}
 		if (handle === 0) {
 			handle = _fetchNextHandle();
 		}
@@ -666,10 +664,11 @@ function FyHeap(_context) {
 		if (handle === 0) {
 			throw new FyException(undefined, "GC Internal error #1");
 		}
-		
-		// if (FyConfig.debugMode && (handle < 0 || handle > FyConfig.maxObjects)) {
-		//	throw new FyException(undefined, "Illegal handle #" + handle);
-		//}
+
+		// if (FyConfig.debugMode && (handle < 0 || handle >
+		// FyConfig.maxObjects)) {
+		// throw new FyException(undefined, "Illegal handle #" + handle);
+		// }
 		// if(handle===4096){
 		// new FyException(undefined,undefined);
 		// }
@@ -1039,7 +1038,7 @@ function FyHeap(_context) {
 				- _edenBottom >= _heapTop) {
 			memoryStressed = true;
 		}
-		_context.log(0,
+		_context.log(1,
 				"#GC "
 						+ (memoryStressed ? "stressed" : "")
 						+ " BEFORE "
@@ -1134,7 +1133,7 @@ function FyHeap(_context) {
 		if (FyConfig.debugMode) {
 			_validateObjects();
 		}
-		_context.log(0,
+		_context.log(1,
 				"#GC AFTER "
 						+ (_edenPos - _edenBottom)
 						+ "+"
@@ -1145,7 +1144,7 @@ function FyHeap(_context) {
 						+ (_edenPos - _edenBottom + _copyPos - _copyBottom
 								+ _oldPos - _oldBottom) + " ints "
 						+ (HEAP_SIZE - _heapTop) + " perm ints");
-		_context.log(0, "#GC time: " + ((t1 - timeStamp) | 0) + " "
+		_context.log(1, "#GC time: " + ((t1 - timeStamp) | 0) + " "
 				+ ((t2 - t1) | 0) + " " + ((t3 - t2) | 0) + " "
 				+ ((t4 - t3) | 0) + " " + ((t5 - t4) | 0) + " "
 				+ ((t6 - t5) | 0) + " " + ((t7 - t6) | 0) + " "
