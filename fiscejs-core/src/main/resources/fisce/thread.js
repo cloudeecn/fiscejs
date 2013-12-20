@@ -293,6 +293,7 @@ var FyThread;
 				return ops;
 			} else {
 				this.pendingNative = method;
+				return ops;
 			}
 		} else {
 			return this.pushMethod(method, ops);
@@ -615,11 +616,17 @@ var FyThread;
 				}
 			}
 			ops = method.invoke(this.context, this, ops);
+			if (this.pendingNative !== undefined) {
+				message.type = FyMessage.message_invoke_native;
+				message.nativeMethod = this.pendingNative;
+				message.thread = this;
+				this.pendingNative = undefined;
+				ops = 0;
+			}
 			if (this.yield) {
 				ops = 0;
 			}
 		}
-		this.yield = false;
 	};
 
 	/**
@@ -631,17 +638,14 @@ var FyThread;
 	 *            ops instructions to run
 	 */
 	FyThread.prototype.run = function(message, ops) {
-		while (ops > 0) {
-			try {
-				ops = this.runEx(message, ops);
-			} catch (e) {
-				if (e instanceof FyException) {
-					this.context.threadManager.pushThrowable(this, e);
-				} else {
-					this.context.panic(
-							"Exception occored while executing thread #"
-									+ this.threadId, e);
-				}
+		try {
+			this.runEx(message, ops);
+		} catch (e) {
+			if (e instanceof FyException) {
+				this.context.threadManager.pushThrowable(this, e);
+			} else {
+				this.context.panic("Exception occored while executing thread #"
+						+ this.threadId, e);
 			}
 		}
 		this.yield = false;
