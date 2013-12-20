@@ -537,30 +537,7 @@ var FyThread;
 	 *            method
 	 * @param ops
 	 */
-	FyThread.prototype.runEx = function(method, ops) {
-		try {
-			return method.invoke(this.context, this, ops);
-		} catch (e) {
-			if (e instanceof FyException) {
-				this.context.threadManager.pushThrowable(this, e);
-				return ops;
-			} else {
-				this.context.panic("Exception occored while executing thread #"
-						+ this.threadId, e);
-				return ops;
-			}
-		}
-	};
-
-	/**
-	 * Run this thread
-	 * 
-	 * @param {FyMessage}
-	 *            message
-	 * @param {Number}
-	 *            ops instructions to run
-	 */
-	FyThread.prototype.run = function(message, ops) {
+	FyThread.prototype.runEx = function(message, ops) {
 		/**
 		 * @returns {FyMethod}
 		 */
@@ -637,9 +614,34 @@ var FyThread;
 					}
 				}
 			}
-			ops = this.runEx(method, ops);
+			ops = method.invoke(this.context, this, ops);
 			if (this.yield) {
 				ops = 0;
+			}
+		}
+		this.yield = false;
+	};
+
+	/**
+	 * Run this thread
+	 * 
+	 * @param {FyMessage}
+	 *            message
+	 * @param {Number}
+	 *            ops instructions to run
+	 */
+	FyThread.prototype.run = function(message, ops) {
+		while (ops > 0) {
+			try {
+				ops = this.runEx(message, ops);
+			} catch (e) {
+				if (e instanceof FyException) {
+					this.context.threadManager.pushThrowable(this, e);
+				} else {
+					this.context.panic(
+							"Exception occored while executing thread #"
+									+ this.threadId, e);
+				}
 			}
 		}
 		this.yield = false;
