@@ -1,6 +1,7 @@
 aot.js
 portable.js
 long.asm.js
+hashmapio.js
 hashmapi.js
 vfs.js
 structs.js
