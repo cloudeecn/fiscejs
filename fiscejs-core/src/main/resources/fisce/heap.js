@@ -1771,11 +1771,19 @@ function FyHeap(_context) {
 		ofs = _getFieldInt(handle, offsetField.posAbs);
 		len = _getFieldInt(handle, countField.posAbs);
 		cah = _getFieldInt(handle, valueField.posAbs);
+		/**
+		 * <code> In modern browser string appender is faster
 		ret = new Array(len);
 		for (i = 0; i < len; i++) {
 			ret[i] = String.fromCharCode(_getArrayChar(cah, i + ofs) & 0xffff);
 		}
 		return ret.join("").toString();
+		 */
+		ret = "";
+		for (i = 0; i < len; i++) {
+			ret += String.fromCharCode(_getArrayChar(cah, i + ofs) & 0xffff);
+		}
+		return ret;
 	};
 	this.getString = _getString;
 
