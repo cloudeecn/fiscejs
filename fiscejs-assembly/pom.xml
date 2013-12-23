@@ -66,6 +66,18 @@
 							</descriptors>
 						</configuration>
 					</execution>
+					<execution>
+						<id>assembly-jsonp</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+						<configuration>
+							<descriptors>
+								<descriptor>assembly-jsonp.xml</descriptor>
+							</descriptors>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 			<plugin>
@@ -85,6 +97,20 @@
 							</jars>
 						</configuration>
 					</execution>
+					<execution>
+						<id>convertp</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>convert</goal>
+						</goals>
+						<configuration>
+							<jars>
+								<jar>${project.build.directory}/assembly-rt.jar</jar>
+							</jars>
+							<outputDir>${project.build.directory}/jsonp</outputDir>
+							<jsonp>true</jsonp>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>
@@ -94,6 +120,7 @@
 			<groupId>com.cirnoworks.fisce</groupId>
 			<artifactId>fiscejs-runtime</artifactId>
 			<version>${project.version}</version>
+			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>com.cirnoworks.fisce</groupId>

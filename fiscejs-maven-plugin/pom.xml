@@ -17,7 +17,7 @@
 		</dependency>
 		<dependency>
 			<groupId>com.cirnoworks.fisce</groupId>
-			<artifactId>fiscejs-core</artifactId>
+			<artifactId>fiscejs-utils</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 	</dependencies>

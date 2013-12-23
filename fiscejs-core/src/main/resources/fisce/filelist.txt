@@ -1,5 +1,5 @@
-aot.js
 portable.js
+aot.js
 long.asm.js
 hashmapio.js
 hashmapi.js

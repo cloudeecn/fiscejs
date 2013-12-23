@@ -3,21 +3,15 @@
 	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
-	<id>rt</id>
+	<id>gzjs</id>
 	<formats>
-		<format>jar</format>
+		<format>zip</format>
 	</formats>
 	<includeBaseDirectory>false</includeBaseDirectory>
-	<dependencySets>
-		<dependencySet>
-			<unpack>true</unpack>
-			<useProjectArtifact>false</useProjectArtifact>
+	<files>
+		<file>
+			<source>${project.build.directory}/fiscejs-${project.version}.gzjs</source>
 			<outputDirectory>/</outputDirectory>
-			<includes>
-				<include>com.cirnoworks.fisce:fiscevm-runtime</include>
-				<include>com.cirnoworks.fisce:fiscevm-classloader</include>
-				<include>com.cirnoworks.fisce:fiscejs-runtime</include>
-			</includes>
-		</dependencySet>
-	</dependencySets>
+		</file>
+	</files>
 </assembly>
