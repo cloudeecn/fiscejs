@@ -95,6 +95,8 @@
 							<jars>
 								<jar>${project.build.directory}/assembly-rt.jar</jar>
 							</jars>
+							<outputFilename>rt-${project.version}.gzjson</outputFilename>
+							<outputVFSFilename>rt-vfs-${project.version}.gzjson</outputVFSFilename>
 						</configuration>
 					</execution>
 					<execution>
@@ -108,6 +110,8 @@
 								<jar>${project.build.directory}/assembly-rt.jar</jar>
 							</jars>
 							<outputDir>${project.build.directory}/jsonp</outputDir>
+							<outputFilename>rt-${project.version}.gzjs</outputFilename>
+							<outputVFSFilename>rt-vfs-${project.version}.gzjs</outputVFSFilename>
 							<jsonp>true</jsonp>
 						</configuration>
 					</execution>

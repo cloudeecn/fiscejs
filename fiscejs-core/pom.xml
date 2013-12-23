@@ -134,13 +134,5 @@
 			</plugins>
 		</pluginManagement>
 	</build>
-
-	<dependencies>
-		<dependency>
-			<groupId>com.cirnoworks.fisce</groupId>
-			<artifactId>fiscejs-utils</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-	</dependencies>
 </project>
 
