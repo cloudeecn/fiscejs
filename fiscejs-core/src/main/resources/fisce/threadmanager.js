@@ -250,7 +250,7 @@ var FyThreadManager;
 			return;
 		}
 		if (target.nextWakeTime > 0) {
-			heap.beginProtect();
+			this.context.heap.beginProtect();
 			this.pushThrowable(target, new FyException(
 					FyConst.FY_EXCEPTION_INTR, "interrupted"));
 			target.nextWakeTime = 0;
