@@ -183,6 +183,7 @@ var FyThreadManager;
 		if (!thread || !e.clazz) {
 			context.panic("Fatal error occored: " + e.message, e);
 		}
+		heap.beginProtect();
 		try {
 			var exceptionClass = context.lookupClass(e.clazz);
 			if (!context.classLoader.canCast(exceptionClass,
@@ -249,6 +250,7 @@ var FyThreadManager;
 			return;
 		}
 		if (target.nextWakeTime > 0) {
+			heap.beginProtect();
 			this.pushThrowable(target, new FyException(
 					FyConst.FY_EXCEPTION_INTR, "interrupted"));
 			target.nextWakeTime = 0;

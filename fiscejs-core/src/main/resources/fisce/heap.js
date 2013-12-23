@@ -661,10 +661,10 @@ function FyHeap(_context) {
 	 *            handle
 	 */
 	var _markObjectInitialUsing = function(handle) {
-		if (handle === 0) {
+		if (!handle) {
 			throw new FyException(undefined, "GC Internal error #1");
 		}
-
+		
 		// if (FyConfig.debugMode && (handle < 0 || handle >
 		// FyConfig.maxObjects)) {
 		// throw new FyException(undefined, "Illegal handle #" + handle);
@@ -720,8 +720,6 @@ function FyHeap(_context) {
 					case 91/* FyConst.ARR */:
 						var value = _getStaticInt(clazz, field.posAbs);
 						if (value !== 0) {
-							// console.log("#GC Add static " + clazz.name + "."
-							// + field.name + " = " + value);
 							_markObjectInitialUsing(value);
 						}
 						break;
@@ -752,7 +750,7 @@ function FyHeap(_context) {
 					_markObjectInitialUsing(thread.waitForNotifyId);
 				}
 				if (thread.currentThrowable !== 0) {
-					_markObjectInitialUsing();
+					_markObjectInitialUsing(thread.currentThrowable);
 				}
 				thread.scanRef(_from);
 			}
@@ -937,7 +935,7 @@ function FyHeap(_context) {
 				i += size - 1;
 			}
 		}
-		console.log("#GC: Compat old"
+		_context.log(1,"#GC: Compat old"
 				+ (marks ? " with object release" : " for space") + ", "
 				+ (_oldPos - _oldBottom) + " => " + (newPos - _oldBottom));
 		_oldPos = newPos;
@@ -1061,10 +1059,8 @@ function FyHeap(_context) {
 
 		t1 = performance.now();
 		_fillInitialHandles(!memoryStressed);
-
 		t2 = performance.now();
 		_scanRef();
-
 		t3 = performance.now();
 		_from.length = 0;
 		for (var i = 1; i < MAX_OBJECTS; i++) {
@@ -1095,7 +1091,6 @@ function FyHeap(_context) {
 		if (memoryStressed) {
 			_compatOld(_marks);
 		}
-
 		t6 = performance.now();
 		for (var i = 1; i < MAX_OBJECTS; i++) {
 			if (_objectExists(i)) {
@@ -1207,6 +1202,9 @@ function FyHeap(_context) {
 	var _arrayLength = function(handle) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
+		}
+		if (_getObjectClass(handle) === undefined) {
+			throw new FyException(undefined, "Illegal object #" + handle);
 		}
 		return _getObjectMultiUsageData(handle);
 	};

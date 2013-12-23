@@ -638,14 +638,18 @@ var FyThread;
 	 *            ops instructions to run
 	 */
 	FyThread.prototype.run = function(message, ops) {
-		try {
-			this.runEx(message, ops);
-		} catch (e) {
-			if (e instanceof FyException) {
-				this.context.threadManager.pushThrowable(this, e);
-			} else {
-				this.context.panic("Exception occored while executing thread #"
-						+ this.threadId, e);
+		while (true) {
+			try {
+				this.runEx(message, ops);
+				break;
+			} catch (e) {
+				if (e instanceof FyException) {
+					this.context.threadManager.pushThrowable(this, e);
+				} else {
+					this.context.panic(
+							"Exception occored while executing thread #"
+									+ this.threadId, e);
+				}
 			}
 		}
 		this.yield = false;
@@ -707,12 +711,6 @@ var FyThread;
 					 */
 					var frame = method.frames[lip];
 
-					if (frame === undefined) {
-						throw new FyException(undefined,
-								"Can't find frame for ip=" + lip
-										+ " in method " + method.uniqueName);
-					}
-
 					var imax;
 					if (isTop) {
 						isTop = false;
@@ -725,25 +723,43 @@ var FyThread;
 					// + " usedLength=" + imax);
 					// locals
 					// var imax = frame.length;
-					for (var i = 0; i < imax; i++) {
-						var value = stack[i + sb];
-						if (frame.charCodeAt(i) === 49/* '1' */&& value !== 0) {
-							if (FyConfig.debugMode
-									&& ((value < 0 || value > FyConfig.maxObjects) || (heap
-											.getObjectClass(value) === undefined))) {
-								throw new FyException(undefined,
-										"Illegal handle #" + value + " @" + i
-												+ " threadId="
-												+ thread.threadId + " frameId="
-												+ frameId + " length="
-												+ frame.length + " usedLength="
-												+ imax);
+					if (frame === undefined) {
+						context.log(2, "WARN: " + "Can't find frame for ip="
+								+ lip + " in method " + method.uniqueName
+								+ " will try to resolve all vars as handle");
+						for (var i = 0; i < imax; i++) {
+							var value = stack[i + sb];
+							if (value > 0 && value < FyConfig.maxObjects
+									&& heap.getObjectClass(value) !== undefined) {
+								// Maybe a valid handle
+								console.log("#VALID " + value);
+								from.push(value);
+							} else {
+								console.log("#INVALID " + value);
 							}
-							// console.log("#Scanref add #" + value + " from
-							// thread
-							// #"
-							// + thread.threadId);
-							from.push(value);
+						}
+					} else {
+						for (var i = 0; i < imax; i++) {
+							var value = stack[i + sb];
+							if (frame.charCodeAt(i) === 49/* '1' */
+									&& value !== 0) {
+								if (FyConfig.debugMode
+										&& ((value < 0 || value > FyConfig.maxObjects) || (heap
+												.getObjectClass(value) === undefined))) {
+									throw new FyException(undefined,
+											"Illegal handle #" + value + " @"
+													+ i + " threadId="
+													+ thread.threadId
+													+ " frameId=" + frameId
+													+ " length=" + frame.length
+													+ " usedLength=" + imax);
+								}
+								// console.log("#Scanref add #" + value + " from
+								// thread
+								// #"
+								// + thread.threadId);
+								from.push(value);
+							}
 						}
 					}
 				});
