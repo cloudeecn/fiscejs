@@ -54,7 +54,6 @@
 							</descriptors>
 						</configuration>
 					</execution>
-					<!-- 
 					<execution>
 						<id>assembly-json</id>
 						<phase>package</phase>
@@ -67,10 +66,8 @@
 							</descriptors>
 						</configuration>
 					</execution>
-					 -->
 				</executions>
 			</plugin>
-			<!-- 
 			<plugin>
 				<groupId>com.cirnoworks.fisce</groupId>
 				<artifactId>fiscejs-maven-plugin</artifactId>
@@ -90,7 +87,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			 -->
 		</plugins>
 	</build>
 	<dependencies>
