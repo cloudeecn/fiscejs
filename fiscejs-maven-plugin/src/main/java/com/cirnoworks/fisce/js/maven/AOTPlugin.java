@@ -41,6 +41,10 @@ public class AOTPlugin extends AbstractMojo {
 				} catch (IOException e) {
 				}
 			}
+			File outputDir = compiledFile.getParentFile();
+			if (!outputDir.exists()) {
+				outputDir.mkdirs();
+			}
 			OutputStreamWriter osw = new OutputStreamWriter(
 					new FileOutputStream(compiledFile), "utf-8");
 			try {

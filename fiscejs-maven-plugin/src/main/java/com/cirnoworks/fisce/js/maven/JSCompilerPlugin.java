@@ -38,6 +38,10 @@ public class JSCompilerPlugin extends AbstractMojo {
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		try {
+			File outputDir = compiledFile.getParentFile();
+			if (!outputDir.exists()) {
+				outputDir.mkdirs();
+			}
 			ArrayList<SourceFile> inputs = new ArrayList<SourceFile>();
 			ZipInputStream zis = new ZipInputStream(
 					new FileInputStream(zipFile));
