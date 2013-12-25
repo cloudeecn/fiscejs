@@ -82,6 +82,7 @@ var FyClass;
 		/* END GC Only */
 
 		this.virtualTable = new HashMapI(-1, 3, 0.75);
+		//this.virtualTable = new HashMapIObj(3, 0.75);
 
 		/** Array only* */
 		this.contentClass = dummyClass;

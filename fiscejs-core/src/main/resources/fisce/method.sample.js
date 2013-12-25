@@ -252,7 +252,6 @@
 				// ###
 			case 37:
 				// ##OP-BASTORE -3 0
-				lip = $ip;
 				
 				sp -= 3;
 				thread.localToFrame(sp, $ip, $ip+1);

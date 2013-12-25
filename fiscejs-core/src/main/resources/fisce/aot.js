@@ -464,9 +464,11 @@ var __FyAOTUtil;
 							"Field " + tmpField.uniqueName + " is static");
 				}
 				code
-						.push("if (stack[sp-1] === 0) {lip="
+						.push("if (stack[sp-1] === 0) {thread.localToFrame(sp,"
 								+ ip
-								+ ";throw new FyException(FyConst.FY_EXCEPTION_NPT, '');}");
+								+ ","
+								+ (ip + 1)
+								+ ");throw new FyException(FyConst.FY_EXCEPTION_NPT, '');}");
 				switch (tmpField.size) {
 				case 2:
 					code
@@ -495,9 +497,11 @@ var __FyAOTUtil;
 				case 2:
 					code.push("sp-=3;");
 					code
-							.push("if (stack[sp] === 0) {lip="
+							.push("if (stack[sp] === 0) {thread.localToFrame(sp,"
 									+ ip
-									+ ";throw new FyException(FyConst.FY_EXCEPTION_NPT, '');}");
+									+ ","
+									+ (ip + 1)
+									+ ");throw new FyException(FyConst.FY_EXCEPTION_NPT, '');}");
 					code.push("_heap[_heap[stack[sp]] + "
 							+ (context.heap.OBJ_META_SIZE + tmpField.posAbs)
 							+ "] = stack[sp+1];");
@@ -510,9 +514,11 @@ var __FyAOTUtil;
 				default:
 					code.push("sp-=2;");
 					code
-							.push("if (stack[sp] === 0) {lip="
+							.push("if (stack[sp] === 0) {thread.localToFrame(sp,"
 									+ ip
-									+ ";throw new FyException(FyConst.FY_EXCEPTION_NPT, '');}");
+									+ ","
+									+ (ip + 1)
+									+ ");throw new FyException(FyConst.FY_EXCEPTION_NPT, '');}");
 					code.push("_heap[_heap[stack[sp]] + "
 							+ (context.heap.OBJ_META_SIZE + tmpField.posAbs)
 							+ "] = stack[sp+1];");
@@ -528,16 +534,18 @@ var __FyAOTUtil;
 							tmpMethod.uniqueName + " is static");
 				}
 
-				code.push("lip=" + ip + ";ip=" + (ip + 1)
-						+ ";tmpMethod=context.methods[" + tmpMethod.methodId
+				code.push("tmpMethod=context.methods[" + tmpMethod.methodId
 						+ "];");
-
+				code
+						.push("sp-="
+								+ (tmpMethod.paramStackUsage + 1)
+								+ ";if(stack[sp]===0){thread.localToFrame(sp,"
+								+ ip
+								+ ","
+								+ (ip + 1)
+								+ ");throw new FyException(FyConst.FY_EXCEPTION_NPT,\"\");}");
 				if (tmpMethod.accessFlags & FyConst.FY_ACC_FINAL) {
 					// generate static code
-					code
-							.push("sp-="
-									+ (tmpMethod.paramStackUsage + 1)
-									+ ";if(stack[sp]===0){throw new FyException(FyConst.FY_EXCEPTION_NPT,\"\");}");
 					if (tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE) {
 						var fun = context.nativeAOT[tmpMethod.uniqueName];
 						if (!fun) {
@@ -564,13 +572,24 @@ var __FyAOTUtil;
 					} else {
 						code.push("thread.localToFrame(sp," + ip + ","
 								+ (ip + 1)
-								+ ");return thread.pushMethod(tmpMethod,ops);");
+								+ ");ops = thread.pushMethod(tmpMethod,ops);if(ops>0 && tmpMethod.invoke){return tmpMethod.invoke(context,thread,ops);}else{return ops;}");
 					}
 
 				} else {
 					// generate dynamic code
 					code.push("thread.localToFrame(sp," + ip + "," + (ip + 1)
-							+ ");return thread.invokeVirtual(tmpMethod,ops);");
+							+ ");");
+					code
+							.push("tmpMethod = context.lookupMethodVirtualByMethod(heap.getObjectClass(stack[sp]), tmpMethod);");
+					code
+							.push("if(tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE){");
+					code.push("if(tmpMethod.invoke){");
+					code
+							.push("heap.beginProtect();ops=tmpMethod.invoke(context,thread,ops);heap.endProtect();return ops;");
+					code
+							.push("}else{thread.pendingNative=tmpMethod;return ops;}");
+					code
+							.push("}else{ops = thread.pushMethod(tmpMethod,ops);if(ops>0 && tmpMethod.invoke){return tmpMethod.invoke(context,thread,ops);}else{return ops;}}");
 				}
 				break;
 			case 0xB7/* $.INVOKESPECIAL */:
@@ -607,8 +626,7 @@ var __FyAOTUtil;
 					throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,
 							tmpMethod.uniqueName);
 				}
-				code.push("lip=" + ip + ";ip=" + (ip + 1)
-						+ ";tmpMethod=context.methods[" + tmpMethod.methodId
+				code.push("tmpMethod=context.methods[" + tmpMethod.methodId
 						+ "];");
 				code.push("sp-=" + (tmpMethod.paramStackUsage + 1) + ";");
 				code
@@ -638,7 +656,7 @@ var __FyAOTUtil;
 					}
 				} else {
 					code.push("thread.localToFrame(sp," + ip + "," + (ip + 1)
-							+ ");return thread.pushMethod(tmpMethod,ops);");
+							+ ");ops = thread.pushMethod(tmpMethod,ops);if(ops>0 && tmpMethod.invoke){return tmpMethod.invoke(context,thread,ops);}else{return ops;}");
 				}
 				break;
 			case 0xB8/* $.INVOKESTATIC */:
@@ -649,8 +667,7 @@ var __FyAOTUtil;
 							tmpMethod.uniqueName + " is not static");
 				}
 				var tmpClass = tmpMethod.owner;
-				code.push("lip=" + ip + ";ip=" + (ip + 1)
-						+ ";tmpMethod=context.methods[" + tmpMethod.methodId
+				code.push("tmpMethod=context.methods[" + tmpMethod.methodId
 						+ "];");
 				if (context.getMethod(tmpClass.name + "."
 						+ FyConst.FY_METHOD_CLINIT + ".()V")) {
@@ -685,7 +702,7 @@ var __FyAOTUtil;
 					}
 				} else {
 					code.push("thread.localToFrame(sp," + ip + "," + (ip + 1)
-							+ ");return thread.pushMethod(tmpMethod,ops);");
+							+ ");ops = thread.pushMethod(tmpMethod,ops);if(ops>0 && tmpMethod.invoke){return tmpMethod.invoke(context,thread,ops);}else{return ops;}");
 				}
 				break;
 			default:
