@@ -20,6 +20,5 @@
 		<module>fiscejs-utils</module>
 		<module>fiscejs-core</module>
 		<module>fiscejs-maven-plugin</module>
-		<module>fiscejs-assembly</module>
 	</modules>
 </project>

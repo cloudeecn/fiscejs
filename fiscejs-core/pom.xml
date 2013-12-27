@@ -2,7 +2,7 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>fiscejs-core</artifactId>
-	<packaging>jar</packaging>
+	<packaging>pom</packaging>
 	<name>FiScE JavaScript Core</name>
 	<url>https://git.cirnoworks.com/cloudee/fiscejs</url>
 	<parent>
@@ -39,6 +39,18 @@
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>2.8</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>properties</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>2.4</version>
 				<executions>
@@ -65,6 +77,8 @@
 						<configuration>
 							<descriptors>
 								<descriptor>assembly-gzjs.xml</descriptor>
+								<descriptor>assembly-json.xml</descriptor>
+								<descriptor>assembly-jsonp.xml</descriptor>
 							</descriptors>
 						</configuration>
 					</execution>
@@ -77,7 +91,7 @@
 				<executions>
 					<execution>
 						<id>aot</id>
-						<phase>compile</phase>
+						<phase>process-resources</phase>
 						<goals>
 							<goal>aot</goal>
 						</goals>
@@ -95,44 +109,53 @@
 							<compiledFile>${project.build.directory}/fiscejs-${project.version}.gzjs</compiledFile>
 						</configuration>
 					</execution>
+					<execution>
+						<id>convert</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>convert</goal>
+						</goals>
+						<configuration>
+							<jars>
+								<jar>${com.cirnoworks.fisce:fiscevm-runtime:jar}</jar>
+							</jars>
+							<outputFilename>rt-${fiscevm.version}.gzjson</outputFilename>
+							<outputVFSFilename>rt-vfs-${fiscevm.version}.gzjson</outputVFSFilename>
+						</configuration>
+					</execution>
+					<execution>
+						<id>convertp</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>convert</goal>
+						</goals>
+						<configuration>
+							<jars>
+								<jar>${com.cirnoworks.fisce:fiscevm-runtime:jar}</jar>
+							</jars>
+							<outputDir>${project.build.directory}/jsonp</outputDir>
+							<outputFilename>rt-${fiscevm.version}.gzjs</outputFilename>
+							<outputVFSFilename>rt-vfs-${fiscevm.version}.gzjs</outputVFSFilename>
+							<jsonp>true</jsonp>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>
-		<pluginManagement>
-			<plugins>
-				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-				<plugin>
-					<groupId>org.eclipse.m2e</groupId>
-					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
-					<configuration>
-						<lifecycleMappingMetadata>
-							<pluginExecutions>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>
-											com.cirnoworks.fisce
-										</groupId>
-										<artifactId>
-											fiscejs-maven-plugin
-										</artifactId>
-										<versionRange>
-											[0.1-SNAPSHOT,)
-										</versionRange>
-										<goals>
-											<goal>aot</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<ignore></ignore>
-									</action>
-								</pluginExecution>
-							</pluginExecutions>
-						</lifecycleMappingMetadata>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 	</build>
+	<dependencies>
+		<dependency>
+			<groupId>com.cirnoworks.fisce</groupId>
+			<artifactId>fiscejs-runtime</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.cirnoworks.fisce</groupId>
+			<artifactId>fiscevm-runtime</artifactId>
+			<version>${fiscevm.version}</version>
+			<optional>true</optional>
+		</dependency>
+	</dependencies>
 </project>
 
