@@ -79,6 +79,7 @@
 								<descriptor>assembly-gzjs.xml</descriptor>
 								<descriptor>assembly-json.xml</descriptor>
 								<descriptor>assembly-jsonp.xml</descriptor>
+								<descriptor>assembly-profile.xml</descriptor>
 							</descriptors>
 						</configuration>
 					</execution>
