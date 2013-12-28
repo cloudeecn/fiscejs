@@ -273,7 +273,7 @@
 					thread.rollbackCurrentIp();
 					thread.sp += 3;
 					thread.pushFrame(clinitClass.clinit);
-					return ops;
+					return 0;
 				} else {
 					// wait for other thread clinit
 					thread.rollbackCurrentIp();
@@ -1077,11 +1077,11 @@
 		var clazz = context.getClassFromClassObject(stack[sb]);
 		var handle = context.heap.allocate(clazz);
 		thread.nativeReturnInt(handle);
-		stack[thread.sp] = handle;
-		// return thread.invokeVirtual(context.lookupMethodVirtual(clazz,
-		// FyConst.FY_METHODF_INIT), ops);
-		return thread.pushMethod(context.lookupMethodVirtual(clazz,
+		stack[thread.sp++] = handle;
+		return thread.invokeVirtual(context.lookupMethodVirtual(clazz,
 				FyConst.FY_METHODF_INIT), ops);
+		// return thread.pushMethod(context.lookupMethodVirtual(clazz,
+		// FyConst.FY_METHODF_INIT), ops);
 	}
 
 	/**

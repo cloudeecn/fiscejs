@@ -227,7 +227,7 @@ var FyThread;
 				clinitClass.clinitThreadId = this.threadId;
 				this.rollbackCurrentIp();
 				this.pushFrame(clinitClass.clinit);
-				return ops;
+				return 0;
 			} else {
 				// wait for other thread clinit
 				this.rollbackCurrentIp();
@@ -242,15 +242,24 @@ var FyThread;
 				ops = method.invoke(this.context, this, ops);
 				this.context.heap.endProtect();
 				if (this.yield) {
-					ops = 0;
+					return 0;
+				} else {
+					return ops;
 				}
-				return ops;
 			} else {
 				this.pendingNative = method;
-				return ops;
+				return 0;
 			}
 		} else {
-			return this.pushMethod(method, ops);
+			if (method.invoke === undefined) {
+				FyAOTUtil.aot(this, method);
+			}
+			ops = this.pushMethod(method, ops);
+			if (ops <= 0) {
+				return 0;
+			}
+			ops = method.invoke(this.context, this, ops);
+			return ops;
 		}
 	};
 
@@ -288,15 +297,24 @@ var FyThread;
 				ops = method.invoke(this.context, this, ops);
 				this.context.heap.endProtect();
 				if (this.yield) {
-					ops = 0;
+					return 0;
+				} else {
+					return ops;
 				}
-				return ops;
 			} else {
 				this.pendingNative = method;
-				return ops;
+				return 0;
 			}
 		} else {
-			return this.pushMethod(method, ops);
+			if (method.invoke === undefined) {
+				FyAOTUtil.aot(this, method);
+			}
+			ops = this.pushMethod(method, ops);
+			if (ops <= 0) {
+				return 0;
+			}
+			ops = method.invoke(this.context, this, ops);
+			return ops;
 		}
 	};
 

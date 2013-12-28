@@ -859,7 +859,8 @@
 		var method = context
 				.getMethod("com/cirnoworks/fisce/js/ProxyHelper.defineClass.(Ljava/lang/ClassLoader;Ljava/lang/String;[B)Ljava/lang/Class;");
 		// thread.sp += 3;
-		return thread.pushMethod(method, ops - 1);
+		thread.pushMethod(method, ops - 1);
+		return 0;
 	}
 
 	/**
