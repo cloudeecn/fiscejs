@@ -24,114 +24,144 @@
 
 	var tests = [];
 
-	$(document).ready(function($) {
-		var targets = {
-			"rt.gzjson" : 1
-		};
+	$(document)
+			.ready(
+					function($) {
+						var targets = {
+							"rt.gzjson" : 1
+						};
 
-		var datas = {};
+						var datas = {};
 
-		function checkTargets() {
-			"use strict";
-			
-			function Exec(context){
-				this.context=context;
-				this.message=new FyMessage();
-				this.fun=function(){
-					try {
-						context.threadManager.run(this.message);
-					} catch (e) {
-						console.log("##HL "+clazz+" end with exception");
-						throw e;
-					}
-					switch (this.message.type) {
-					case FyMessage.message_vm_dead:
-						console.log("##HL "+clazz+" end");
-						return;
-					case FyMessage.message_sleep:
-						var target = performance.now() + Number(this.message.sleepTime);
-						if (target !== target) {
-							// Nan
-							throw new FyException(undefined, "Illegal sleep time: "
-									+ sleepTime);
+						function checkTargets() {
+							"use strict";
+
+							function Exec(context) {
+								this.context = context;
+								this.message = new FyMessage();
+								this.fun = function() {
+									try {
+										context.threadManager.run(this.message);
+									} catch (e) {
+										console.log("##HL " + clazz
+												+ " end with exception");
+										throw e;
+									}
+									switch (this.message.type) {
+									case FyMessage.message_vm_dead:
+										console.log("##HL " + clazz + " end");
+										return;
+									case FyMessage.message_sleep:
+										var target = performance.now()
+												+ Number(this.message.sleepTime);
+										if (target !== target) {
+											// Nan
+											throw new FyException(undefined,
+													"Illegal sleep time: "
+															+ sleepTime);
+										}
+										var delay = target - performance.now();
+										if (delay < 0) {
+											delay = 0;
+										}
+										if (delay > 0) {
+											console
+													.log("sleep " + delay
+															+ "ms");
+											setTimeout(this.f2, delay);
+										} else {
+											this.fun();
+										}
+										break;
+									default:
+										console.log("##HL " + clazz
+												+ " end with exception");
+										throw new FyException(undefined,
+												"Unknown message type: "
+														+ message.type);
+									}
+								};
+								this.f2 = this.fun.bind(this);
+							}
+							;
+
+							var done = true;
+							var failed=false;
+							var result=[];
+							for ( var target in targets) {
+								console.log("##Checking " + target);
+								switch(targets[target]){
+								case -1:
+									result.push(target+": failed");
+									done=false;
+									failed=true;
+									break;
+								case 0:
+									result.push(target+": done");
+									break;
+								case 1:
+								case 2:
+									result.push(target+": loading");
+									done=false;
+									break;
+								}
+							}
+							if(done){
+								result.push("All done! Starting...");
+							}
+							if(failed){
+								result.push("Failed... please refresh");
+							}
+							$("#load-status").text(result.join("\n"));
+							if (done) {
+								var clazz = "com/cirnoworks/fisce/privat/Profile";
+								var context = new FyContext();
+								for ( var idx in datas) {
+									var data = JSON.parse(datas[idx]);
+									context.addClassDef(data);
+								}
+								context
+										.registerNativeHandler(
+												"EXCLUDE/fisce/test/TestService.fail0.(Ljava/lang/String;)V",
+												function(context, thread, ops) {
+													throw new FyException(
+															"java/lang/Error",
+															"Test failed: "
+																	+ context.heap
+																			.getString(thread.stack[thread.sp]));
+													return 0;
+												});
+								context.bootup(clazz);
+
+								var exec = new Exec(context);
+								setTimeout(exec.f2, 1);
+							}
 						}
-						var delay = target - performance.now();
-						if (delay < 0) {
-							delay = 0;
-						}
-						if (delay > 0) {
-							console.log("sleep " + delay + "ms");
-							setTimeout(this.f2, delay);
-						} else {
-							this.fun();
-						}
-						break;
-					default:
-						console.log("##HL "+clazz+" end with exception");
-						throw new FyException(undefined, "Unknown message type: "
-								+ message.type);
-					}
-				};
-				this.f2=this.fun.bind(this);
-			};
-			
-			var done = true;
-			for ( var target in targets) {
-				console.log("##Checking " + target);
-				if (targets[target]) {
-					console.log("##Checking " + target + "... wait");
-					done = false;
-					break;
-				} else {
-					console.log("##Checking " + target + "... done");
-				}
-			}
-			if (done) {
-				var clazz="com/cirnoworks/fisce/privat/Profile";
-				var context = new FyContext();
-				for ( var idx in datas) {
-					var data=JSON.parse(datas[idx]);
-					context.addClassDef(data);
-				}
-				context
-						.registerNativeHandler(
-								"EXCLUDE/fisce/test/TestService.fail0.(Ljava/lang/String;)V",
-								function(context, thread, ops) {
-									throw new FyException(
-											"java/lang/Error",
-											"Test failed: "
-													+ context.heap
-															.getString(thread.stack[thread.sp]));
-									return 0;
-								});
-				context.bootup(clazz);
-				
-				
-				var exec=new Exec(context);
-				setTimeout(exec.f2, 1);
-			}
-		}
-		
-		for ( var target in targets) {
-			(function(t) {
-				$.ajax({
-					url : target,
-					dataType : "text",
-					success : function(data) {
-						targets[t] = 0;
-						datas[t] = data;
+						
 						checkTargets();
-					},
-					fail : function() {
-						targets[t] = 2;
-					}
-				});
-			})(target);
-		}
-	});
+
+						for ( var target in targets) {
+							(function(t) {
+								$.ajax({
+									url : target,
+									dataType : "text",
+									success : function(data) {
+										targets[t] = 0;
+										datas[t] = data;
+										checkTargets();
+									},
+									fail : function() {
+										targets[t] = -1;
+										checkTargets();
+									}
+								});
+							})(target);
+						}
+					});
 </script>
 </head>
 <body>
+	<pre id="load-status"></pre>
 	<pre id="console"></pre>
 </body>
 </html>
