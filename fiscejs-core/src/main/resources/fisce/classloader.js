@@ -198,17 +198,28 @@ var FyClassLoader;
 					 */
 					var method = methods[i] = new FyMethod();
 
-					FyUtils
-							.simpleClone(methodDef, method, [ "name",
-									"descriptor", "accessFlags", "maxStack",
-									"maxLocals", "paramStackUsage",
-									"paramType", "returnType",
-									"parameterCount", "returnClassName" ]);
+					FyUtils.simpleClone(methodDef, method, [ "name",
+							"descriptor", "accessFlags", "maxStack",
+							"maxLocals", "paramStackUsage", "parameterCount",
+							"returnClassName" ]);
 					method.fullName = this.context.pool("." + method.name + "."
 							+ method.descriptor);
 					method.uniqueName = this.context.pool(clazz.name
 							+ method.fullName);
 					method.owner = clazz;
+
+					switch (method.returnClassName) {
+					case "void":
+						method.returnLength = 0;
+						break;
+					case "long":
+					case "double":
+						method.returnLength = 2;
+						break;
+					default:
+						method.returnLength = 1;
+						break;
+					}
 
 					if (method.name === FyConst.FY_METHOD_CLINIT) {
 						clazz.clinit = method;

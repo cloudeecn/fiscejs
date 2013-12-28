@@ -329,11 +329,6 @@ var FyContext;
 					method.descriptor = this.pool(lookup(strings,
 							method.descriptor));
 
-					method.paramType = this.pool(lookup(strings,
-							method.paramType));
-					method.returnType = this.pool(lookup(strings,
-							method.returnType));
-
 					for ( var key in method.frames) {
 						method.frames[key] = this.pool(lookup(strings,
 								method.frames[key]));

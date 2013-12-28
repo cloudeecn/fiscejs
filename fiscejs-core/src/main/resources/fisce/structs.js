@@ -151,6 +151,13 @@ var FyLookupSwitchTarget;
 		}
 	};
 
+	__FyUtils.prototype.breakpoint = function() {
+		var i = 0;
+		i++;
+		i++;
+		return i;
+	};
+
 	FyUtils = new __FyUtils();
 
 	function __FyConst() {

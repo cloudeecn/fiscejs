@@ -340,6 +340,14 @@ var __FyAOTUtil;
 				code.push(oprand1);
 				code.push(" ");
 				code.push(oprand2);
+				if (ip === 0) {
+					code.push("\n");
+					if (FyConfig.verboseMode) {
+						code.push("console.log('Enter '+_m_.uniqueName);");
+					}
+					code
+							.push("if (sb+_m_.maxLocals!==sp){throw new FyException(undefined,'Internal error');}");
+				}
 			}
 			code.push("\n");
 			if (FyConfig.verboseMode
@@ -534,6 +542,8 @@ var __FyAOTUtil;
 							tmpMethod.uniqueName + " is static");
 				}
 
+				// code.push("FyUtils.breakpoint();");
+
 				code.push("tmpMethod=context.methods[" + tmpMethod.methodId
 						+ "];");
 				code
@@ -559,37 +569,54 @@ var __FyAOTUtil;
 											+ ip
 											+ ","
 											+ (ip + 1)
-											+ ");ops=tmpMethod.invoke(context,thread,ops);heap.endProtect();return ops;");
-
+											+ ");ops=tmpMethod.invoke(context,thread,ops);heap.endProtect();if(ops<=0){return 0;}");
+							code.push("sp+=" + (tmpMethod.returnLength | 0)
+									+ ";");
 						} else {
 							code
 									.push("thread.localToFrame(sp,"
 											+ ip
 											+ ","
 											+ (ip + 1)
-											+ ");thread.pendingNative=tmpMethod;return ops;");
+											+ ");thread.pendingNative=tmpMethod;return 0;");
 						}
 					} else {
 						code.push("thread.localToFrame(sp," + ip + ","
-								+ (ip + 1)
-								+ ");ops = thread.pushMethod(tmpMethod,ops);if(ops>0 && tmpMethod.invoke){return tmpMethod.invoke(context,thread,ops);}else{return ops;}");
+								+ (ip + 1) + ");\n");
+						code
+								.push("if(tmpMethod.invoke===undefined){FyAOTUtil.aot(thread,tmpMethod);}\n");
+						code.push("ops = thread.pushMethod(tmpMethod,ops);\n");
+						code.push("if(ops<=0){return 0;}\n");
+						code
+								.push("ops = tmpMethod.invoke(context,thread,ops);\n");
+						code.push("if(ops<=0){return 0;}\n");
+						code.push("sp+=" + (tmpMethod.returnLength | 0) + ";");
 					}
 
 				} else {
 					// generate dynamic code
 					code.push("thread.localToFrame(sp," + ip + "," + (ip + 1)
-							+ ");");
+							+ ");\n");
 					code
-							.push("tmpMethod = context.lookupMethodVirtualByMethod(heap.getObjectClass(stack[sp]), tmpMethod);");
+							.push("tmpMethod = context.lookupMethodVirtualByMethod(heap.getObjectClass(stack[sp]), tmpMethod);\n");
 					code
-							.push("if(tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE){");
-					code.push("if(tmpMethod.invoke){");
+							.push("if(tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE){\n");
+					code.push("if(tmpMethod.invoke){\n");
 					code
-							.push("heap.beginProtect();ops=tmpMethod.invoke(context,thread,ops);heap.endProtect();return ops;");
+							.push("heap.beginProtect();ops=tmpMethod.invoke(context,thread,ops);heap.endProtect();if(ops<=0) {return 0;}\n");
+					code.push("sp+=" + (tmpMethod.returnLength | 0) + ";\n");
+					code.push("}else{\n");
+					code.push("thread.pendingNative=tmpMethod;return 0;\n");
+					code.push("}\n");
+					code.push("}else{\n");
 					code
-							.push("}else{thread.pendingNative=tmpMethod;return ops;}");
-					code
-							.push("}else{ops = thread.pushMethod(tmpMethod,ops);if(ops>0 && tmpMethod.invoke){return tmpMethod.invoke(context,thread,ops);}else{return ops;}}");
+							.push("if(tmpMethod.invoke===undefined){FyAOTUtil.aot(thread,tmpMethod);}\n");
+					code.push("ops = thread.pushMethod(tmpMethod,ops);\n");
+					code.push("if(ops<=0) {return 0;}\n");
+					code.push("ops = tmpMethod.invoke(context,thread,ops);");
+					code.push("if(ops<=0) {return 0;}\n");
+					code.push("sp+=" + (tmpMethod.returnLength | 0) + ";\n");
+					code.push("}\n");
 				}
 				break;
 			case 0xB7/* $.INVOKESPECIAL */:
@@ -644,19 +671,22 @@ var __FyAOTUtil;
 										+ ip
 										+ ","
 										+ (ip + 1)
-										+ ");ops=tmpMethod.invoke(context,thread,ops);heap.endProtect();return ops;");
-
+										+ ");ops=tmpMethod.invoke(context,thread,ops);heap.endProtect();if(ops<=0){return 0;}");
+						code.push("sp+=" + (tmpMethod.returnLength | 0) + ";");
+						// switch(tmpMethod.returnClassName.charAt(0))
 					} else {
-						code
-								.push("thread.localToFrame(sp,"
-										+ ip
-										+ ","
-										+ (ip + 1)
-										+ ");thread.pendingNative=tmpMethod;return ops;");
+						code.push("thread.localToFrame(sp," + ip + ","
+								+ (ip + 1)
+								+ ");thread.pendingNative=tmpMethod;return 0;");
 					}
 				} else {
-					code.push("thread.localToFrame(sp," + ip + "," + (ip + 1)
-							+ ");ops = thread.pushMethod(tmpMethod,ops);if(ops>0 && tmpMethod.invoke){return tmpMethod.invoke(context,thread,ops);}else{return ops;}");
+					code
+							.push("thread.localToFrame(sp,"
+									+ ip
+									+ ","
+									+ (ip + 1)
+									+ ");if(tmpMethod.invoke===undefined){FyAOTUtil.aot(thread,tmpMethod);} ops = thread.pushMethod(tmpMethod,ops);if(ops<=0) {return 0;}ops = tmpMethod.invoke(context,thread,ops);if(ops<=0) {return 0;}");
+					code.push("sp+=" + (tmpMethod.returnLength | 0) + ";");
 				}
 				break;
 			case 0xB8/* $.INVOKESTATIC */:
@@ -690,26 +720,28 @@ var __FyAOTUtil;
 										+ ip
 										+ ","
 										+ (ip + 1)
-										+ ");ops=tmpMethod.invoke(context,thread,ops);heap.endProtect();return ops;");
-
+										+ ");ops=tmpMethod.invoke(context,thread,ops);heap.endProtect();if(ops<=0) {return 0;}");
+						code.push("sp+=" + (tmpMethod.returnLength | 0) + ";");
 					} else {
-						code
-								.push("thread.localToFrame(sp,"
-										+ ip
-										+ ","
-										+ (ip + 1)
-										+ ");thread.pendingNative=tmpMethod;return ops;");
+						code.push("thread.localToFrame(sp," + ip + ","
+								+ (ip + 1)
+								+ ");thread.pendingNative=tmpMethod;return 0;");
 					}
 				} else {
-					code.push("thread.localToFrame(sp," + ip + "," + (ip + 1)
-							+ ");ops = thread.pushMethod(tmpMethod,ops);if(ops>0 && tmpMethod.invoke){return tmpMethod.invoke(context,thread,ops);}else{return ops;}");
+					code
+							.push("thread.localToFrame(sp,"
+									+ ip
+									+ ","
+									+ (ip + 1)
+									+ ");if(tmpMethod.invoke===undefined){FyAOTUtil.aot(thread,tmpMethod);} ops = thread.pushMethod(tmpMethod,ops);if(ops<=0) {return 0;}ops = tmpMethod.invoke(context,thread,ops);if(ops<=0) {return 0;}");
+					code.push("sp+=" + (tmpMethod.returnLength | 0) + ";");
 				}
 				break;
 			default:
 				code.push(this.replaceAll(opResult.code, ip, oprand1, oprand2));
 				break;
 			}
-			code.push("\n");
+			code.push("\n\n");
 		}
 		code.push(macros["TAIL"].toString());
 		result = code.join("").toString();

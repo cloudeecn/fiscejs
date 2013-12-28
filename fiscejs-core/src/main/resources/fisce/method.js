@@ -28,8 +28,7 @@ var FyMethod;
 		this.accessFlags = "";
 
 		this.paramStackUsage = 0;
-		this.paramType = "";
-		this.returnType = "";
+		this.returnLength = 0;
 
 		this.parameterCount = 0;
 		this.parameterClassNames = [];
@@ -62,8 +61,8 @@ var FyMethod;
 
 		Object.preventExtensions(this);
 	};
-	
-	FyMethod.prototype.getLineNumber = function(ip){
+
+	FyMethod.prototype.getLineNumber = function(ip) {
 		if (this.accessFlags & FyConst.FY_ACC_NATIVE) {
 			return -1;
 		} else if (this.lineNumberTable) {

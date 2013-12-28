@@ -737,7 +737,11 @@
 		var stack = thread.stack;
 		var sb = thread.sp;
 		context.threadManager.interrupt(stack[sb]);
-		return ops - 1;
+		if (context.heap.getObjectMultiUsageData(stack[sb]) === thread.threadId) {
+			return 0;
+		} else {
+			return ops - 1;
+		}
 	}
 
 	/**
@@ -876,9 +880,9 @@
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "name");
 		}
 		var name = heap.getString(nameHandle);
-//		console.log("#VFS bind #" + stack[sb] + " to " + name);
+		// console.log("#VFS bind #" + stack[sb] + " to " + name);
 		context.vfs.bind(stack[sb], name, pos);
-		return ops-1;
+		return ops - 1;
 	}
 
 	/**
@@ -893,7 +897,7 @@
 		var stack = thread.stack;
 		var sb = thread.sp;
 		thread.nativeReturnInt(context.vfs.read(stack[sb]));
-		return ops-1;
+		return ops - 1;
 	}
 
 	/**
@@ -936,7 +940,7 @@
 	function risClose(context, thread, ops) {
 		var stack = thread.stack;
 		var sb = thread.sp;
-//		console.log("#VFS close #" + stack[sb]);
+		// console.log("#VFS close #" + stack[sb]);
 		context.vfs.close(stack[sb]);
 		return ops - 1;
 	}
