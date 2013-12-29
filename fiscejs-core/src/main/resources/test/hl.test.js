@@ -9,11 +9,13 @@
 					.registerNativeHandler(
 							"EXCLUDE/fisce/test/TestService.fail0.(Ljava/lang/String;)V",
 							function(context, thread, ops) {
-								throw new FyException(
-										"java/lang/Error",
-										"Test failed: "
-												+ context.heap
+								ok(false,context.heap
 														.getString(thread.stack[thread.sp]));
+//								throw new FyException(
+//										"java/lang/Error",
+//										"Test failed: "
+//												+ context.heap
+//														.getString(thread.stack[thread.sp]));
 								return 0;
 							});
 			context.bootup(clazz);

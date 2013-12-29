@@ -306,9 +306,8 @@
 				// ###
 			case 48:
 				// ##OP-D2L -2 2
-
-				FyPortable.doubleToLong(FyPortable
-						.ieee64ToDouble(stack, sp - 2), stack, sp - 2);
+				longOps.longFromNumber(sp - 2, FyPortable.ieee64ToDouble(stack,
+						sp - 2));
 				// ###
 			case 49:
 				// ##OP-DADD -4 2
@@ -480,8 +479,7 @@
 				// ###
 			case 70:
 				// ##OP-F2L -1 2
-
-				FyPortable.doubleToLong(floatStack[sp - 1], stack, sp - 1);
+				longOps.longFromNumber(sp - 1, floatStack[sp - 1]);
 				sp++;
 				// ###
 			case 71:
@@ -570,7 +568,7 @@
 			case 85:
 				// ##OP-I2B -1 1
 
-				stack[sp - 1] &= 0xff;
+				stack[sp - 1] = stack[sp - 1] << 24 >> 24;
 				// ###
 			case 86:
 				// ##OP-I2C -1 1
@@ -900,15 +898,14 @@
 			case 143:
 				// ##OP-L2D -2 2
 
-				FyPortable.doubleToIeee64(stack[sp - 2] * 4294967296.0
-						+ stack[sp - 1], stack, sp - 2);
+				FyPortable.doubleToIeee64(longOps.longToNumber(sp - 2), stack,
+						sp - 2);
 				// ###
 			case 144:
 				// ##OP-L2F -2 1
 
 				sp--;
-				stack[sp - 1] = FyPortable.floatToIeee32(stack[sp - 1]
-						* 4294967296.0 + stack[sp]);
+				floatStack[sp - 1] = longOps.longToNumber(sp - 1);
 				// ###
 			case 145:
 				// ##OP-L2I -2 1

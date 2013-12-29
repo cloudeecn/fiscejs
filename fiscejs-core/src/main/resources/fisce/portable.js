@@ -191,17 +191,6 @@ var FyConfig = {
 			return doubleView[0];
 		};
 	}
-	/**
-	 * convert double to int pair
-	 * 
-	 * @param doubleValue
-	 * @param container
-	 * @param ofs
-	 */
-	__FyPortable.prototype.doubleToLong = function(doubleValue, container, ofs) {
-		container[ofs] = (doubleValue / 4294967296) | 0;// Higher
-		container[ofs + 1] = doubleValue | 0; // Lower
-	};
 
 	__FyPortable.prototype.dcmpg = function(value1, value2) {
 		var result = value1 - value2;
@@ -223,10 +212,6 @@ var FyConfig = {
 
 	__FyPortable.prototype.getLongOps = function(stack, tmpBegin) {
 		return FyCreateLongOps(this, 0, stack, tmpBegin);
-	};
-
-	__FyPortable.prototype.now = function() {
-		return performance.now();
 	};
 
 	FyPortable = new __FyPortable();

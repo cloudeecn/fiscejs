@@ -468,6 +468,7 @@ var FyThread;
 	 *          clinit
 	 */
 	FyThread.prototype.clinit = function(clazz) {
+//		console.log("<clinit>" + (clazz ? clazz.name : "undefined"));
 		var ret;
 		if (clazz === undefined) {
 			ret = undefined;
@@ -475,14 +476,19 @@ var FyThread;
 				|| clazz.clinitThreadId === this.threadId) {
 			ret = undefined;
 		} else if (clazz.clinit === undefined) {
+//			console.log("<call clinit>"
+//					+ (clazz.superClass ? clazz.superClass.name : ""));
 			ret = this.clinit(clazz.superClass);
 			if (ret === undefined) {
 				clazz.clinitThreadId = -1;
 			}
+//			console.log("</clinit>" + (ret?ret.name:"undefined"));
 			return ret;
 		} else {
+//			console.log("</clinit>" + clazz.name);
 			return clazz;
 		}
+//		console.log("</clinit> undefined");
 		return undefined;
 	};
 

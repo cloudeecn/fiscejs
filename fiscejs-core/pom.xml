@@ -119,6 +119,8 @@
 						<configuration>
 							<jars>
 								<jar>${com.cirnoworks.fisce:fiscevm-runtime:jar}</jar>
+								<jar>${com.cirnoworks.fisce:fiscevm-classloader:jar}</jar>
+								<jar>${com.cirnoworks.fisce:fiscejs-runtime:jar}</jar>
 							</jars>
 							<outputFilename>rt-${fiscevm.version}.gzjson</outputFilename>
 							<outputVFSFilename>rt-vfs-${fiscevm.version}.gzjson</outputVFSFilename>
@@ -133,6 +135,8 @@
 						<configuration>
 							<jars>
 								<jar>${com.cirnoworks.fisce:fiscevm-runtime:jar}</jar>
+								<jar>${com.cirnoworks.fisce:fiscevm-classloader:jar}</jar>
+								<jar>${com.cirnoworks.fisce:fiscejs-runtime:jar}</jar>
 							</jars>
 							<outputDir>${project.build.directory}/jsonp</outputDir>
 							<outputFilename>rt-${fiscevm.version}.gzjs</outputFilename>
@@ -149,6 +153,12 @@
 			<groupId>com.cirnoworks.fisce</groupId>
 			<artifactId>fiscejs-runtime</artifactId>
 			<version>${project.version}</version>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.cirnoworks.fisce</groupId>
+			<artifactId>fiscevm-classloader</artifactId>
+			<version>${fiscevm.version}</version>
 			<optional>true</optional>
 		</dependency>
 		<dependency>

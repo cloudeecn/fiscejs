@@ -478,9 +478,8 @@
 	 *            ops
 	 */
 	function systemTimeMS(context, thread, ops) {
-		var stack = thread.stack;
 		var sb = thread.sp;
-		FyPortable.doubleToLong(FyPortable.now(), stack, sb);
+		thread.longOps.longFromNumber(sb, Date.now());
 		thread.nativeReturn(2);
 		return ops - 1;
 	}
@@ -494,9 +493,8 @@
 	 *            ops
 	 */
 	function systemTimeNS(context, thread, ops) {
-		var stack = thread.stack;
 		var sb = thread.sp;
-		FyPortable.doubleToLong(FyPortable.now() * 1000000, stack, sb);
+		thread.longOps.longFromNumber(sb, performance.now() * 1000000);
 		thread.nativeReturn(2);
 		return ops - 1;
 	}
@@ -644,7 +642,7 @@
 		var sb = thread.sp;
 		context.threadManager.wait(thread, stack[sb], thread.longOps
 				.longToNumber(sb + 1));
-		return ops - 1;
+		return 0;
 	}
 
 	/**
@@ -786,7 +784,7 @@
 	function threadSleep(context, thread, ops) {
 		var sb = thread.sp;
 		context.threadManager.sleep(thread, thread.longOps.longToNumber(sb));
-		return ops - 1;
+		return 0;
 	}
 
 	/**
