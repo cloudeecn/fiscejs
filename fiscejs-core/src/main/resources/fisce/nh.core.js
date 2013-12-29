@@ -49,8 +49,7 @@
 		var stack = thread.stack;
 		var sb = thread.sp;
 		thread.currentThrowable = stack[sb];
-		context.panic("Explicted FiScEVM.throwOut called");
-
+		context.panic("Explicted FiScEVM.throwOut called", new Error());
 		return ops - 1;
 	}
 
@@ -66,7 +65,7 @@
 		var stack = thread.stack;
 		var sb = thread.sp;
 		// TODO
-		context.panic("Exited with code: " + stack[sb]);
+		context.panic("Exited with code: " + stack[sb], new Error());
 
 		return ops - 1;
 	}

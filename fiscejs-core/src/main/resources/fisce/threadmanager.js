@@ -235,8 +235,8 @@ var FyThreadManager;
 	FyThreadManager.prototype.sleep = function(thread, time) {
 		thread.nextWakeTime = Date.now() + time;
 		thread.yield = true;
-//		console.log(thread.threadId + ": Sleep " + time + " => "
-//				+ thread.nextWakeTime + "/" + Date.now());
+		// console.log(thread.threadId + ": Sleep " + time + " => "
+		// + thread.nextWakeTime + "/" + Date.now());
 	};
 
 	/**
@@ -550,12 +550,12 @@ var FyThreadManager;
 						case 5/* FyMessage.message_sleep */:
 							// Illegal!
 							this.context.panic("Illegal message type "
-									+ message.type);
+									+ message.type, new Error());
 						case 1/* FyMessage.message_none */:
 							break;
 						case 4/* FyMessage.message_exception */:
 							this.context.panic("Illegal message type "
-									+ message.type);
+									+ message.type, new Error());
 						case 2/* FyMessage.message_thread_dead */:
 							thread.destroyPending = true;
 							break;
@@ -563,7 +563,7 @@ var FyThreadManager;
 							return;
 						default:
 							this.context.panic("Illegal message type "
-									+ message.type);
+									+ message.type, new Error());
 						}
 					} else {
 						if (!this.nonDaemonRunned) {
@@ -608,7 +608,8 @@ var FyThreadManager;
 				message.type = FyMessage.message_vm_dead;
 				return;
 			default:
-				this.context.panic("Illegal vm state " + stateLocal);
+				this.context.panic("Illegal vm state " + stateLocal,
+						new Error());
 			}
 		}
 	};

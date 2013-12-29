@@ -964,7 +964,7 @@ var FyContext;
 		var context = this;
 		try {
 			data.push("###PANIC: " + message);
-			data.push(""+e);
+			data.push("" + e);
 			data.push("#PANIC context:");
 			data.push(this);
 			data.push("#PANIC Thread dump:");
@@ -1021,8 +1021,6 @@ var FyContext;
 		// console.log(this);
 		if (e) {
 			throw e;
-		} else {
-			throw new Error("Virtual machine panic!");
 		}
 	};
 
