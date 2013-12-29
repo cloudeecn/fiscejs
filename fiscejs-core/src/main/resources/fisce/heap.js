@@ -664,7 +664,7 @@ function FyHeap(_context) {
 		if (!handle) {
 			throw new FyException(undefined, "GC Internal error #1");
 		}
-		
+
 		// if (FyConfig.debugMode && (handle < 0 || handle >
 		// FyConfig.maxObjects)) {
 		// throw new FyException(undefined, "Illegal handle #" + handle);
@@ -935,7 +935,7 @@ function FyHeap(_context) {
 				i += size - 1;
 			}
 		}
-		_context.log(1,"#GC: Compat old"
+		_context.log(1, "#GC: Compat old"
 				+ (marks ? " with object release" : " for space") + ", "
 				+ (_oldPos - _oldBottom) + " => " + (newPos - _oldBottom));
 		_oldPos = newPos;
@@ -982,7 +982,6 @@ function FyHeap(_context) {
 			_heap[handle] = pos;
 			_heap[pos] = handle;
 			_setObjectBId(handle, BID_YOUNG);
-			_setObjectGen(handle, _getObjectGen(handle) + 1);
 		}
 	};
 
@@ -1002,11 +1001,13 @@ function FyHeap(_context) {
 	};
 
 	var _move = function(handle) {
-		if (_getObjectGen(handle) > MAX_GEN) {
+		var gen = _getObjectGen(handle);
+		if (gen > MAX_GEN) {
 			// console.log("#GC move #" + handle + " to old");
 			_moveToOld(handle);
 		} else {
 			// console.log("#GC move #" + handle + " to young");
+			_setObjectGen(handle, gen + 1);
 			_moveToYoung(handle);
 		}
 		if (_getObjectClass(handle) === undefined) {
