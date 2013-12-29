@@ -1021,6 +1021,8 @@ var FyContext;
 		// console.log(this);
 		if (e) {
 			throw e;
+		}else{
+			return data;
 		}
 	};
 
