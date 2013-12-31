@@ -1,15 +1,6 @@
 var FyVFS;
 (function() {
 
-	var code = new HashMapI(-1, 7, 0.75);
-
-	(function initCode(str) {
-		var len = str.length;
-		for (var i = len; i--;) {
-			code.put(str.charCodeAt(i), i);
-		}
-	})("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=");
-
 	/**
 	 * @param {String}
 	 *            filename
@@ -20,60 +11,12 @@ var FyVFS;
 	 * @param {Number}
 	 *            len
 	 */
-	function VFSEntry(filename, string, pos, len) {
+	function VFSEntry(filename, string, pos) {
 		this.pos = pos | 0;
-		this.len = len | 0;
-		this.content = new Uint8Array(len);
-
-		var content = this.content;
-		var slen = string.length;
-		if (slen & 3 !== 0) {
-			throw new FyException(FyConst.FY_EXCEPTION_IO,
-					"Exception in VFS: Illegal base64 code for file "
-							+ filename);
-		}
-		var i = 0;
-		var p = 0;
-		while (i < slen) {
-			var c1 = code.get(string.charCodeAt(i));
-			if (c1 < 0) {
-				throw new FyException(FyConst.FY_EXCEPTION_IO,
-						"Exception in VFS: Illegal base64 code for file "
-								+ filename);
-			}
-			var c2 = code.get(string.charCodeAt(i + 1));
-			if (c2 < 0) {
-				throw new FyException(FyConst.FY_EXCEPTION_IO,
-						"Exception in VFS: Illegal base64 code for file "
-								+ filename);
-			}
-			var c3 = code.get(string.charCodeAt(i + 2));
-			if (c3 < 0) {
-				throw new FyException(FyConst.FY_EXCEPTION_IO,
-						"Exception in VFS: Illegal base64 code for file "
-								+ filename);
-			}
-			var c4 = code.get(string.charCodeAt(i + 3));
-			if (c4 < 0) {
-				throw new FyException(FyConst.FY_EXCEPTION_IO,
-						"Exception in VFS: Illegal base64 code for file "
-								+ filename);
-			}
-
-			content[p] = (c1 << 2) | (c2 >> 4);
-			if (c3 !== 64) {
-				content[p + 1] = ((c2 & 15) << 4) | (c3 >> 2);
-			}
-
-			if (c4 !== 64) {
-				content[p + 2] = ((c3 & 3) << 6) | c4;
-			}
-
-			p += 3;
-			i += 4;
-		}
-		// console.log("#VFS Entry created");
-		// console.log(this);
+		this.content = FyUtils.unbase64(string, undefined, 0, 0);
+		console.log("Decompress string " + string + " to byte["
+				+ this.content.length + "]");
+		this.len = this.content.length;
 	}
 
 	VFSEntry.prototype.read = function() {
@@ -147,13 +90,7 @@ var FyVFS;
 			throw new FyException(FyConst.FY_EXCEPTION_FNF, name);
 		} else {
 			pos = pos | 0;
-			var len = str.length / 4 * 3;
-			if (str.endsWith("==")) {
-				len -= 2;
-			} else if (str.endsWith("=")) {
-				len--;
-			}
-			this.entries[handle] = new VFSEntry(name, str, pos, len);
+			this.entries[handle] = new VFSEntry(name, str, pos);
 		}
 	};
 

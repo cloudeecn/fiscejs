@@ -29,11 +29,16 @@ var FyClass;
 	var dummyMethod = undefined;
 
 	/**
+	 * @returns {FyGlobal}
+	 */
+	var dummyGlobal = undefined;
+
+	/**
 	 * 
 	 * @param {Number}
 	 *            type
 	 */
-	FyClass = function(type, classDef) {
+	FyClass = function(type) {
 		this.name = "";
 		this.sourceFile = undefined;
 
@@ -82,7 +87,7 @@ var FyClass;
 		/* END GC Only */
 
 		this.virtualTable = new HashMapI(-1, 3, 0.75);
-		//this.virtualTable = new HashMapIObj(3, 0.75);
+		// this.virtualTable = new HashMapIObj(3, 0.75);
 
 		/** Array only* */
 		this.contentClass = dummyClass;
@@ -91,8 +96,7 @@ var FyClass;
 		/** primitive only */
 		this.pType = undefined;
 
-		/** classDef, will be removed in phase2 */
-		this.classDef = classDef;
+		this.global = dummyGlobal;
 
 		Object.preventExtensions(this);
 	};

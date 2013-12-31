@@ -50,8 +50,7 @@ var FyMethod;
 		/** Filled in by class loader* */
 		this.methodId = 0;
 
-		this.opsCheck = {};
-		this.frames = {};
+		this.frames = [];
 		this.tableSwitchTargets = [];
 		this.lookupSwitchTargets = [];
 
@@ -66,14 +65,15 @@ var FyMethod;
 		if (this.accessFlags & FyConst.FY_ACC_NATIVE) {
 			return -1;
 		} else if (this.lineNumberTable) {
-			for (var j = this.lineNumberTable.length - 1; j >= 0; j--) {
-				var ln = this.lineNumberTable[j];
-				if (ip > ln.start) {
-					return ln.line;
-					break;
+			for (var j = this.lineNumberTable.length - 2; j >= 0; j--) {
+				var start = this.lineNumberTable[j];
+				var ln = this.lineNumberTable[j + 1];
+				if (ip > start) {
+					return ln;
 				}
 			}
 		}
+		return -2;
 	};
 
 	FyMethod.prototype.toString = function() {

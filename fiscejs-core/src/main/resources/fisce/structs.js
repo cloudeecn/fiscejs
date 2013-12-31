@@ -24,8 +24,6 @@ var FyUtils;
  * @returns {__FyConst}
  */
 var FyConst;
-var FyLineNumber;
-var FyExceptionHandler;
 var FyClass;
 var FyException;
 var FyGlobal;
@@ -35,9 +33,14 @@ var FyLookupSwitchTarget;
 (function() {
 	"use strict";
 
-	FyGlobal = {
-		STRICT_CHECK : true
-	};
+	var code = new HashMapI(-1, 7, 0.6);
+
+	(function initCode(str) {
+		var len = str.length;
+		for (var i = len; i--;) {
+			code.put(str.charCodeAt(i), i);
+		}
+	})("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=");
 
 	var __FyUtils = function() {
 	};
@@ -156,6 +159,68 @@ var FyLookupSwitchTarget;
 		i++;
 		i++;
 		return i;
+	};
+
+	__FyUtils.prototype.unbase64 = function(str, container, ofs, len) {
+		ofs = ofs | 0;
+		len = len | 0;
+		var slen = str.length;
+		if (slen & 3 !== 0) {
+			throw new FyException(FyConst.FY_EXCEPTION_IO,
+					"Illegal base64 code");
+		}
+		var tlen = (slen >> 2) * 3;
+		if (str.endsWith("==")) {
+			tlen -= 2;
+		} else if (str.endsWith("=")) {
+			tlen--;
+		}
+
+		if (container === undefined) {
+			ofs = 0;
+			len = tlen;
+			container = new Uint8Array(len);
+		} else if (len <= 0) {
+			len = tlen;
+		}
+
+		var i = 0;
+		var p = 0;
+		while (i < slen) {
+			var c1 = code.get(str.charCodeAt(i));
+			if (c1 < 0) {
+				throw new FyException(FyConst.FY_EXCEPTION_IO,
+						"Illegal base64 code");
+			}
+			var c2 = code.get(str.charCodeAt(i + 1));
+			if (c2 < 0) {
+				throw new FyException(FyConst.FY_EXCEPTION_IO,
+						"Illegal base64 code");
+			}
+			var c3 = code.get(str.charCodeAt(i + 2));
+			if (c3 < 0) {
+				throw new FyException(FyConst.FY_EXCEPTION_IO,
+						"Illegal base64 code");
+			}
+			var c4 = code.get(str.charCodeAt(i + 3));
+			if (c4 < 0) {
+				throw new FyException(FyConst.FY_EXCEPTION_IO,
+						"Illegal base64 code for file.");
+			}
+
+			container[p] = ((c1 << 2) | (c2 >> 4)) & 0xff;
+			if (c3 !== 64) {
+				container[p + 1] = (((c2 & 15) << 4) | (c3 >> 2)) & 0xff;
+			}
+
+			if (c4 !== 64) {
+				container[p + 2] = (((c3 & 3) << 6) | c4) & 0xff;
+			}
+
+			p += 3;
+			i += 4;
+		}
+		return container;
 	};
 
 	FyUtils = new __FyUtils();
@@ -395,7 +460,7 @@ var FyLookupSwitchTarget;
 	}
 
 	FyConst = new __FyConst();
-
+/*
 	FyLineNumber = function() {
 		this.start = 0;
 		this.line = 0;
@@ -405,14 +470,11 @@ var FyLookupSwitchTarget;
 	FyExceptionHandler = function() {
 		this.start = 0;
 		this.end = 0;
-		/**
-		 * constant class data
-		 */
 		this.catchClass = undefined;
 		this.handler = 0;
 		Object.preventExtensions(this);
 	};
-
+*/
 	FyTableSwitchTarget = function() {
 		this.dflt = 0;
 		this.min = 0;

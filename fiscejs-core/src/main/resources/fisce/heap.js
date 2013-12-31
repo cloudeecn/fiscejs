@@ -1849,12 +1849,13 @@ function FyHeap(_context) {
 	};
 	this.literal = _literal;
 
-	var _literalWithConstant = function(constant) {
-		var ret = constant.value;
-		if (ret === undefined) {
-			ret = constant.value = _literal(constant.string);
+	var _literalWithConstant = function(global, constant) {
+		var constants = global.constants;
+		if (!constants[constant + 2]) {
+			constants[constant] = _literal(global.strings[constants[constant]]);
+			constants[constant + 2] = 1;
 		}
-		return ret;
+		return constants[constant];
 	};
 	this.literalWithConstant = _literalWithConstant;
 

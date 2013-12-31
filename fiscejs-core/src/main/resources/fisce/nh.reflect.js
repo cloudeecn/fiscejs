@@ -603,8 +603,8 @@
 			if ((field.accessFlags & FyConst.FY_ACC_FINAL)
 					&& field.constantValueData) {
 				// static final Field value in constant must be string
-				thread.nativeReturnInt(heap
-						.literalWithConstant(field.constantValueData));
+				thread.nativeReturnInt(heap.literalWithConstant(
+						field.owner.global, field.constantValueData));
 			} else {
 				thread.nativeReturnInt(heap.getStaticRaw(field.owner,
 						field.posAbs));

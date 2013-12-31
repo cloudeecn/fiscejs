@@ -291,8 +291,8 @@ var __FyAOTUtil;
 		var len = method.code.length / 3;
 		var code = [];
 		var result;
-		var opsCheck = method.opsCheck;
 		var clazz = method.owner;
+		var global = clazz.global;
 		/**
 		 * @returns {String}
 		 */
@@ -309,6 +309,8 @@ var __FyAOTUtil;
 			var op = method.code[base];
 			var oprand1 = method.code[base + 1];
 			var oprand2 = method.code[base + 2];
+			var opsCheck = op >>> 16;
+			op = op & 0x3FF;
 			/**
 			 * @returns {String}
 			 */
@@ -375,6 +377,8 @@ var __FyAOTUtil;
 
 			if (FyConfig.debugMode) {
 				code
+						.push("if(ops===undefined || ops!==ops){throw new FyException(undefined,'Illegal ops');}");
+				code
 						.push("if(sp<sb+"
 								+ method.maxLocals
 								+ "){throw new FyException(undefined,'Buffer underflow');}\n");
@@ -390,15 +394,15 @@ var __FyAOTUtil;
 							"clazz" : "clazz.superClass"
 						}));
 			}
-			if (opsCheck[ip] !== undefined) {
+			if (opsCheck) {
 				code.push(this.replaceAll(opsCheckCode, ip, oprand1, oprand2, {
-					"distance" : opsCheck[ip]
+					"distance" : opsCheck
 				}));
 			}
 			switch (op) {
 			case 0xB2/* $.GETSTATIC */:
-				var tmpField = context
-						.lookupFieldVirtualFromConstant(clazz.constants[oprand1]);
+				var tmpField = context.lookupFieldVirtualFromConstant(global,
+						clazz.constants[oprand1]);
 				if (!(tmpField.accessFlags & FyConst.FY_ACC_STATIC)) {
 					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 							"Field " + tmpField.uniqueName + " is not static");
@@ -428,8 +432,8 @@ var __FyAOTUtil;
 				}
 				break;
 			case 0xB3/* $.PUTSTATIC */:
-				var tmpField = context
-						.lookupFieldVirtualFromConstant(clazz.constants[oprand1]);
+				var tmpField = context.lookupFieldVirtualFromConstant(global,
+						clazz.constants[oprand1]);
 				if (!(tmpField.accessFlags & FyConst.FY_ACC_STATIC)) {
 					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 							"Field " + tmpField.uniqueName + " is not static");
@@ -465,8 +469,8 @@ var __FyAOTUtil;
 				}
 				break;
 			case 0xB4/* $.GETFIELD */:
-				var tmpField = context
-						.lookupFieldVirtualFromConstant(clazz.constants[oprand1]);
+				var tmpField = context.lookupFieldVirtualFromConstant(global,
+						clazz.constants[oprand1]);
 				if (tmpField.accessFlags & FyConst.FY_ACC_STATIC) {
 					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 							"Field " + tmpField.uniqueName + " is static");
@@ -495,8 +499,8 @@ var __FyAOTUtil;
 				}
 				break;
 			case 0xB5/* $.PUTFIELD */:
-				var tmpField = context
-						.lookupFieldVirtualFromConstant(clazz.constants[oprand1]);
+				var tmpField = context.lookupFieldVirtualFromConstant(global,
+						clazz.constants[oprand1]);
 				if (tmpField.accessFlags & FyConst.FY_ACC_STATIC) {
 					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 							"Field " + tmpField.uniqueName + " is static");
@@ -535,8 +539,8 @@ var __FyAOTUtil;
 				break;
 			case 0xB6/* $.INVOKEVIRTUAL */:
 			case 0xB9/* $.INVOKEINTERFACE */:
-				var tmpMethod = context
-						.lookupMethodVirtualFromConstant(clazz.constants[oprand1]);
+				var tmpMethod = context.lookupMethodVirtualFromConstant(global,
+						clazz.constants[oprand1]);
 				if ((tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
 					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 							tmpMethod.uniqueName + " is static");
@@ -620,8 +624,8 @@ var __FyAOTUtil;
 				}
 				break;
 			case 0xB7/* $.INVOKESPECIAL */:
-				var tmpMethod = context
-						.lookupMethodVirtualFromConstant(clazz.constants[oprand1]);
+				var tmpMethod = context.lookupMethodVirtualFromConstant(global,
+						clazz.constants[oprand1]);
 				if ((tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
 					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 							tmpMethod.uniqueName + " is static");
@@ -637,8 +641,8 @@ var __FyAOTUtil;
 					throw new FyException(
 							FyConst.FY_EXCEPTION_ABSTRACT,
 							"Special: "
-									+ context
-											.lookupMethodVirtualFromConstant(clazz.constants[oprand1]).uniqueName);
+									+ context.lookupMethodVirtualFromConstant(
+											global, clazz.constants[oprand1]).uniqueName);
 				}
 				if (tmpMethod.name !== FyConst.FY_METHOD_INIT
 						&& tmpMethod.owner !== tmpClass) {
@@ -690,8 +694,8 @@ var __FyAOTUtil;
 				}
 				break;
 			case 0xB8/* $.INVOKESTATIC */:
-				var tmpMethod = context
-						.lookupMethodVirtualFromConstant(clazz.constants[oprand1]);
+				var tmpMethod = context.lookupMethodVirtualFromConstant(global,
+						clazz.constants[oprand1]);
 				if (!(tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
 					throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 							tmpMethod.uniqueName + " is not static");

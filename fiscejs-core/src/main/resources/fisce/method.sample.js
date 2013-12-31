@@ -58,6 +58,7 @@
 		 */
 		var longOps = thread.longOps;
 		var constants = clazz.constants;
+		var global = clazz.global;
 		/**
 		 * @returns {Int32Array}
 		 */
@@ -191,9 +192,8 @@
 							+ stack[sp - 1]);
 				}
 				stack[sp - 1] = heap.allocateArray(context
-						.lookupArrayClass(context
-								.lookupClassFromConstant(constants[$1])),
-						stack[sp - 1]);
+						.lookupArrayClass(context.lookupClassFromConstant(
+								global, constants[$1])), stack[sp - 1]);
 				// ###
 			case 20:
 				// ##OP-IRETURN|FRETURN|ARETURN -1 0
@@ -279,15 +279,15 @@
 				if (stack[sp - 1] !== 0) {
 					if (!context.classLoader.canCast(heap
 							.getObjectClass(stack[sp - 1]), context
-							.lookupClassFromConstant(constants[$1]))) {
+							.lookupClassFromConstant(global, constants[$1]))) {
 						thread.localToFrame(sp, $ip, $ip + 1);
 						throw new FyException(
 								FyConst.FY_EXCEPTION_CAST,
 								"Can't case "
 										+ heap.getObjectClass(stack[sp - 1]).name
 										+ " to "
-										+ context
-												.lookupClassFromConstant(constants[$1]).name);
+										+ context.lookupClassFromConstant(
+												global, constants[$1]).name);
 					}
 				}
 				// ###
@@ -830,7 +830,7 @@
 					thread.localToFrame(sp, $ip, $ip + 1);
 					stack[sp - 1] = context.classLoader.canCast(heap
 							.getObjectClass(stack[sp - 1]), context
-							.lookupClassFromConstant(constants[$1]));
+							.lookupClassFromConstant(global, constants[$1]));
 				}
 				// ###
 			case 130:
@@ -956,15 +956,15 @@
 				switch ($2) {
 				case 0:
 					// int/float
-					stack[sp] = constants[$1].value;
+					stack[sp] = global.constants[constants[$1]];
 					"#!";
 					console.log(stack[sp]);
 					"!#";
 					sp++;
 					break;
 				case 1:
-					stack[sp] = constants[$1].value[0];
-					stack[sp + 1] = constants[$1].value[1];
+					stack[sp] = global.constants[constants[$1]];
+					stack[sp + 1] = global.constants[constants[$1] + 1];
 					"#!";
 					console.log([ stack[sp], stack[sp + 1] ]);
 					"!#";
@@ -972,7 +972,7 @@
 					break;
 				case 2:
 					thread.localToFrame(sp, $ip, $ip + 1);
-					stack[sp] = heap.literalWithConstant(constants[$1]);
+					stack[sp] = heap.literalWithConstant(global, constants[$1]);
 					"#!";
 					console.log([ constants[$1], stack[sp] ]);
 					"!#";
@@ -981,7 +981,7 @@
 				case 3:
 					thread.localToFrame(sp, $ip, $ip + 1);
 					stack[sp] = context.getClassObjectHandle(context
-							.lookupClassFromConstant(constants[$1]));
+							.lookupClassFromConstant(global, constants[$1]));
 					"#!";
 					console.log([ constants[$1], stack[sp] ]);
 					"!#";
@@ -1115,15 +1115,16 @@
 
 				sp -= $2;
 				thread.localToFrame(sp, $ip, $ip + 1);
-				stack[sp] = heap.multiNewArray(context
-						.lookupClassFromConstant(constants[$1]), $2, stack, sp);
+				stack[sp] = heap.multiNewArray(context.lookupClassFromConstant(
+						global, constants[$1]), $2, stack, sp);
 				sp++;
 				// ###
 			case 169:
 				// ##OP-NEW 0 1
 
 				thread.localToFrame(sp, $ip, $ip + 1);
-				tmpClass = context.lookupClassFromConstant(constants[$1]);
+				tmpClass = context.lookupClassFromConstant(global,
+						constants[$1]);
 				if (tmpClass.accessFlags
 						& (FyConst.FY_ACC_INTERFACE | FyConst.FY_ACC_ABSTRACT)) {
 					throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,

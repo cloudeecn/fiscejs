@@ -16,9 +16,23 @@
  */
 
 var FyContext;
-
+var FyGlobal;
+var FyClassDef;
 (function() {
 	"use strict";
+
+	FyGlobal = function(context, strings, constants) {
+		for (var i = strings.length; i--;) {
+			strings[i] = context.pool(strings[i]);
+		}
+		this.strings = strings;
+		this.constants = constants;
+	};
+
+	FyClassDef = function(context, data) {
+		this.classes = data.classes;
+		this.global = new FyGlobal(context, data.strings, data.constants);
+	};
 
 	/**
 	 * lookup constant from constant pool
@@ -98,7 +112,7 @@ var FyContext;
 	FyContext = function(namespace) {
 		var levels = [ "D", "I", "W", "E" ];
 		this.settings = {};
-		this.classDef = {};
+		this.classDefs = [];
 		this.dynamicClassDef = {};
 
 		/* Classes begins from 1 */
@@ -257,99 +271,7 @@ var FyContext;
 	};
 
 	FyContext.prototype.addClassDef = function(data) {
-		/**
-		 * @returns {Array}
-		 */
-		var strings = data.strings;
-		/**
-		 * @returns {Array}
-		 */
-		var constants = data.constants;
-		/**
-		 * @returns {Array}
-		 */
-		var classes = data.classes;
-
-		for (var i = 1; i < constants.length; i++) {
-			var constant = constants[i];
-
-			if (constant.name !== undefined) {
-				constant.name = this.pool(lookup(strings, constant.name));
-			}
-
-			if (constant.string !== undefined) {
-				constant.string = this.pool(lookup(strings, constant.string));
-			}
-
-			if (constant.className !== undefined) {
-				constant.className = this.pool(lookup(strings,
-						constant.className));
-			}
-
-			if (constant.nameAndType !== undefined) {
-				constant.nameAndType = this.pool(lookup(strings,
-						constant.nameAndType));
-			}
-		}
-
-		for (var i = 0; i < classes.length; i++) {
-			var def = classes[i];
-
-			// name
-			def.name = this.pool(lookup(strings, def.name));
-
-			// sourceFile optional
-			if (def.sourceFile !== undefined) {
-				def.sourceFile = this.pool(lookup(strings, def.sourceFile));
-			}
-
-			// constant pool
-			{
-				for (var j = 0; j < def.constants.length; j++) {
-					def.constants[j] = lookup(constants, def.constants[j]);
-				}
-			}
-
-			// fields
-			{
-				for (var j = 0; j < def.fields.length; j++) {
-					var field = def.fields[j];
-					field.name = this.pool(lookup(strings, field.name));
-					field.descriptor = this.pool(lookup(strings,
-							field.descriptor));
-				}
-			}
-
-			// methods
-			{
-				for (var j = 0; j < def.methods.length; j++) {
-					var method = def.methods[j];
-
-					method.name = this.pool(lookup(strings, method.name));
-					method.descriptor = this.pool(lookup(strings,
-							method.descriptor));
-
-					for ( var key in method.frames) {
-						method.frames[key] = this.pool(lookup(strings,
-								method.frames[key]));
-					}
-
-					for (var k = 0; k < method.exceptions.length; k++) {
-						method.exceptions[k] = this.pool(lookup(strings,
-								method.exceptions[k]));
-					}
-
-					for (var k = 0; k < method.parameterClassNames.length; k++) {
-						method.parameterClassNames[k] = this.pool(lookup(
-								strings, method.parameterClassNames[k]));
-					}
-					method.returnClassName = this.pool(lookup(strings,
-							method.returnClassName));
-				}
-			}
-
-			this.classDef[def.name] = def;
-		}
+		this.classDefs.push(new FyClassDef(this, data));
 	};
 	/**
 	 * Register a field to context
@@ -430,33 +352,42 @@ var FyContext;
 	/**
 	 * Lookup a field from field constant
 	 * 
-	 * @param constant :
-	 *            field constant
+	 * @param {FyGlobal}
+	 *            global
+	 * @param {Number}
+	 *            constant : field constant
 	 * @returns {FyField} field
 	 */
-	FyContext.prototype.lookupFieldVirtualFromConstant = function(constant) {
-		var resolvedField = constant.resolvedField;
-		if (resolvedField === undefined) {
+	FyContext.prototype.lookupFieldVirtualFromConstant = function(global,
+			constant) {
+		var constants = global.constants;
+		var resolvedField;
+		if (!constants[constant + 2]) {
+			var strings = global.strings;
 			/**
 			 * @returns {FyClass}
 			 */
-			var clazz = this.lookupClass(constant.className);
+			var clazz = this.lookupClass(strings[constants[constant]]);
 			if (clazz === undefined) {
 				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
-						constant.className);
+						strings[constants[constant]]);
 			}
 
-			resolvedField = this
-					.lookupFieldVirtual(clazz, constant.nameAndType);
+			resolvedField = this.lookupFieldVirtual(clazz,
+					strings[constants[constant + 1]]);
 			if (resolvedField) {
-				constant.resolvedField = resolvedField;
+				constants[constant] = resolvedField.fieldId;
+				constants[constant + 2] = 1;
 			} else {
 				throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
-						constant.className + "." + constant.nameAndType
+						strings[constants[constant]] + "."
+								+ strings[constants[constant + 1]]
 								+ " not found");
 			}
 			// delete constant.className;
 			// delete constant.nameAndType;
+		} else {
+			resolvedField = this.fields[constants[constant]];
 		}
 		return resolvedField;
 	};
@@ -610,33 +541,42 @@ var FyContext;
 	/**
 	 * Lookup a method from method constant
 	 * 
-	 * @param constant :
-	 *            method constant
+	 * @param {FyGlobal}
+	 *            global
+	 * @param {Number}
+	 *            constant : method constant
 	 * @returns {FyMethod} method
 	 */
-	FyContext.prototype.lookupMethodVirtualFromConstant = function(constant) {
-		var resolvedMethod = constant.resolvedMethod;
-		if (!resolvedMethod) {
+	FyContext.prototype.lookupMethodVirtualFromConstant = function(global,
+			constant) {
+		var constants = global.constants;
+		var resolvedMethod;
+		if (!constants[constant + 2]) {
+			var strings = global.strings;
 			/**
 			 * @returns {FyClass}
 			 */
-			var clazz = this.lookupClass(constant.className);
+			var clazz = this.lookupClass(strings[constants[constant]]);
 			if (clazz === undefined) {
 				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
-						constant.className);
+						strings[constants[constant]]);
 			}
 
 			resolvedMethod = this.lookupMethodVirtual(clazz,
-					constant.nameAndType);
+					strings[constants[constant + 1]]);
 			if (resolvedMethod) {
-				constant.resolvedMethod = resolvedMethod;
+				constants[constant] = resolvedMethod.methodId;
+				constants[constant + 2] = 1;
 			} else {
 				throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
-						constant.className + "." + constant.nameAndType
+						strings[constants[constant]] + "."
+								+ strings[constants[constant + 1]]
 								+ " not found");
 			}
 			// delete constant.className;
 			// delete constant.nameAndType;
+		} else {
+			resolvedMethod = this.methods[constants[constant]];
 		}
 		return resolvedMethod;
 	};
@@ -727,20 +667,31 @@ var FyContext;
 	/**
 	 * Lookup class from constant phase1
 	 * 
-	 * @param constant
-	 *            the constant entry
+	 * @param {FyGlobal}
+	 *            global
+	 * @param {Number}
+	 *            constant the constant pos
 	 * @returns {FyClass}
 	 */
-	FyContext.prototype.lookupClassFromConstantPhase1 = function(constant) {
-		if (!constant.resolvedClass) {
-			constant.resolvedClass = this.lookupClassPhase1(constant.name);
-			if (!constant.resolvedClass) {
+	FyContext.prototype.lookupClassFromConstantPhase1 = function(global,
+			constant) {
+		var constants = global.constants;
+		var clazz = undefined;
+		if (!constants[constant + 2]) {
+			var strings = global.strings;
+			// console.log(constant + ", " + constants[constant] + ", "
+			// + strings[constants[constant]]);
+			clazz = this.lookupClassPhase1(strings[constants[constant]]);
+			if (!clazz) {
 				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 						constant.name);
 			}
-			// delete constant.name;
+			constants[constant] = clazz.classId;
+			constants[constant + 2] = 1;
+		} else {
+			clazz = this.classes[constants[constant]];
 		}
-		return constant.resolvedClass;
+		return clazz;
 	};
 
 	/**
@@ -750,16 +701,22 @@ var FyContext;
 	 *            the constant entry
 	 * @returns {FyClass}
 	 */
-	FyContext.prototype.lookupClassFromConstant = function(constant) {
-		if (!constant.resolvedClass) {
-			constant.resolvedClass = this.lookupClass(constant.name);
-			if (!constant.resolvedClass) {
+	FyContext.prototype.lookupClassFromConstant = function(global, constant) {
+		var constants = global.constants;
+		var clazz = undefined;
+		if (!constants[constant + 2]) {
+			var strings = global.strings;
+			clazz = this.lookupClass(strings[constants[constant]]);
+			if (!clazz) {
 				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 						constant.name);
 			}
-			// delete constant.name;
+			constants[constant] = clazz.classId;
+			constants[constant + 2] = 1;
+		} else {
+			clazz = this.classes[constants[constant]];
 		}
-		return constant.resolvedClass;
+		return clazz;
 	};
 
 	/**
@@ -1021,7 +978,7 @@ var FyContext;
 		// console.log(this);
 		if (e) {
 			throw e;
-		}else{
+		} else {
 			return data;
 		}
 	};

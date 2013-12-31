@@ -195,6 +195,9 @@ var FyThread;
 	 * @returns {Number}
 	 */
 	FyThread.prototype.pushMethod = function(method, ops) {
+		if (ops !== ops) {
+			throw new FyException(undefined, "Illegal ops");
+		}
 		var ret = this.pushFrame(method);
 		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
 			this
@@ -340,29 +343,26 @@ var FyThread;
 		var method = this.getCurrentMethod();
 		this.context.log(0, "GetExceptionHandler ip: " + handle + " " + ip
 				+ " " + method.uniqueName);
-		for (var i = 0, max = method.exceptionTable.length; i < max; i++) {
-			/**
-			 * @returns {FyExceptionHandler}
-			 */
-			var handler = method.exceptionTable[i];
-			this.context.log(0, "# " + handler.start + "-" + handler.end + "("
-					+ (handler.catchClass ? handler.catchClass.name : "*")
-					+ ")=>" + handler.handler + " "
-					+ heap.getObjectClass(handle).name);
-			if (ip >= handler.start && ip < handler.end) {
-				if (handler.catchClass) {
+		for (var i = 0, max = method.exceptionTable.length; i < max; i += 4) {
+			var start = method.exceptionTable[i];
+			var end = method.exceptionTable[i + 1];
+			var classId = method.exceptionTable[i + 2];
+			var handler = method.exceptionTable[i + 3];
+
+			if (ip >= start && ip < end) {
+				if (classId > 0) {
 					/**
 					 * @returns {FyClass}
 					 */
-					var handlerClass = handler.catchClass;
+					var handlerClass = this.context.classes[classId];
 					if (this.context.classLoader.canCast(heap
 							.getObjectClass(handle), handlerClass)) {
-						this.context.log(0, "!!" + handler.handler);
-						return handler.handler;
+						this.context.log(0, "!!" + handler);
+						return handler;
 					}
 				} else {
-					this.context.log(0, "!!" + handler.handler);
-					return handler.handler;
+					this.context.log(0, "!!" + handler);
+					return handler;
 				}
 			}
 		}
@@ -468,7 +468,7 @@ var FyThread;
 	 *          clinit
 	 */
 	FyThread.prototype.clinit = function(clazz) {
-//		console.log("<clinit>" + (clazz ? clazz.name : "undefined"));
+		// console.log("<clinit>" + (clazz ? clazz.name : "undefined"));
 		var ret;
 		if (clazz === undefined) {
 			ret = undefined;
@@ -476,19 +476,19 @@ var FyThread;
 				|| clazz.clinitThreadId === this.threadId) {
 			ret = undefined;
 		} else if (clazz.clinit === undefined) {
-//			console.log("<call clinit>"
-//					+ (clazz.superClass ? clazz.superClass.name : ""));
+			// console.log("<call clinit>"
+			// + (clazz.superClass ? clazz.superClass.name : ""));
 			ret = this.clinit(clazz.superClass);
 			if (ret === undefined) {
 				clazz.clinitThreadId = -1;
 			}
-//			console.log("</clinit>" + (ret?ret.name:"undefined"));
+			// console.log("</clinit>" + (ret?ret.name:"undefined"));
 			return ret;
 		} else {
-//			console.log("</clinit>" + clazz.name);
+			// console.log("</clinit>" + clazz.name);
 			return clazz;
 		}
-//		console.log("</clinit> undefined");
+		// console.log("</clinit> undefined");
 		return undefined;
 	};
 

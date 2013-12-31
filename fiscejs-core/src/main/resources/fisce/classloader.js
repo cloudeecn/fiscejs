@@ -50,11 +50,13 @@ var FyClassLoader;
 	};
 
 	/**
-	 * @param constant
+	 * @param {Number}
+	 *            constant
 	 * @returns {FyClass}
 	 */
-	FyClassLoader.prototype.lookupConstantAndPend = function(constant) {
-		var clazz = this.context.lookupClassFromConstantPhase1(constant);
+	FyClassLoader.prototype.lookupConstantAndPend = function(global, constant) {
+		var clazz = this.context
+				.lookupClassFromConstantPhase1(global, constant);
 		this.pending.push(clazz);
 		return clazz;
 	};
@@ -71,7 +73,7 @@ var FyClassLoader;
 
 	FyClassLoader.prototype.fixPendingSingle = function(clazz) {
 		if (clazz.phase === 1) {
-			this.phase2(clazz, this.context.classDef[clazz.name]);
+			this.phase2(clazz);
 		}
 
 		if (clazz.phase === 2) {
@@ -163,27 +165,42 @@ var FyClassLoader;
 			clazz.superClass = this.lookupAndPend(FyConst.FY_BASE_OBJECT);
 		} else {
 			// Normal class
-			var classDef = this.context.classDef[name];
-			this.context.classDef[name] = undefined;
+			// iterate all class defs
+			var classDef = undefined;
+			var global = undefined;
+			for (var i = 0, max = this.context.classDefs.length; i < max; i++) {
+				/**
+				 * @returns {FyClassDef}
+				 */
+				var cd = this.context.classDefs[i];
+				if (cd.classes[name]) {
+					classDef = cd.classes[name];
+					cd.classes[name] = undefined;
+					global = cd.global;
+					break;
+				}
+			}
 			if (!classDef) {
 				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 						"Class not found: " + name);
 			}
 			name = this.context.pool(name);
-			clazz = new FyClass(FyConst.TYPE_OBJECT, classDef);
+			clazz = new FyClass(FyConst.TYPE_OBJECT);
+			clazz.global = global;
 
-			FyUtils.simpleClone(classDef, clazz, [ "name", "sourceFile",
-					"accessFlags", "sizeRel", "staticSize", "phase" ]);
+			FyUtils.simpleClone(classDef, clazz, [ "accessFlags", "sizeRel",
+					"staticSize", "phase" ]);
+			clazz.name = name;
+			clazz.sourceFile = global.strings[classDef.sourceFile];
+			clazz.constants = classDef.constants;
 			if (clazz.staticSize > 0) {
 				clazz.staticPos = this.context.heap
 						.allocateStatic(clazz.staticSize);
 			}
-			{// Constants
-				var constantDefs = classDef.constants;
-				var constants = clazz.constants;
-				var len = constantDefs.length;
-				for (var i = 0; i < len; i++) {
-					constants[i] = constantDefs[i];
+			{// Interfaces
+				for (var idx = 0, im = classDef.interfaceDatas.length; idx < im; idx++) {
+					clazz.interfaces.push(this.lookupConstantAndPend(global,
+							clazz.constants[classDef.interfaceDatas[idx]]));
 				}
 			}
 			{// Methods
@@ -198,16 +215,19 @@ var FyClassLoader;
 					 */
 					var method = methods[i] = new FyMethod();
 
-					FyUtils.simpleClone(methodDef, method, [ "name",
-							"descriptor", "accessFlags", "maxStack",
-							"maxLocals", "paramStackUsage", "parameterCount",
-							"returnClassName" ]);
+					FyUtils.simpleClone(methodDef, method, [ "accessFlags",
+							"maxStack", "maxLocals", "paramStackUsage",
+							"parameterCount" ]);
+					method.name = global.strings[methodDef.name];
+					method.descriptor = global.strings[methodDef.descriptor];
+					method.returnClassName = global.strings[methodDef.returnClassName];
 					method.fullName = this.context.pool("." + method.name + "."
 							+ method.descriptor);
 					method.uniqueName = this.context.pool(clazz.name
 							+ method.fullName);
 					method.owner = clazz;
-
+					method.lineNumberTable = methodDef.lineNumberTable;
+					method.exceptionTable = methodDef.exceptionTable;
 					switch (method.returnClassName) {
 					case "void":
 						method.returnLength = 0;
@@ -227,15 +247,14 @@ var FyClassLoader;
 					} else if (method.name === FyConst.FY_METHOD_INIT) {
 						method.accessFlags |= FyConst.FY_ACC_CONSTRUCTOR;
 					}
-
-					if (methodDef.lineNumberTable) {
-						for (var lnIdx = 0; lnIdx < methodDef.lineNumberTable.length; lnIdx++) {
-							var lineNumber = new FyLineNumber();
-							var lineNumberDef = methodDef.lineNumberTable[lnIdx];
-							FyUtils.simpleClone(lineNumberDef, lineNumber);
-							method.lineNumberTable[lnIdx] = lineNumber;
-						}
-					}
+					/*
+					 * if (methodDef.lineNumberTable) { for (var lnIdx = 0;
+					 * lnIdx < methodDef.lineNumberTable.length; lnIdx++) { var
+					 * lineNumber = new FyLineNumber(); var lineNumberDef =
+					 * methodDef.lineNumberTable[lnIdx];
+					 * FyUtils.simpleClone(lineNumberDef, lineNumber);
+					 * method.lineNumberTable[lnIdx] = lineNumber; } }
+					 */
 
 					if (methodDef.lookupSwitchTargets) {
 						for (var lstIdx = 0; lstIdx < methodDef.lookupSwitchTargets.length; lstIdx++) {
@@ -263,20 +282,19 @@ var FyClassLoader;
 						method.code = methodDef.code;
 					}
 
-					if (methodDef.opsCheck) {
-						method.opsCheck = methodDef.opsCheck;
+					for (var idx = 0, im = methodDef.frames.length; idx < im; idx += 2) {
+						method.frames[methodDef.frames[idx]] = this.context
+								.pool(global.strings[methodDef.frames[idx + 1]]);
 					}
 
-					if (methodDef.frames) {
-						method.frames = methodDef.frames;
+					for (var idx = 0, im = methodDef.parameterClassNames.length; idx < im; idx++) {
+						method.parameterClassNames
+								.push(global.strings[methodDef.parameterClassNames[idx]]);
 					}
 
-					if (methodDef.parameterClassNames) {
-						method.parameterClassNames = methodDef.parameterClassNames;
-					}
-
-					if (methodDef.exceptions) {
-						method.exceptions = methodDef.exceptions;
+					for (var idx = 0, im = methodDef.exceptions.length; idx < im; idx++) {
+						method.exceptions
+								.push(global.strings[methodDef.exceptions[idx]]);
 					}
 
 					if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
@@ -302,7 +320,10 @@ var FyClassLoader;
 					 */
 					var field = fields[i] = new FyField();
 					var fieldDef = fieldDefs[i];
-					FyUtils.simpleClone(fieldDef, field);
+					FyUtils.simpleClone(fieldDef, field, [ "accessFlags",
+							"posRel", "size", "constantValueData" ]);
+					field.name = global.strings[fieldDef.name];
+					field.descriptor = global.strings[fieldDef.descriptor];
 					field.fullName = this.context.pool("." + field.name + "."
 							+ field.descriptor);
 					// console
@@ -311,15 +332,6 @@ var FyClassLoader;
 					field.uniqueName = this.context.pool(clazz.name
 							+ field.fullName);
 					field.owner = clazz;
-					switch (field.descriptor.charCodeAt(0)) {
-					case 68/* FyConst.D */:
-					case 74/* FyConst.J */:
-						field.size = 2;
-						break;
-					default:
-						field.size = 1;
-						break;
-					}
 					this.context.registerField(field);
 					// init static fields for reflection
 					if (fieldDef.constantValueData) {
@@ -336,7 +348,7 @@ var FyClassLoader;
 										.putStaticInt(
 												clazz,
 												field.posRel,
-												clazz.constants[fieldDef.constantValueData].value);
+												global.constants[clazz.constants[fieldDef.constantValueData]]);
 								break;
 							case 68/* FyConst.D */:
 							case 74/* FyConst.J */:
@@ -344,8 +356,8 @@ var FyClassLoader;
 										.putStaticLongFrom(
 												clazz,
 												field.posRel,
-												clazz.constants[fieldDef.constantValueData].value,
-												0);
+												global.constants,
+												clazz.constants[fieldDef.constantValueData]);
 								break;
 							case 76/* FyConst.L */:
 								field.constantValueData = clazz.constants[fieldDef.constantValueData];
@@ -358,8 +370,8 @@ var FyClassLoader;
 
 			if (classDef.superClassData) {
 				var superClassConstant = clazz.constants[classDef.superClassData];
-				clazz.superClass = this
-						.lookupConstantAndPend(superClassConstant);
+				clazz.superClass = this.lookupConstantAndPend(global,
+						superClassConstant);
 			}
 
 			if (!this.context.TOP_OBJECT
@@ -422,18 +434,6 @@ var FyClassLoader;
 			break;
 		case 0/* FyConst.TYPE_OBJECT */: {
 			// Count method params already done.
-			var classDef = clazz.classDef;
-			{
-				var interfaceDatas = classDef.interfaceDatas;
-				var len = interfaceDatas.length;
-
-				for (var i = 0; i < len; i++) {
-					var interfaceData = clazz.constants[interfaceDatas[i]];
-					clazz.interfaces[i] = this
-							.lookupConstantAndPend(interfaceData);
-				}
-			}
-
 			if (clazz.superClass) {
 				// Normal class
 				var tmp = clazz.superClass;
@@ -515,16 +515,14 @@ var FyClassLoader;
 					 * @returns {FyMethod}
 					 */
 					var method = methods[i];
-					var methodDef = classDef.methods[i];
-					if (methodDef.exceptionTable) {
-						for ( var etId in methodDef.exceptionTable) {
-							var fehDef = methodDef.exceptionTable[etId];
-							var feh = method.exceptionTable[etId] = new FyExceptionHandler();
-							FyUtils.simpleClone(fehDef, feh, [ "start", "end",
-									"handler" ]);
-							if (fehDef.catchClassData) {
-								feh.catchClass = this
-										.lookupConstantAndPend(clazz.constants[fehDef.catchClassData]);
+					if (method.exceptionTable.length > 0) {
+						for (var j = 0, maxj = method.exceptionTable.length; j < maxj; j += 4) {
+							// start end catchidx handler
+							if (method.exceptionTable[j + 2]) {
+								method.exceptionTable[j + 2] = this
+										.lookupConstantAndPend(
+												clazz.global,
+												clazz.constants[method.exceptionTable[j + 2]]).classId;
 							}
 						}
 					}
@@ -555,7 +553,8 @@ var FyClassLoader;
 							field.type = this.lookupAndPend(typeClassName);
 						} else {
 							throw new FyException(null,
-									"Illegal descriptor of field!");
+									"Illegal descriptor of field: "
+											+ field.descriptor);
 						}
 					}
 				}
@@ -605,7 +604,6 @@ var FyClassLoader;
 				}
 			}
 		}
-		clazz.classDef = undefined;
 		clazz.phase = 3;
 	};
 
@@ -618,7 +616,9 @@ var FyClassLoader;
 	 * @returns {Boolean} whether class [from] can cast to class [to]
 	 */
 	FyClassLoader.prototype.canCast = function(from, to) {
+//		console.log("Can cast: " + from.name + " => " + to.name);
 		if (from === to || to === this.context.TOP_OBJECT) {
+//			console.log("true");
 			return true;
 		}
 		if (from.type === FyConst.TYPE_OBJECT) {
@@ -629,6 +629,7 @@ var FyClassLoader;
 					 */
 					var intf = from.interfaces[i];
 					if (this.canCast(intf, to)) {
+//						console.log("true");
 						return true;
 					}
 				}
@@ -645,6 +646,7 @@ var FyClassLoader;
 				return false;
 			}
 		}
+//		console.log("false");
 		return false;
 	};
 

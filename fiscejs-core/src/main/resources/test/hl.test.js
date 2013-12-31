@@ -46,7 +46,6 @@
 						delay = 0;
 					}
 					if (delay > 0) {
-						console.log("sleep " + delay + "ms");
 						setTimeout(fun, delay);
 					} else {
 						fun();

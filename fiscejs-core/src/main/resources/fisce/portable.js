@@ -25,7 +25,7 @@ var FyConfig = {
 	maxObjects : 32768,
 	maxThreads : 16,
 	gcIdv : 10000,
-	gcForceIdv : 20000,
+	gcForceIdv : 120000,
 	heapSize : 2097152,
 	edenSize : 262144,
 	copySize : 65536,

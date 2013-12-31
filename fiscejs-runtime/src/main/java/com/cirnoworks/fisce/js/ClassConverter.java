@@ -59,17 +59,17 @@ public class ClassConverter {
 
 	};
 
-	private void convert(InputStream is, StringBuilder sb) throws IOException {
+	private String convert(InputStream is, StringBuilder sb) throws IOException {
 		StringBuilder tmp = new StringBuilder(64);
 
 		ClassReader cr = new ClassReader(is);
 		ClassData clazz = new ClassData(cr);
 		cr.accept(clazz, ClassReader.EXPAND_FRAMES);
+		String name = clazz.getName();
 
-		sb.append("{\n");
-		SimpleJSONUtil.add(sb, 1, "\"name\"",
-				stringPool.poolString(clazz.getName()), true);
-		System.out.println(clazz.getName());
+		SimpleJSONUtil
+				.add(sb, 0, SimpleJSONUtil.escapeString(name), "{", false);
+		System.out.println(name);
 
 		if (clazz.sourceFile != null) {
 			SimpleJSONUtil.add(sb, 1, "\"sourceFile\"",
@@ -88,7 +88,7 @@ public class ClassConverter {
 					SimpleJSONUtil
 							.add(sb,
 									2,
-									String.valueOf(poolConstant((JSONExportableConstantData) constant)),
+									String.valueOf(poolConstant((JSONExportableConstantData) constant) * 3),
 									i < max - 1);
 				}
 			}
@@ -169,17 +169,19 @@ public class ClassConverter {
 					SimpleJSONUtil.add(sb, 3, "\"exceptionTable\"", "[", false);
 					for (int j = 0, maxj = exceptionHandlerTable.length; j < maxj; j++) {
 						ExceptionHandler eh = exceptionHandlerTable[j];
-						SimpleJSONUtil.add(sb, 4, "{", false);
-						SimpleJSONUtil
-								.add(sb, 5, "\"start\"", (int) eh.startPc);
-						SimpleJSONUtil.add(sb, 5, "\"end\"", (int) eh.endPc);
-						SimpleJSONUtil.add(sb, 5, "\"catchClassData\"",
-								(int) eh.catchClassIdx);
-						SimpleJSONUtil.add(sb, 5, "\"handler\"",
-								(int) eh.handlerPc, false);
-						SimpleJSONUtil.add(sb, 4, "}", j < maxj - 1);
+						SimpleJSONUtil.add(sb, 4,
+								String.valueOf((int) eh.startPc));
+						SimpleJSONUtil.add(sb, 4,
+								String.valueOf((int) eh.endPc));
+						SimpleJSONUtil.add(sb, 4,
+								String.valueOf((int) eh.catchClassIdx));
+						SimpleJSONUtil.add(sb, 4,
+								String.valueOf((int) eh.handlerPc),
+								j < maxj - 1);
 					}
 					SimpleJSONUtil.add(sb, 3, "]", true);
+				} else {
+					SimpleJSONUtil.add(sb, 3, "\"exceptionTable\"", "[]", true);
 				}
 
 				LineNumber[] lineNumbers = method.getLineNumberTable();
@@ -188,14 +190,15 @@ public class ClassConverter {
 							.add(sb, 3, "\"lineNumberTable\"", "[", false);
 					for (int j = 0, maxj = lineNumbers.length; j < maxj; j++) {
 						LineNumber ln = lineNumbers[j];
-						SimpleJSONUtil.add(sb, 4, "{", false);
-						SimpleJSONUtil
-								.add(sb, 5, "\"start\"", (int) ln.startPc);
-						SimpleJSONUtil.add(sb, 5, "\"line\"",
-								(int) ln.lineNumber, false);
-						SimpleJSONUtil.add(sb, 4, "}", j < maxj - 1);
+						SimpleJSONUtil.add(sb, 4,
+								String.valueOf((int) ln.startPc) + ", "
+										+ String.valueOf((int) ln.lineNumber),
+								j < maxj - 1);
 					}
 					SimpleJSONUtil.add(sb, 3, "]", true);
+				} else {
+					SimpleJSONUtil
+							.add(sb, 3, "\"lineNumberTable\"", "[]", true);
 				}
 
 				int[] code = method.getCode();
@@ -203,8 +206,7 @@ public class ClassConverter {
 					SimpleJSONUtil.add(sb, 3, "\"maxStack\"", 0, true);
 					SimpleJSONUtil.add(sb, 3, "\"maxLocals\"", 0, true);
 					SimpleJSONUtil.add(sb, 3, "\"code\"", "[]", true);
-					SimpleJSONUtil.add(sb, 3, "\"opsCheck\"", "{}", true);
-					SimpleJSONUtil.add(sb, 3, "\"frames\"", "{}", true);
+					SimpleJSONUtil.add(sb, 3, "\"frames\"", "[]", true);
 				} else {
 
 					SimpleJSONUtil.add(sb, 3, "\"maxStack\"",
@@ -212,40 +214,49 @@ public class ClassConverter {
 					SimpleJSONUtil.add(sb, 3, "\"maxLocals\"",
 							(int) method.getMaxLocals(), true);
 
-					SimpleJSONUtil.add(sb, 3, "\"code\"", "[", false);
-					SimpleJSONUtil.addIndent(sb, 4);
-					for (int j = 0, maxj = code.length; j < maxj; j++) {
-						sb.append(code[j]);
-						if (j < maxj - 1) {
-							sb.append(", ");
-							if (j % 32 == 31) {
-								sb.append('\n');
-								SimpleJSONUtil.addIndent(sb, 4);
-							}
-						}
-					}
-					sb.append('\n');
-					SimpleJSONUtil.add(sb, 3, "]", true);
 					{
-						SimpleJSONUtil.add(sb, 3, "\"opsCheck\"", "{", false);
+						SimpleJSONUtil.add(sb, 3, "\"code\"", "[", false);
+						SimpleJSONUtil.addIndent(sb, 4);
 						int[] check = method.getCheckOps();
-						boolean checked = false;
-						for (int j = 0, maxj = check.length; j < maxj; j++) {
-							if (check[j] >= 0) {
-								SimpleJSONUtil.add(sb, 4,
-										"\"" + String.valueOf(j) + "\"",
-										check[j], true);
-								checked = true;
+						for (int j = 0, maxj = code.length; j < maxj; j++) {
+							if (j % 3 == 0) {
+								if (code[j] > 65535) {
+									throw new IllegalArgumentException(
+											"Illegal op=" + code[j] + " @ "
+													+ name + "."
+													+ method.getName() + "."
+													+ method.getDescriptor());
+								} else {
+									int ip = j / 3;
+									if (check[ip] >= 0) {
+										if (check[ip] > 32768) {
+											throw new IllegalArgumentException(
+													"Method "
+															+ name
+															+ "."
+															+ method.getName()
+															+ "."
+															+ method.getDescriptor()
+															+ " too large!");
+										}
+										code[j] |= (check[ip]) << 16;
+									}
+								}
+							}
+							sb.append(code[j]);
+							if (j < maxj - 1) {
+								sb.append(", ");
+								if (j % 32 == 31) {
+									sb.append('\n');
+									SimpleJSONUtil.addIndent(sb, 4);
+								}
 							}
 						}
-						if (checked) {
-							sb.setLength(sb.length() - 2);
-							sb.append('\n');
-						}
-						SimpleJSONUtil.add(sb, 3, "}", true);
+						sb.append('\n');
+						SimpleJSONUtil.add(sb, 3, "]", true);
 					}
 					{
-						SimpleJSONUtil.add(sb, 3, "\"frames\"", "{", false);
+						SimpleJSONUtil.add(sb, 3, "\"frames\"", "[", false);
 						boolean[] hints = method.getHintFrame();
 						boolean hinted = false;
 
@@ -254,6 +265,13 @@ public class ClassConverter {
 								tmp.setLength(0);
 								hinted = true;
 								Frame<BasicValue> frame = method.getRawFrames()[j];
+								if (frame == null) {
+									throw new NullPointerException(
+											"Can't find frame @" + j + " for "
+													+ name + "."
+													+ method.getName() + "."
+													+ method.getDescriptor());
+								}
 								for (int k = 0, maxk = frame.getLocals(); k < maxk; k++) {
 									BasicValue v = frame.getLocal(k);
 									tmp.append(v.isReference() ? '1' : '0');
@@ -265,17 +283,20 @@ public class ClassConverter {
 										tmp.append('0');
 									}
 								}
-								SimpleJSONUtil.add(sb, 4,
-										"\"" + String.valueOf(j) + "\"",
-										stringPool.poolString(tmp.toString()),
-										true);
+								SimpleJSONUtil.add(
+										sb,
+										4,
+										String.valueOf(j)
+												+ ", "
+												+ stringPool.poolString(tmp
+														.toString()), true);
 							}
 						}
 						if (hinted) {
 							sb.setLength(sb.length() - 2);
 							sb.append('\n');
 						}
-						SimpleJSONUtil.add(sb, 3, "}", true);
+						SimpleJSONUtil.add(sb, 3, "]", true);
 					}
 				}
 
@@ -365,6 +386,7 @@ public class ClassConverter {
 		SimpleJSONUtil.add(sb, 1, "\"phase\"", 0, true);
 		SimpleJSONUtil.add(sb, 1, "\"converted\"", "true", false);
 		sb.append("}\n");
+		return name;
 	}
 
 	public String singleConvert(InputStream is) throws IOException {
@@ -380,7 +402,7 @@ public class ClassConverter {
 		}
 		sb = new StringBuilder(16384);
 		SimpleJSONUtil.add(sb, 0, "{", false);
-		SimpleJSONUtil.add(sb, 0, "\"classes\"", "[", false);
+		SimpleJSONUtil.add(sb, 0, "\"classes\"", "{", false);
 	}
 
 	public void multiPush(InputStream is) throws IOException {
@@ -392,7 +414,9 @@ public class ClassConverter {
 		if (sb.charAt(sb.length() - 1) == ',') {
 			sb.setLength(sb.length() - 1);
 		}
-		SimpleJSONUtil.add(sb, 0, "]", true);
+		SimpleJSONUtil.add(sb, 0, "}", true);
+
+		int[] output = new int[2];
 
 		SimpleJSONUtil.add(sb, 0, "\"constants\"", "[", false);
 		{
@@ -401,9 +425,11 @@ public class ClassConverter {
 			while (i.hasNext()) {
 				JSONExportableConstantData constant = i.next();
 				if (constant == null) {
-					SimpleJSONUtil.add(sb, 1, "null", i.hasNext());
+					SimpleJSONUtil.add(sb, 1, "0, 0, 0", i.hasNext());
 				} else {
-					constant.appendJSON(stringPool, sb, 1, i.hasNext());
+					constant.export(stringPool, output, 0);
+					SimpleJSONUtil.add(sb, 1, output[0] + ", " + output[1]
+							+ ", 0", i.hasNext());
 				}
 			}
 		}
@@ -415,7 +441,8 @@ public class ClassConverter {
 			while (i.hasNext()) {
 				String str = i.next();
 				if (str == null) {
-					SimpleJSONUtil.add(sb, 1, "null", i.hasNext());
+					SimpleJSONUtil.add(sb, 1, SimpleJSONUtil.escapeString(""),
+							i.hasNext());
 				} else {
 					SimpleJSONUtil.add(sb, 1, SimpleJSONUtil.escapeString(str),
 							i.hasNext());
