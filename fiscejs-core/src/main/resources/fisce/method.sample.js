@@ -1155,6 +1155,7 @@
 				// ###
 			case 170:
 				// ##OP-NEWARRAY -1 1
+				thread.localToFrame(sp, $ip, $ip + 1);
 				switch ($1) {
 				case 4:
 					stack[sp - 1] = heap.allocateArray(context
@@ -1245,7 +1246,7 @@
 
 				sp -= 3;
 				thread.localToFrame(sp, $ip, $ip + 1);
-				heap.putArrayRaw16ToHeap(stack[sp], stack[sp + 1], sp + 2);
+				heap.putArrayRaw16FromHeap(stack[sp], stack[sp + 1], sp + 2);
 				// ###
 			case 180:
 				// ##OP-SIPUSH 0 1

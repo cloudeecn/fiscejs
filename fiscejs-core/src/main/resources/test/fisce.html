@@ -10,6 +10,7 @@
 <script type="text/javascript" src="../fisce/hashmapi.js"></script>
 <script type="text/javascript" src="../fisce/vfs.js"></script>
 <script type="text/javascript" src="../fisce/structs.js"></script>
+<script type="text/javascript" src="../fisce/gunzip.minjs"></script>
 <script type="text/javascript" src="../fisce/method.js"></script>
 <script type="text/javascript" src="../fisce/field.js"></script>
 <script type="text/javascript" src="../fisce/class.js"></script>
@@ -61,8 +62,8 @@
 	}
 	window.console = {
 		log : function(param) {
-			$("#console").append(param);
-			$("#console").append("\n");
+			//$("#console").append(param);
+			//$("#console").append("\n");
 			window.oldConsole.log.apply(window.oldConsole, arguments);
 		}
 	}

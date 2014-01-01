@@ -736,6 +736,7 @@ var FyThread;
 					var frame = method.frames[lip];
 
 					var imax;
+					console.log(frameId + ": " + isTop);
 					if (isTop) {
 						isTop = false;
 						imax = thread.sp - sb;

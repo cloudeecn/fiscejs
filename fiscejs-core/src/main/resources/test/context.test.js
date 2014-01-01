@@ -17,7 +17,6 @@
 			.extend({
 				"    ClassDef" : function() {
 					var context = fisceTests.context();
-
 					ok(context);
 				},
 				"    Hierarchy.methods" : function() {
@@ -87,117 +86,13 @@
 							.lookupMethodVirtualByMethod(classIdentityHashMap,
 									methodAbstractMapGet));
 
-					var constant;
-
-					constant = {
-						className : "EXCLUDE/fisce/test/JspTag",
-						nameAndType : ".method1.()I"
-					};
-					var methodJspTagMethod1 = context
-							.lookupMethodVirtualFromConstant(constant);
-
-					ok(constant.resolvedMethod);
-					//ok(!constant.className);
-					//ok(!constant.nameAndType);
-
-					ok(methodJspTagMethod1);
-
-					equal(methodJspTagMethod1, context
-							.lookupMethodVirtualFromConstant(constant));
-
-					constant = {
-						className : "EXCLUDE/fisce/test/IterationTag",
-						nameAndType : ".method1.()I"
-					};
-					var methodIterationTagMethod1 = context
-							.lookupMethodVirtualFromConstant(constant);
-					ok(constant.resolvedMethod);
-//					ok(!constant.className);
-//					ok(!constant.nameAndType);
-					ok(methodIterationTagMethod1);
-
-					equal(methodJspTagMethod1, methodIterationTagMethod1);
-
-					constant = {
-						className : "EXCLUDE/fisce/test/AbstractTestTag",
-						nameAndType : ".method1.()I"
-					};
-					var methodAbstractTestTagMethod1 = context
-							.lookupMethodVirtualFromConstant(constant);
-					ok(constant.resolvedMethod);
-//					ok(!constant.className);
-//					ok(!constant.nameAndType);
-					ok(methodAbstractTestTagMethod1);
-
-					equal(methodJspTagMethod1, methodAbstractTestTagMethod1);
-
 				},
 				"    Hierarchy.fields" : function() {
 					/**
 					 * @returns {FyContext}
 					 */
 					var context = fisceTests.context();
-					var constant;
-
-					constant = {
-						className : "EXCLUDE/fisce/test/IterationTag",
-						nameAndType : ".static1.I"
-					};
-					var fieldIterationTagStatic1 = context
-							.lookupFieldVirtualFromConstant(constant);
-					ok(constant.resolvedField);
-//					ok(!constant.className);
-//					ok(!constant.nameAndType);
-					ok(fieldIterationTagStatic1);
-					equal(fieldIterationTagStatic1, context
-							.lookupFieldVirtualFromConstant(constant));
-
-					constant = {
-						className : "EXCLUDE/fisce/test/JspTag",
-						nameAndType : ".static1.I"
-					};
-					var fieldJspTagStatic1 = context
-							.lookupFieldVirtualFromConstant(constant);
-					ok(constant.resolvedField);
-//					ok(!constant.className);
-//					ok(!constant.nameAndType);
-					ok(fieldJspTagStatic1);
-					equal(fieldJspTagStatic1, context
-							.lookupFieldVirtualFromConstant(constant));
-					equal(fieldJspTagStatic1, fieldIterationTagStatic1);
-
-					constant = {
-						className : "EXCLUDE/fisce/test/TestTag2",
-						nameAndType : ".static1.I"
-					};
-					var fieldTestTag2Static1 = context
-							.lookupFieldVirtualFromConstant(constant);
-					equal("EXCLUDE/fisce/test/JspTag.static1.I",
-							fieldTestTag2Static1.uniqueName);
-
-					equal("EXCLUDE/fisce/test/TestTag.static5.I", context
-							.lookupFieldVirtualFromConstant({
-								className : "EXCLUDE/fisce/test/TestTag2",
-								nameAndType : ".static5.I"
-							}).uniqueName);
-
-					equal("EXCLUDE/fisce/test/TestTag.field0.I", context
-							.lookupFieldVirtualFromConstant({
-								className : "EXCLUDE/fisce/test/TestTag2",
-								nameAndType : ".field0.I"
-							}).uniqueName);
-
-					equal("EXCLUDE/fisce/test/TestTag2.field1.I", context
-							.lookupFieldVirtualFromConstant({
-								className : "EXCLUDE/fisce/test/TestTag2",
-								nameAndType : ".field1.I"
-							}).uniqueName);
 					
-					equal("EXCLUDE/fisce/test/Intf2.static4.I", context
-							.lookupFieldVirtualFromConstant({
-								className : "EXCLUDE/fisce/test/TestTag2",
-								nameAndType : ".static4.I"
-							}).uniqueName);
 				}
 			});
 })();

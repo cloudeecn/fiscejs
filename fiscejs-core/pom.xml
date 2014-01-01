@@ -107,6 +107,7 @@
 						</goals>
 						<configuration>
 							<zipFile>${project.build.directory}/assembly-js.zip</zipFile>
+							<extras><extra>${baseddir}/src/main/resources/fisce/gunzip.minjs</extra></extras>
 							<compiledFile>${project.build.directory}/fiscejs-${project.version}.gzjs</compiledFile>
 						</configuration>
 					</execution>

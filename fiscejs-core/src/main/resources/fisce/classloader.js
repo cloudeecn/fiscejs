@@ -174,8 +174,23 @@ var FyClassLoader;
 				 */
 				var cd = this.context.classDefs[i];
 				if (cd.classes[name]) {
-					classDef = cd.classes[name];
+					var data = FyUtils.unbase64(cd.classes[name], undefined, 0,
+							0);
+					var gunzip = new Zlib.Gunzip(data);
+					var utf8 = gunzip.decompress();
+					data = undefined;
+					var outArray = new Array(1);
+					var ofs = 0;
+					var str = "";
+					while (ofs < utf8.length) {
+						ofs += FyUtils.utf8Decode(utf8, ofs, outArray, 0);
+						str += String.fromCharCode(outArray[0]);
+					}
+					utf8 = undefined;
+					classDef = JSON.parse(str);
+
 					cd.classes[name] = undefined;
+
 					global = cd.global;
 					break;
 				}
@@ -616,9 +631,9 @@ var FyClassLoader;
 	 * @returns {Boolean} whether class [from] can cast to class [to]
 	 */
 	FyClassLoader.prototype.canCast = function(from, to) {
-//		console.log("Can cast: " + from.name + " => " + to.name);
+		// console.log("Can cast: " + from.name + " => " + to.name);
 		if (from === to || to === this.context.TOP_OBJECT) {
-//			console.log("true");
+			// console.log("true");
 			return true;
 		}
 		if (from.type === FyConst.TYPE_OBJECT) {
@@ -629,7 +644,7 @@ var FyClassLoader;
 					 */
 					var intf = from.interfaces[i];
 					if (this.canCast(intf, to)) {
-//						console.log("true");
+						// console.log("true");
 						return true;
 					}
 				}
@@ -646,7 +661,7 @@ var FyClassLoader;
 				return false;
 			}
 		}
-//		console.log("false");
+		// console.log("false");
 		return false;
 	};
 

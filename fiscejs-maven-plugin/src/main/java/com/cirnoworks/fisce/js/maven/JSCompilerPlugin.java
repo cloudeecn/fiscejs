@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -34,6 +35,8 @@ public class JSCompilerPlugin extends AbstractMojo {
 	 * @parameter default-value="${project.build.directory}/compiled.gzjs"
 	 */
 	private File compiledFile;
+
+	private File[] extras;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -67,8 +70,6 @@ public class JSCompilerPlugin extends AbstractMojo {
 			CompilationLevel.SIMPLE_OPTIMIZATIONS
 					.setOptionsForCompilationLevel(options);
 
-			char[] buf = new char[65536];
-			StringBuilder sb = new StringBuilder(65536);
 			SourceFile extern = SourceFile.fromCode("externs.js",
 					"function alert(x) {}");
 			compiler.compile(Arrays.asList(extern), inputs, options);
@@ -78,6 +79,25 @@ public class JSCompilerPlugin extends AbstractMojo {
 				GZIPOutputStream gos = new GZIPOutputStream(fos);
 				OutputStreamWriter writer = new OutputStreamWriter(gos, "utf-8");
 				writer.write(output);
+				if (extras != null) {
+					char[] cbuf = new char[65536];
+					int cread = 0;
+					for (File extra : extras) {
+						writer.write('\n');
+						InputStreamReader isr = new InputStreamReader(
+								new FileInputStream(extra), "utf-8");
+						try {
+							while ((cread = isr.read(cbuf)) >= 0) {
+								writer.write(cbuf, 0, cread);
+							}
+						} finally {
+							try {
+								isr.close();
+							} catch (Exception e) {
+							}
+						}
+					}
+				}
 				writer.close();
 				gos.close();
 			} finally {
@@ -90,5 +110,4 @@ public class JSCompilerPlugin extends AbstractMojo {
 			throw new MojoExecutionException("Exception occored", e);
 		}
 	}
-
 }

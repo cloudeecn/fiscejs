@@ -1,5 +1,6 @@
 package com.cirnoworks.fisce.js;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import com.cirnoworks.fisce.data.constants.ConstantData;
 import com.cirnoworks.fisce.data.constants.JSONExportableConstantData;
 import com.cirnoworks.fisce.vm.data.attributes.ExceptionHandler;
 import com.cirnoworks.fisce.vm.data.attributes.LineNumber;
+import com.jcraft.jzlib.GZIPOutputStream;
 
 public class ClassConverter {
 	private StringBuilder sb;
@@ -67,8 +69,7 @@ public class ClassConverter {
 		cr.accept(clazz, ClassReader.EXPAND_FRAMES);
 		String name = clazz.getName();
 
-		SimpleJSONUtil
-				.add(sb, 0, SimpleJSONUtil.escapeString(name), "{", false);
+		sb.append("{\n");
 		System.out.println(name);
 
 		if (clazz.sourceFile != null) {
@@ -406,13 +407,24 @@ public class ClassConverter {
 	}
 
 	public void multiPush(InputStream is) throws IOException {
-		convert(is, sb);
-		sb.append(",");
+		StringBuilder tmp = new StringBuilder();
+		String name = convert(is, tmp);
+		byte[] bytes = tmp.toString().getBytes("utf-8");
+		tmp = null;
+		ByteArrayOutputStream baos = new ByteArrayOutputStream(bytes.length / 2);
+		GZIPOutputStream gos = new GZIPOutputStream(baos);
+		gos.write(bytes);
+		gos.close();
+		bytes = null;
+		bytes = baos.toByteArray();
+		String result = Base64.encode(bytes);
+		SimpleJSONUtil.add(sb, 1, SimpleJSONUtil.escapeString(name),
+				SimpleJSONUtil.escapeString(result), true);
 	}
 
 	public String multiFinish() {
-		if (sb.charAt(sb.length() - 1) == ',') {
-			sb.setLength(sb.length() - 1);
+		if (sb.charAt(sb.length() - 2) == ',') {
+			sb.setLength(sb.length() - 2);
 		}
 		SimpleJSONUtil.add(sb, 0, "}", true);
 

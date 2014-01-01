@@ -754,6 +754,7 @@
 					"Field not found!");
 		}
 		thread.nativeReturnInt(heap.literal(field.name));
+		return ops - 1;
 	}
 
 	/**
@@ -773,6 +774,7 @@
 					"Field not found!");
 		}
 		thread.nativeReturnInt(context.getClassObjectHandle(field.type));
+		return ops - 1;
 	}
 
 	/**
@@ -792,6 +794,7 @@
 					"Field not found!");
 		}
 		thread.nativeReturnInt(context.getClassObjectHandle(field.owner));
+		return ops - 1;
 	}
 
 	/**

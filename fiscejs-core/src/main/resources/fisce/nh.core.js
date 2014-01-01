@@ -1098,5 +1098,6 @@
 
 	FyContext.registerStaticNH("com/cirnoworks/fisce/privat/FiScEVM.save.()V",
 			function() {/* TODO */
+		return 0;
 			});
 })();
