@@ -36,6 +36,9 @@ public class JSCompilerPlugin extends AbstractMojo {
 	 */
 	private File compiledFile;
 
+	/**
+	 * @parameter
+	 */
 	private File[] extras;
 
 	@Override
@@ -83,6 +86,7 @@ public class JSCompilerPlugin extends AbstractMojo {
 					char[] cbuf = new char[65536];
 					int cread = 0;
 					for (File extra : extras) {
+						this.getLog().info("Adding extra files");
 						writer.write('\n');
 						InputStreamReader isr = new InputStreamReader(
 								new FileInputStream(extra), "utf-8");
