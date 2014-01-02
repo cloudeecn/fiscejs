@@ -93,5 +93,6 @@
 		hltest("EXCLUDE/fisce/test/ParamStoreTest");
 		hltest("EXCLUDE/fisce/test/ReflectionTest");
 		hltest("EXCLUDE/fisce/test/ProxyTest");
+		hltest("EXCLUDE/fisce/test/GZIPTest");
 	}
 })();

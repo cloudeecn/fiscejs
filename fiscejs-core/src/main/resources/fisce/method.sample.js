@@ -893,7 +893,7 @@
 				// ##OP-IXOR -2 1
 
 				sp--;
-				stack[sp - 1] >>>= stack[sp];
+				stack[sp - 1] ^= stack[sp];
 				// ###
 			case 143:
 				// ##OP-L2D -2 2
