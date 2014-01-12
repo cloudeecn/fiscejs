@@ -50,9 +50,10 @@ var FyConfig = {
 		window.performance = {};
 	}
 	if (!performance.now) {
+		console.log("Polyfill performance.now");
 		performance.now = (function() {
 			return performance.now || performance.mozNow || performance.msNow
-					|| performance.oNow || performance.webkitNow || function() {
+					|| performance.oNow || performance.webkitNow || Date.now || function() {
 						// Doh! Crap browser!
 						return new Date().getTime();
 					};
