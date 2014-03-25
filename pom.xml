@@ -11,6 +11,32 @@
 		<artifactId>parent</artifactId>
 		<version>3</version>
 	</parent>
+	<repositories>
+		<repository>
+			<id>cw-releases</id>
+			<name>Cirnoworks Releases</name>
+			<url>http://repo1.cirnoworks.com/releases/</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<layout>default</layout>
+		</repository>
+		<repository>
+			<id>cw-snapshots</id>
+			<name>Cirnoworks Snapshots</name>
+			<url>http://repo1.cirnoworks.com/snapshots/</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<layout>default</layout>
+		</repository>
+	</repositories>
 	<properties>
 		<project.build.sourceEncoding>utf-8</project.build.sourceEncoding>
 		<fiscevm.version>2.0.0-SNAPSHOT</fiscevm.version>
