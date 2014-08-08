@@ -30,7 +30,7 @@ var FyConfig = {
 	edenSize : 262144,
 	copySize : 65536,
 	stackSize : 16384,
-	debugMode : true,
+	debugMode : false,
 	verboseMode : false,
 	aggresiveGC : false,
 	_ : undefined
