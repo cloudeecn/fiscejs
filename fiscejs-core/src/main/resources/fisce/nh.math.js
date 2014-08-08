@@ -28,11 +28,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathACos(context, thread, ops) {
-		var sb = thread.sp;
+	function mathACos(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.acos(x));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.acos(x));
 		return ops - 1;
 	}
 
@@ -44,11 +44,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathASin(context, thread, ops) {
-		var sb = thread.sp;
+	function mathASin(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.asin(x));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.asin(x));
 		return ops - 1;
 	}
 
@@ -60,11 +60,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathATan(context, thread, ops) {
-		var sb = thread.sp;
+	function mathATan(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.atan(x));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.atan(x));
 		return ops - 1;
 	}
 
@@ -76,12 +76,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathATan2(context, thread, ops) {
-		var sb = thread.sp;
+	function mathATan2(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		var y = FyPortable.ieee64ToDouble(stack, sb + 2);
-		thread.nativeReturnDouble(Math.atan(x, y));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		var y = FyPortable.ieee64ToDouble(stack, sp + 2);
+		thread.nativeReturnDouble(sp, Math.atan(x, y));
 		return ops - 1;
 	}
 
@@ -93,11 +93,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathCbrt(context, thread, ops) {
-		var sb = thread.sp;
+	function mathCbrt(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.pow(x, 1 / 3));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.pow(x, 1 / 3));
 		return ops - 1;
 	}
 
@@ -109,11 +109,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathCeil(context, thread, ops) {
-		var sb = thread.sp;
+	function mathCeil(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.ceil(x));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.ceil(x));
 		return ops - 1;
 	}
 
@@ -125,11 +125,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathCos(context, thread, ops) {
-		var sb = thread.sp;
+	function mathCos(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.cos(x));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.cos(x));
 		return ops - 1;
 	}
 
@@ -141,12 +141,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathCosh(context, thread, ops) {
-		var sb = thread.sp;
+	function mathCosh(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
+		var x = FyPortable.ieee64ToDouble(stack, sp);
 		var ex = Math.exp(x);
-		thread.nativeReturnDouble((ex - 1 / ex) * .5);
+		thread.nativeReturnDouble(sp, (ex - 1 / ex) * .5);
 		return ops - 1;
 	}
 
@@ -158,11 +158,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathExp(context, thread, ops) {
-		var sb = thread.sp;
+	function mathExp(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.exp(x));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.exp(x));
 		return ops - 1;
 	}
 
@@ -174,11 +174,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathExpm1(context, thread, ops) {
-		var sb = thread.sp;
+	function mathExpm1(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.exp(x) - 1);
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.exp(x) - 1);
 		return ops - 1;
 	}
 
@@ -190,11 +190,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathFloor(context, thread, ops) {
-		var sb = thread.sp;
+	function mathFloor(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.floor(x));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.floor(x));
 		return ops - 1;
 	}
 
@@ -206,18 +206,18 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathHypot(context, thread, ops) {
-		var sb = thread.sp;
+	function mathHypot(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		var y = FyPortable.ieee64ToDouble(stack, sb + 2);
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		var y = FyPortable.ieee64ToDouble(stack, sp + 2);
 		var t;
 		x = Math.abs(x);
 		y = Math.abs(y);
 		t = Math.min(x, y);
 		x = Math.max(x, y);
 		t /= x;
-		thread.nativeReturnDouble(x * Math.sqrt(1 + t * t));
+		thread.nativeReturnDouble(sp, x * Math.sqrt(1 + t * t));
 		return ops - 1;
 	}
 
@@ -229,15 +229,15 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathIEEERemainder(context, thread, ops) {
-		var sb = thread.sp;
+	function mathIEEERemainder(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		var y = FyPortable.ieee64ToDouble(stack, sb + 2);
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		var y = FyPortable.ieee64ToDouble(stack, sp + 2);
 		if (y === 0) {
-			thread.nativeReturnDouble(0.0 / y);
+			thread.nativeReturnDouble(sp, 0.0 / y);
 		} else {
-			thread.nativeReturnDouble(x - Math.floot(x / y) * y);
+			thread.nativeReturnDouble(sp, x - Math.floot(x / y) * y);
 		}
 		return ops - 1;
 	}
@@ -250,11 +250,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathLog(context, thread, ops) {
-		var sb = thread.sp;
+	function mathLog(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.log(x));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.log(x));
 		return ops - 1;
 	}
 
@@ -266,11 +266,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathLog10(context, thread, ops) {
-		var sb = thread.sp;
+	function mathLog10(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.log(x) / LOG10);
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.log(x) / LOG10);
 		return ops - 1;
 	}
 
@@ -282,11 +282,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathLog1p(context, thread, ops) {
-		var sb = thread.sp;
+	function mathLog1p(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.log(x + 1));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.log(x + 1));
 		return ops - 1;
 	}
 
@@ -298,12 +298,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathPow(context, thread, ops) {
-		var sb = thread.sp;
+	function mathPow(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		var y = FyPortable.ieee64ToDouble(stack, sb + 2);
-		thread.nativeReturnDouble(Math.pow(x, y));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		var y = FyPortable.ieee64ToDouble(stack, sp + 2);
+		thread.nativeReturnDouble(sp, Math.pow(x, y));
 		return ops - 1;
 	}
 
@@ -315,11 +315,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathRint(context, thread, ops) {
-		var sb = thread.sp;
+	function mathRint(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(x - Math.floor(x));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, x - Math.floor(x));
 		return ops - 1;
 	}
 
@@ -331,14 +331,14 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathSignum(context, thread, ops) {
-		var sb = thread.sp;
+	function mathSignum(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
+		var x = FyPortable.ieee64ToDouble(stack, sp);
 		if (x != x) {
-			thread.nativeReturnDouble(0.0 / 0.0);
+			thread.nativeReturnDouble(sp, 0.0 / 0.0);
 		} else {
-			thread.nativeReturnDouble(x > 0 ? 1.0 : (x < 0 ? -1.0 : 0.0));
+			thread.nativeReturnDouble(sp, x > 0 ? 1.0 : (x < 0 ? -1.0 : 0.0));
 		}
 		return ops - 1;
 	}
@@ -351,14 +351,14 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathSignumf(context, thread, ops) {
-		var sb = thread.sp;
+	function mathSignumf(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
+		var x = FyPortable.ieee64ToDouble(stack, sp);
 		if (x != x) {
-			thread.nativeReturnFloat(0.0 / 0.0);
+			thread.nativeReturnFloat(sp, 0.0 / 0.0);
 		} else {
-			thread.nativeReturnFloat(x > 0 ? 1.0 : (x < 0 ? -1.0 : 0.0));
+			thread.nativeReturnFloat(sp, x > 0 ? 1.0 : (x < 0 ? -1.0 : 0.0));
 		}
 		return ops - 1;
 	}
@@ -371,11 +371,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathSin(context, thread, ops) {
-		var sb = thread.sp;
+	function mathSin(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.sin(x));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.sin(x));
 		return ops - 1;
 	}
 
@@ -387,12 +387,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathSinh(context, thread, ops) {
-		var sb = thread.sp;
+	function mathSinh(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
+		var x = FyPortable.ieee64ToDouble(stack, sp);
 		var ex = Math.exp(x);
-		thread.nativeReturnDouble((ex - 1 / ex) / 2);
+		thread.nativeReturnDouble(sp, (ex - 1 / ex) / 2);
 		return ops - 1;
 	}
 
@@ -404,11 +404,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathSqrt(context, thread, ops) {
-		var sb = thread.sp;
+	function mathSqrt(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.sqrt(x));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.sqrt(x));
 		return ops - 1;
 	}
 
@@ -420,11 +420,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathTan(context, thread, ops) {
-		var sb = thread.sp;
+	function mathTan(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
-		thread.nativeReturnDouble(Math.tan(x));
+		var x = FyPortable.ieee64ToDouble(stack, sp);
+		thread.nativeReturnDouble(sp, Math.tan(x));
 		return ops - 1;
 	}
 
@@ -436,12 +436,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathTanh(context, thread, ops) {
-		var sb = thread.sp;
+	function mathTanh(context, thread, sp, ops) {
+
 		var stack = thread.stack;
-		var x = FyPortable.ieee64ToDouble(stack, sb);
+		var x = FyPortable.ieee64ToDouble(stack, sp);
 		var e2x = Math.exp(2 * x);
-		thread.nativeReturnDouble((e2x - 1) / (e2x + 1));
+		thread.nativeReturnDouble(sp, (e2x - 1) / (e2x + 1));
 		return ops - 1;
 	}
 
@@ -453,9 +453,9 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathUlp(context, thread, ops) {
+	function mathUlp(context, thread, sp, ops) {
 		// TODO
-		thread.nativeReturnDouble(0);
+		thread.nativeReturnDouble(sp, 0);
 		return ops - 1;
 	}
 
@@ -467,9 +467,9 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function mathUlpf(context, thread, ops) {
+	function mathUlpf(context, thread, sp, ops) {
 		// TODO
-		thread.nativeReturnFloat(0);
+		thread.nativeReturnFloat(sp, 0);
 		return ops - 1;
 	}
 

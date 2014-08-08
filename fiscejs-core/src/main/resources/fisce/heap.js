@@ -621,7 +621,9 @@ function FyHeap(_context) {
 
 	var _registerReference = function(reference, referent) {
 		reference = reference | 0;
-		if (_references[reference] !== undefined) {
+		if (reference === 0) {
+			throw new FyException(undefined, "Reference is null");
+		} else if (_references[reference] !== undefined) {
 			throw new FyException(undefined, "Reference #" + reference
 					+ " is already registered with referent #"
 					+ _references[reference]);
@@ -690,6 +692,8 @@ function FyHeap(_context) {
 
 		var imax;
 
+		var f1, f2, f3, f4, f5, f6, f7;
+		f1 = performance.now();
 		/* Reflection objects */
 		imax = FyConfig.maxObjects;
 		for (var i = 1; i < imax; i++) {
@@ -701,7 +705,7 @@ function FyHeap(_context) {
 				}
 			}
 		}
-
+		f2 = performance.now();
 		/* Class static area */
 		imax = _context.classes.length;
 		for (var i = 1; i < imax; i++) {
@@ -727,13 +731,13 @@ function FyHeap(_context) {
 				}
 			}
 		}
-
+		f3 = performance.now();
 		/* Literals */
 		for ( var literal in _literials) {
 			var handle = _literials[literal];
 			_markObjectInitialUsing(handle);
 		}
-
+		f4 = performance.now();
 		/* Thread objects */
 		imax = FyConfig.maxThreads;
 		for (var i = 1; i < imax; i++) {
@@ -755,21 +759,20 @@ function FyHeap(_context) {
 				thread.scanRef(_from);
 			}
 		}
-
+		f5 = performance.now();
 		imax = _toFinalize.length;
 		for (var i = 0; i < imax; i++) {
 			_markObjectInitialUsing(_toFinalize[i]);
 		}
-
 		imax = _protectedObjects.length;
 		for (var i = 0; i < imax; i++) {
 			_markObjectInitialUsing(_protectedObjects[i]);
 		}
-
 		imax = _toEnqueue.length;
 		for (var i = 0; i < imax; i++) {
 			_markObjectInitialUsing(_toEnqueue[i]);
 		}
+		f6 = performance.now();
 
 		if (processSoft) {
 			// console.log("process soft");
@@ -777,7 +780,11 @@ function FyHeap(_context) {
 				var reference = key | 0;
 				var referent = _references[key];
 				var referenceClass = _getObjectClass(reference);
-				// console.log("reference #" + reference + " got");
+				console.log("reference #" + reference + " got");
+				if (referenceClass === undefined) {
+					throw new FyException(undefined,
+							"Can't get class for reference #" + reference);
+				}
 				if (referenceClass.accessFlags & FyConst.FY_ACC_SOFT_REF) {
 					// console.log("reference #" + reference + "(" + referent
 					// + ") is added as soft ref");
@@ -785,7 +792,9 @@ function FyHeap(_context) {
 				}
 			}
 		}
-
+		f7 = performance.now();
+		_context.log(0, [ (f2 - f1), (f3 - f2), (f4 - f3), (f5 - f4),
+				(f6 - f5), (f7 - f6) ]);
 		// for ( var idx in _from) {
 		// console.log("#Initial: " + _from[idx]);
 		// }

@@ -8,9 +8,9 @@
 			context
 					.registerNativeHandler(
 							"EXCLUDE/fisce/test/TestService.fail0.(Ljava/lang/String;)V",
-							function(context, thread, ops) {
+							function(context, thread, sp, ops) {
 								ok(false,context.heap
-														.getString(thread.stack[thread.sp]));
+														.getString(thread.stack[sp]));
 //								throw new FyException(
 //										"java/lang/Error",
 //										"Test failed: "

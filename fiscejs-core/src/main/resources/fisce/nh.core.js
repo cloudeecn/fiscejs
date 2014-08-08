@@ -26,12 +26,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function vmLogOut(context, thread, ops) {
+	function vmLogOut(context, thread, sp, ops) {
 		// Level,Content
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var level = stack[sb];
-		var content = context.heap.getString(stack[sb + 1]);
+
+		var level = stack[sp];
+		var content = context.heap.getString(stack[sp + 1]);
 		context.log(level, content);
 
 		return ops - 1;
@@ -45,10 +45,10 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function vmThrowOut(context, thread, ops) {
+	function vmThrowOut(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		thread.currentThrowable = stack[sb];
+
+		thread.currentThrowable = stack[sp];
 		context.panic("Explicted FiScEVM.throwOut called", new Error());
 		return ops - 1;
 	}
@@ -61,11 +61,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function vmExit(context, thread, ops) {
+	function vmExit(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
+
 		// TODO
-		context.panic("Exited with code: " + stack[sb], new Error());
+		context.panic("Exited with code: " + stack[sp], new Error());
 
 		return ops - 1;
 	}
@@ -78,13 +78,13 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function vmDecode(context, thread, ops) {
+	function vmDecode(context, thread, sp, ops) {
 		// String encoding, byte[] src, int ofs, int len
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var src = stack[sb + 1];
-		var ofs = stack[sb + 2];
-		var len = stack[sb + 3];
+
+		var src = stack[sp + 1];
+		var ofs = stack[sp + 2];
+		var len = stack[sp + 3];
 		var arr = new Array(len);
 		var i = 0;
 		var resultArr = new Array(len);
@@ -104,7 +104,7 @@
 			context.heap.putArrayChar(resultHandle, i, resultArr[i]);
 		}
 		// console.log([ "decode", arr, resultArr ]);
-		thread.nativeReturnInt(resultHandle);
+		thread.nativeReturnInt(sp, resultHandle);
 		return ops - len;
 	}
 
@@ -116,13 +116,13 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function vmEncode(context, thread, ops) {
+	function vmEncode(context, thread, sp, ops) {
 		// String encoding, char[] src, int ofs, int len
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var src = stack[sb + 1];
-		var ofs = stack[sb + 2];
-		var len = stack[sb + 3];
+
+		var src = stack[sp + 1];
+		var ofs = stack[sp + 2];
+		var len = stack[sp + 3];
 		var resultPos = 0;
 		var resultArr = new Array(len * 3);
 		for (var i = 0; i < len; i++) {
@@ -137,7 +137,7 @@
 			context.heap.putArrayByte(resultHandle, i, resultArr[i]);
 		}
 		// console.log([ "encode", resultArr ]);
-		thread.nativeReturnInt(resultHandle);
+		thread.nativeReturnInt(sp, resultHandle);
 		return ops - len;
 	}
 
@@ -149,12 +149,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function vmStringToDouble(context, thread, ops) {
+	function vmStringToDouble(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var str = context.heap.getString(stack[sb]);
+
+		var str = context.heap.getString(stack[sp]);
 		var num = Number(str);
-		thread.nativeReturnDouble(num);
+		thread.nativeReturnDouble(sp, num);
 		return ops - 1;
 	}
 
@@ -166,14 +166,14 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function vmDoubleToString(context, thread, ops) {
+	function vmDoubleToString(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var num = FyPortable.ieee64ToDouble(stack, sb);
+
+		var num = FyPortable.ieee64ToDouble(stack, sp);
 		var str = num.toString();
 		var handle = context.heap.allocate(context
 				.lookupClass(FyConst.FY_BASE_STRING));
-		thread.nativeReturnInt(handle);
+		thread.nativeReturnInt(sp, handle);
 		context.heap.fillString(handle, str);
 		return ops - 1;
 	}
@@ -186,12 +186,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function vmStringToFloat(context, thread, ops) {
+	function vmStringToFloat(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var str = context.heap.getString(stack[sb]);
+
+		var str = context.heap.getString(stack[sp]);
 		var num = Number(str);
-		thread.nativeReturnFloat(num);
+		thread.nativeReturnFloat(sp, num);
 		return ops - 1;
 	}
 
@@ -203,14 +203,14 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function vmFloatToString(context, thread, ops) {
+	function vmFloatToString(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var num = FyPortable.ieee32ToFloat(stack[sb]);
+
+		var num = FyPortable.ieee32ToFloat(stack[sp]);
 		var str = num.toString();
 		var handle = context.heap.allocate(context
 				.lookupClass(FyConst.FY_BASE_STRING));
-		thread.nativeReturnInt(handle);
+		thread.nativeReturnInt(sp, handle);
 		context.heap.fillString(handle, str);
 		return ops - 1;
 	}
@@ -223,7 +223,7 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function vmBreakpoint(context, thread, ops) {
+	function vmBreakpoint(context, thread, sp, ops) {
 		var i = 0;
 		i++;
 		// TODO put breakpoint here
@@ -240,9 +240,9 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function finalizerGetFinalizee(context, thread, ops) {
+	function finalizerGetFinalizee(context, thread, sp, ops) {
 		var heap = context.heap;
-		thread.nativeReturnInt(heap.getFinalizee());
+		thread.nativeReturnInt(sp, heap.getFinalizee());
 		return ops - 1;
 	}
 
@@ -254,9 +254,9 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function finalizerGetReferencesToEnqueue(context, thread, ops) {
+	function finalizerGetReferencesToEnqueue(context, thread, sp, ops) {
 		var heap = context.heap;
-		thread.nativeReturnInt(heap.getReferencesToEnqueue());
+		thread.nativeReturnInt(sp, heap.getReferencesToEnqueue());
 		return ops - 1;
 	}
 
@@ -304,10 +304,10 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function throwableFillInStackTrace(context, thread, ops) {
+	function throwableFillInStackTrace(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		thread.fillStackTrace(stack[sb], true);
+
+		thread.fillStackTrace(stack[sp], true);
 
 		return ops - 1;
 	}
@@ -320,9 +320,9 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function systemInputStreamRead0(context, thread, ops) {
+	function systemInputStreamRead0(context, thread, sp, ops) {
 		// TODO: stub
-		thread.nativeReturnInt(0);
+		thread.nativeReturnInt(sp, 0);
 		return ops - 1;
 	}
 
@@ -336,14 +336,14 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function systemOutStreamWrite(context, thread, ops) {
+	function systemOutStreamWrite(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		if (stack[sb + 1] === 10 || stack[sb + 1] === 13) {
+
+		if (stack[sp + 1] === 10 || stack[sp + 1] === 13) {
 			console.log(String.fromCharCode.apply(undefined, displayBuffer));
 			displayBuffer = [];
 		} else {
-			displayBuffer.push(stack[sb + 1]);
+			displayBuffer.push(stack[sp + 1]);
 			if (displayBuffer.length >= 132) {
 				// throw String.fromCharCode.apply(undefined, displayBuffer);
 				console
@@ -364,7 +364,7 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function systemSetIn(context, thread, ops) {
+	function systemSetIn(context, thread, sp, ops) {
 		// TODO: stub
 
 		return ops - 1;
@@ -378,7 +378,7 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function systemSetOut(context, thread, ops) {
+	function systemSetOut(context, thread, sp, ops) {
 		// TODO: stub
 
 		return ops - 1;
@@ -392,7 +392,7 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function systemSetErr(context, thread, ops) {
+	function systemSetErr(context, thread, sp, ops) {
 		// TODO: stub
 
 		return ops - 1;
@@ -406,9 +406,9 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function systemGetProperty(context, thread, ops) {
+	function systemGetProperty(context, thread, sp, ops) {
 		// TODO: stub
-		thread.nativeReturnInt(0);
+		thread.nativeReturnInt(sp, 0);
 		return ops - 1;
 	}
 
@@ -420,7 +420,7 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function systemSetProperty(context, thread, ops) {
+	function systemSetProperty(context, thread, sp, ops) {
 		// TODO: stub
 		return ops - 1;
 	}
@@ -433,7 +433,7 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function systemGC(context, thread, ops) {
+	function systemGC(context, thread, sp, ops) {
 		context.heap.gc(0);
 		return ops - 1;
 	}
@@ -446,7 +446,7 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function systemExit(context, thread, ops) {
+	function systemExit(context, thread, sp, ops) {
 		// TODO
 		throw "exited";
 		return ops - 1;
@@ -460,11 +460,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function systemArrayCopy(context, thread, ops) {
+	function systemArrayCopy(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		context.heap.arrayCopy(stack[sb], stack[sb + 1], stack[sb + 2],
-				stack[sb + 3], stack[sb + 4]);
+
+		context.heap.arrayCopy(stack[sp], stack[sp + 1], stack[sp + 2],
+				stack[sp + 3], stack[sp + 4]);
 		return ops - 1;
 	}
 
@@ -476,10 +476,9 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function systemTimeMS(context, thread, ops) {
-		var sb = thread.sp;
-		thread.longOps.longFromNumber(sb, Date.now());
-		thread.nativeReturn(2);
+	function systemTimeMS(context, thread, sp, ops) {
+
+		thread.longOps.longFromNumber(sp, Date.now());
 		return ops - 1;
 	}
 
@@ -491,10 +490,9 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function systemTimeNS(context, thread, ops) {
-		var sb = thread.sp;
-		thread.longOps.longFromNumber(sb, performance.now() * 1000000);
-		thread.nativeReturn(2);
+	function systemTimeNS(context, thread, sp, ops) {
+
+		thread.longOps.longFromNumber(sp, performance.now() * 1000000);
 		return ops - 1;
 	}
 
@@ -506,10 +504,65 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function systemIdentityHashCode(context, thread, ops) {
+	function systemIdentityHashCode(context, thread, sp, ops) {
+		return ops - 1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function runtimeFreeMemory(context, thread, sp, ops) {
+		// TODO
+		thread.nativeReturnLong(sp, [ 0, 0 ], 0);
+		return ops - 1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function runtimeTotalMemory(context, thread, sp, ops) {
+		// TODO
+		thread.nativeReturnLong(sp, [ 0, 0 ], 0);
+		return ops - 1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function runtimeMaxMemory(context, thread, sp, ops) {
+		// TODO
+		thread.nativeReturnLong(sp, [ 0, 0 ], 0);
+		return ops - 1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function stringIntern(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		thread.nativeReturnInt(stack[sb]);
+
+		var str = context.heap.getString(stack[sp]);
+		thread.nativeReturnInt(sp, context.heap.literal(str));
 		return ops - 1;
 	}
 
@@ -521,66 +574,7 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function runtimeFreeMemory(context, thread, ops) {
-		// TODO
-		thread.nativeReturnLong([ 0, 0 ], 0);
-		return ops - 1;
-	}
-
-	/**
-	 * @param {FyContext}
-	 *            context
-	 * @param {FyThread}
-	 *            thread
-	 * @param {Number}
-	 *            ops
-	 */
-	function runtimeTotalMemory(context, thread, ops) {
-		// TODO
-		thread.nativeReturnLong([ 0, 0 ], 0);
-		return ops - 1;
-	}
-
-	/**
-	 * @param {FyContext}
-	 *            context
-	 * @param {FyThread}
-	 *            thread
-	 * @param {Number}
-	 *            ops
-	 */
-	function runtimeMaxMemory(context, thread, ops) {
-		// TODO
-		thread.nativeReturnLong([ 0, 0 ], 0);
-		return ops - 1;
-	}
-
-	/**
-	 * @param {FyContext}
-	 *            context
-	 * @param {FyThread}
-	 *            thread
-	 * @param {Number}
-	 *            ops
-	 */
-	function stringIntern(context, thread, ops) {
-		var stack = thread.stack;
-		var sb = thread.sp;
-		var str = context.heap.getString(stack[sb]);
-		thread.nativeReturnInt(context.heap.literal(str));
-		return ops - 1;
-	}
-
-	/**
-	 * @param {FyContext}
-	 *            context
-	 * @param {FyThread}
-	 *            thread
-	 * @param {Number}
-	 *            ops
-	 */
-	function doubleLongBitsToDouble(context, thread, ops) {
-		thread.nativeReturn(2);
+	function doubleLongBitsToDouble(context, thread, sp, ops) {
 		return ops;
 	}
 
@@ -592,8 +586,7 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function floatIntBitsToFloat(context, thread, ops) {
-		thread.nativeReturn(1);
+	function floatIntBitsToFloat(context, thread, sp, ops) {
 		return ops - 1;
 	}
 
@@ -605,11 +598,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function objectGetClass(context, thread, ops) {
+	function objectGetClass(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		thread.nativeReturnInt(context.getClassObjectHandle(context.heap
-				.getObjectClass(stack[sb])));
+
+		thread.nativeReturnInt(sp, context.getClassObjectHandle(context.heap
+				.getObjectClass(stack[sp])));
 		return ops - 1;
 	}
 
@@ -621,10 +614,10 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function objectClone(context, thread, ops) {
+	function objectClone(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		thread.nativeReturnInt(context.heap.clone(stack[sb]));
+
+		thread.nativeReturnInt(sp, context.heap.clone(stack[sp]));
 		return ops - 1;
 	}
 
@@ -636,11 +629,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function objectWait(context, thread, ops) {
+	function objectWait(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		context.threadManager.wait(thread, stack[sb], thread.longOps
-				.longToNumber(sb + 1));
+
+		context.threadManager.wait(thread, stack[sp], thread.longOps
+				.longToNumber(sp + 1));
 		return 0;
 	}
 
@@ -652,10 +645,10 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function objectNotify(context, thread, ops) {
+	function objectNotify(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		context.threadManager.notify(thread, stack[sb], false);
+
+		context.threadManager.notify(thread, stack[sp], false);
 		return ops - 1;
 	}
 
@@ -667,10 +660,10 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function objectNorifyAll(context, thread, ops) {
+	function objectNorifyAll(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		context.threadManager.notify(thread, stack[sb], true);
+
+		context.threadManager.notify(thread, stack[sp], true);
 		return ops - 1;
 	}
 
@@ -682,8 +675,8 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function threadCurrentThread(context, thread, ops) {
-		thread.nativeReturnInt(thread.handle);
+	function threadCurrentThread(context, thread, sp, ops) {
+		thread.nativeReturnInt(sp, thread.handle);
 		return ops - 1;
 	}
 
@@ -695,12 +688,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function threadSetPriority(context, thread, ops) {
+	function threadSetPriority(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var target = context.threadManager._getThreadByHandle(stack[sb]);
+
+		var target = context.threadManager._getThreadByHandle(stack[sp]);
 		if (target) {
-			target.priority = stack[sb + 1];
+			target.priority = stack[sp + 1];
 		}
 		return ops - 1;
 	}
@@ -713,12 +706,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function threadIsAlive(context, thread, ops) {
+	function threadIsAlive(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		thread
-				.nativeReturnInt(context.threadManager.isAlive(stack[sb]) ? 1
-						: 0);
+
+		thread.nativeReturnInt(sp, context.threadManager.isAlive(stack[sp]) ? 1
+				: 0);
 		return ops - 1;
 	}
 
@@ -730,11 +722,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function threadInterrupt(context, thread, ops) {
+	function threadInterrupt(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		context.threadManager.interrupt(stack[sb]);
-		if (context.heap.getObjectMultiUsageData(stack[sb]) === thread.threadId) {
+
+		context.threadManager.interrupt(stack[sp]);
+		if (context.heap.getObjectMultiUsageData(stack[sp]) === thread.threadId) {
 			return 0;
 		} else {
 			return ops - 1;
@@ -749,11 +741,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function threadInterrupted(context, thread, ops) {
+	function threadInterrupted(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		thread.nativeReturnInt(context.threadManager.isInterrupted(stack[sb],
-				stack[sb + 1] ? true : false) ? 1 : 0);
+
+		thread.nativeReturnInt(sp, context.threadManager.isInterrupted(
+				stack[sp], stack[sp + 1] ? true : false) ? 1 : 0);
 		return ops - 1;
 	}
 
@@ -765,10 +757,10 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function threadStart(context, thread, ops) {
+	function threadStart(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		context.threadManager.pushThread(stack[sb]);
+
+		context.threadManager.pushThread(stack[sp]);
 		return ops - 1;
 	}
 
@@ -780,9 +772,9 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function threadSleep(context, thread, ops) {
-		var sb = thread.sp;
-		context.threadManager.sleep(thread, thread.longOps.longToNumber(sb));
+	function threadSleep(context, thread, sp, ops) {
+
+		context.threadManager.sleep(thread, thread.longOps.longToNumber(sp));
 		return 0;
 	}
 
@@ -794,10 +786,10 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function refRegister(context, thread, ops) {
+	function refRegister(context, thread, sp, ops) {
 		var heap = context.heap;
 		var stack = thread.stack;
-		heap.registerReference(stack[thread.sp], stack[thread.sp + 1]);
+		heap.registerReference(stack[sp], stack[sp + 1]);
 		return ops - 1;
 	}
 
@@ -809,10 +801,10 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function refClear(context, thread, ops) {
+	function refClear(context, thread, sp, ops) {
 		var heap = context.heap;
 		var stack = thread.stack;
-		heap.clearReference(stack[thread.sp]);
+		heap.clearReference(stack[sp]);
 		return ops - 1;
 	}
 
@@ -824,9 +816,9 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function refGet(context, thread, ops) {
-		thread.nativeReturnInt(context.heap
-				.getReferent(thread.stack[thread.sp]));
+	function refGet(context, thread, sp, ops) {
+		thread.nativeReturnInt(sp, context.heap
+				.getReferent(thread.stack[sp]));
 		return ops - 1;
 	}
 
@@ -838,7 +830,7 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function threadYield(context, thread, ops) {
+	function threadYield(context, thread, sp, ops) {
 		thread.yield = true;
 		return 0;
 	}
@@ -851,12 +843,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function proxyDefineClass(context, thread, ops) {
+	function proxyDefineClass(context, thread, sp, ops) {
 		context.lookupClass("com/cirnoworks/fisce/js/ProxyHelper");
 		var method = context
 				.getMethod("com/cirnoworks/fisce/js/ProxyHelper.defineClass.(Ljava/lang/ClassLoader;Ljava/lang/String;[B)Ljava/lang/Class;");
 		// thread.sp += 3;
-		thread.pushMethod(method, ops - 1);
+		thread.pushMethod(method, sp, ops - 1);
 		return 0;
 	}
 
@@ -868,18 +860,18 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function risBind(context, thread, ops) {
+	function risBind(context, thread, sp, ops) {
 		var heap = context.heap;
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var nameHandle = stack[sb + 1];
-		var pos = stack[sb + 2];
+
+		var nameHandle = stack[sp + 1];
+		var pos = stack[sp + 2];
 		if (nameHandle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "name");
 		}
 		var name = heap.getString(nameHandle);
-		// console.log("#VFS bind #" + stack[sb] + " to " + name);
-		context.vfs.bind(stack[sb], name, pos);
+		// console.log("#VFS bind #" + stack[sp] + " to " + name);
+		context.vfs.bind(stack[sp], name, pos);
 		return ops - 1;
 	}
 
@@ -891,10 +883,10 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function risRead(context, thread, ops) {
+	function risRead(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		thread.nativeReturnInt(context.vfs.read(stack[sb]));
+
+		thread.nativeReturnInt(sp, context.vfs.read(stack[sp]));
 		return ops - 1;
 	}
 
@@ -906,14 +898,14 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function risReadTo(context, thread, ops) {
+	function risReadTo(context, thread, sp, ops) {
 		var heap = context.heap;
 		var _heap8 = heap._heap8;
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var targetHandle = stack[sb + 1];
-		var pos = stack[sb + 2];
-		var len = stack[sb + 3];
+
+		var targetHandle = stack[sp + 1];
+		var pos = stack[sp + 2];
+		var len = stack[sp + 3];
 		if (targetHandle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "b");
 		}
@@ -922,8 +914,8 @@
 					+ "/" + heap.arrayLength(targetHandle));
 		}
 		var heapPos = (heap.arrayPos(targetHandle) << 2) + pos;
-		thread.nativeReturnInt(context.vfs.readTo(stack[sb], _heap8, heapPos,
-				len));
+		thread.nativeReturnInt(sp, context.vfs.readTo(stack[sp], _heap8,
+				heapPos, len));
 		return ops - 1;
 	}
 
@@ -935,11 +927,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function risClose(context, thread, ops) {
+	function risClose(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		// console.log("#VFS close #" + stack[sb]);
-		context.vfs.close(stack[sb]);
+
+		// console.log("#VFS close #" + stack[sp]);
+		context.vfs.close(stack[sp]);
 		return ops - 1;
 	}
 
@@ -951,8 +943,8 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function proxyHelperDefineClass(context, thread, ops) {
-		var str = context.heap.getString(thread.stack[thread.sp]);
+	function proxyHelperDefineClass(context, thread, sp, ops) {
+		var str = context.heap.getString(thread.stack[sp]);
 		var data = JSON.parse(str);
 		context.addClassDef(data);
 		return ops - 1;
@@ -1098,6 +1090,6 @@
 
 	FyContext.registerStaticNH("com/cirnoworks/fisce/privat/FiScEVM.save.()V",
 			function() {/* TODO */
-		return 0;
+				return 0;
 			});
 })();

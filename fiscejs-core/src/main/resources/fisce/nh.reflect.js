@@ -35,16 +35,16 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function methodIsBridge(context, thread, ops) {
+	function methodIsBridge(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var method = context.getMethodFromMethodObject(stack[sb]);
+
+		var method = context.getMethodFromMethodObject(stack[sp]);
 		if (method === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Method not found!");
 		}
-		thread.nativeReturnInt((FyConst.FY_ACC_BRIDGE & method.accessFlags) ? 1
-				: 0);
+		thread.nativeReturnInt(sp,
+				(FyConst.FY_ACC_BRIDGE & method.accessFlags) ? 1 : 0);
 		return ops - 1;
 	}
 
@@ -56,17 +56,16 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function methodIsVarArgs(context, thread, ops) {
+	function methodIsVarArgs(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var method = context.getMethodFromMethodObject(stack[sb]);
+
+		var method = context.getMethodFromMethodObject(stack[sp]);
 		if (method === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Method not found!");
 		}
-		thread
-				.nativeReturnInt((FyConst.FY_ACC_VARARGS & method.accessFlags) ? 1
-						: 0);
+		thread.nativeReturnInt(sp,
+				(FyConst.FY_ACC_VARARGS & method.accessFlags) ? 1 : 0);
 		return ops - 1;
 	}
 
@@ -78,17 +77,16 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function methodIsSynthetic(context, thread, ops) {
+	function methodIsSynthetic(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var method = context.getMethodFromMethodObject(stack[sb]);
+
+		var method = context.getMethodFromMethodObject(stack[sp]);
 		if (method === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Method not found!");
 		}
-		thread
-				.nativeReturnInt((FyConst.FY_ACC_SYNTHETIC & method.accessFlags) ? 1
-						: 0);
+		thread.nativeReturnInt(sp,
+				(FyConst.FY_ACC_SYNTHETIC & method.accessFlags) ? 1 : 0);
 		return ops - 1;
 	}
 
@@ -100,15 +98,15 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function methodGetDeclaringClass(context, thread, ops) {
+	function methodGetDeclaringClass(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var method = context.getMethodFromMethodObject(stack[sb]);
+
+		var method = context.getMethodFromMethodObject(stack[sp]);
 		if (method === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Method not found!");
 		}
-		thread.nativeReturnInt(context.getClassObjectHandle(method.owner));
+		thread.nativeReturnInt(sp, context.getClassObjectHandle(method.owner));
 		return ops - 1;
 	}
 
@@ -120,10 +118,10 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function methodExceptionTypes(context, thread, ops) {
+	function methodExceptionTypes(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var method = context.getMethodFromMethodObject(stack[sb]);
+
+		var method = context.getMethodFromMethodObject(stack[sp]);
 		if (method === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Method not found!");
@@ -132,13 +130,13 @@
 		var handle = context.heap.allocateArray(
 				context.lookupClass(FyClassLoader
 						.getArrayName(FyConst.FY_BASE_CLASS)), max);
-		stack[sb] = handle;
+		stack[sp] = handle;
 		for (var i = 0; i < max; i++) {
 			var name = method.exceptions[i];
 			context.heap.putArrayInt(handle, i, context
 					.getClassObjectHandle(context.lookupClass(name)));
 		}
-		thread.nativeReturn(1);
+
 		return ops - 1;
 	}
 
@@ -150,15 +148,15 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function methodGetModifiers(context, thread, ops) {
+	function methodGetModifiers(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var method = context.getMethodFromMethodObject(stack[sb]);
+
+		var method = context.getMethodFromMethodObject(stack[sp]);
 		if (method === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Method not found!");
 		}
-		thread.nativeReturnInt(method.accessFlags);
+		thread.nativeReturnInt(sp, method.accessFlags);
 		return ops - 1;
 	}
 
@@ -170,15 +168,15 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function methodGetName(context, thread, ops) {
+	function methodGetName(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var method = context.getMethodFromMethodObject(stack[sb]);
+
+		var method = context.getMethodFromMethodObject(stack[sp]);
 		if (method === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Method not found!");
 		}
-		thread.nativeReturnInt(context.heap.literal(method.name));
+		thread.nativeReturnInt(sp, context.heap.literal(method.name));
 		return ops - 1;
 	}
 
@@ -190,10 +188,10 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function methodGetParameterTypes(context, thread, ops) {
+	function methodGetParameterTypes(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var method = context.getMethodFromMethodObject(stack[sb]);
+
+		var method = context.getMethodFromMethodObject(stack[sp]);
 		if (method === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Method not found!");
@@ -202,13 +200,13 @@
 		var handle = context.heap.allocateArray(
 				context.lookupClass(FyClassLoader
 						.getArrayName(FyConst.FY_BASE_CLASS)), max);
-		stack[sb] = handle;
+		stack[sp] = handle;
 		for (var i = 0; i < max; i++) {
 			var name = method.parameterClassNames[i];
 			context.heap.putArrayInt(handle, i, context
 					.getClassObjectHandle(context.lookupClass(name)));
 		}
-		thread.nativeReturn(1);
+
 		return ops - 1;
 	}
 
@@ -220,15 +218,15 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function methodGetReturnType(context, thread, ops) {
+	function methodGetReturnType(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var method = context.getMethodFromMethodObject(stack[sb]);
+
+		var method = context.getMethodFromMethodObject(stack[sp]);
 		if (method === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Method not found!");
 		}
-		thread.nativeReturnInt(context.getClassObjectHandle(context
+		thread.nativeReturnInt(sp, context.getClassObjectHandle(context
 				.lookupClass(method.returnClassName)));
 		return ops - 1;
 	}
@@ -239,18 +237,19 @@
 	 * @param {FyThread}
 	 *            thread
 	 * @param {Number}
+	 *            sp
+	 * @param {Number}
 	 *            ops
 	 */
-	function methodInvoke(context, thread, ops) {
+	function methodInvoke(context, thread, sp, ops) {
 		/**
 		 * @returns {FyHeap}
 		 */
 		var heap = context.heap;
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var sp = sb;
-		var paramsHandle = stack[sb + 2];
-		var method = context.getMethodFromMethodObject(stack[sb]);
+		var paramsHandle = stack[sp + 2];
+		var sb = sp;
+		var method = context.getMethodFromMethodObject(stack[sp]);
 		if (method === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Method not found!");
@@ -271,13 +270,11 @@
 					// no thread is running it, so let this run
 					clinitClass.clinitThreadId = thread.threadId;
 					thread.rollbackCurrentIp();
-					thread.sp += 3;
-					thread.pushFrame(clinitClass.clinit);
+					thread.pushFrame(clinitClass.clinit, sp + 3);
 					return 0;
 				} else {
 					// wait for other thread clinit
 					thread.rollbackCurrentIp();
-					thread.sp += 3;
 					return 0;
 				}
 			}
@@ -324,11 +321,10 @@
 				stack[sp++] = paramHandle;
 			}
 		}
-		thread.sp = sp;
 		if (method.accessFlags & FyConst.FY_ACC_STATIC) {
-			return thread.invokeStatic(method, ops - 1);
+			return thread.invokeStatic(method, sp, ops - 1);
 		} else {
-			return thread.invokeVirtual(method, ops - 1);
+			return thread.invokeVirtual(method, sp, ops - 1);
 		}
 	}
 
@@ -340,11 +336,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function methodGetUniqueName(context, thread, ops) {
+	function methodGetUniqueName(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var method = context.getMethodFromMethodObject(stack[sb]);
-		thread.nativeReturnInt(context.heap.literal(method.uniqueName));
+
+		var method = context.getMethodFromMethodObject(stack[sp]);
+		thread.nativeReturnInt(sp, context.heap.literal(method.uniqueName));
 		return ops - 1;
 	}
 
@@ -418,17 +414,16 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function constructorNewInstance(context, thread, ops) {
+	function constructorNewInstance(context, thread, sp, ops) {
 		/**
 		 * @returns {FyHeap}
 		 */
 		var heap = context.heap;
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var sp = sb;
-		var paramsHandle = stack[sb + 1];
+		var sb = sp;
+		var paramsHandle = stack[sp + 1];
 		var handle;
-		var method = context.getMethodFromMethodObject(stack[sb]);
+		var method = context.getMethodFromMethodObject(stack[sp]);
 		if (method === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Method not found!");
@@ -445,8 +440,9 @@
 		}
 
 		handle = heap.allocate(method.owner);
-		thread.nativeReturnInt(handle);
-		thread.nativeReturnInt(handle);
+
+		stack[sp++] = handle;
+		stack[sp++] = handle;
 		// FIXME: stack overflow check
 		// TODO optimize / cache class lookup
 		for (var i = 0; i < count; i++) {
@@ -456,40 +452,40 @@
 				// unwrap
 				switch (paramType.pType) {
 				case 90 /* FyConst.Z */:
-					heap.unwrapBooleanTo(paramHandle, thread.sp++);
+					heap.unwrapBooleanTo(paramHandle, sp++);
 					break;
 				case 66/* FyConst.B */:
-					heap.unwrapByteTo(paramHandle, thread.sp++);
+					heap.unwrapByteTo(paramHandle, sp++);
 					break;
 				case 83/* FyConst.S */:
-					heap.unwrapShortTo(paramHandle, thread.sp++);
+					heap.unwrapShortTo(paramHandle, sp++);
 					break;
 				case 67/* FyConst.C */:
-					heap.unwrapCharTo(paramHandle, thread.sp++);
+					heap.unwrapCharTo(paramHandle, sp++);
 					break;
 				case 73/* FyConst.I */:
-					heap.unwrapIntTo(paramHandle, thread.sp++);
+					heap.unwrapIntTo(paramHandle, sp++);
 					break;
 				case 70/* FyConst.F */:
-					heap.unwrapFloatTo(paramHandle, thread.sp++);
+					heap.unwrapFloatTo(paramHandle, sp++);
 					break;
 				case 74/* FyConst.J */:
-					heap.unwrapLongTo(paramHandle, thread.sp);
-					thread.sp += 2;
+					heap.unwrapLongTo(paramHandle, sp);
+					sp += 2;
 					break;
 				case 68/* FyConst.D */:
-					heap.unwrapDoubleTo(paramHandle, thread.sp);
-					thread.sp += 2;
+					heap.unwrapDoubleTo(paramHandle, sp);
+					sp += 2;
 					break;
 				default:
 					throw new FyException(FyConst.FY_EXCEPTION_ARGU,
 							"Illegal parameter type " + paramType.pType);
 				}
 			} else {
-				stack[thread.sp++] = paramHandle;
+				stack[sp++] = paramHandle;
 			}
 		}
-		return thread.invokeVirtual(method, ops - 1);
+		return thread.invokeVirtual(method, sp, ops - 1);
 	}
 
 	(function() {
@@ -543,17 +539,16 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function fieldIsSynthetic(context, thread, ops) {
+	function fieldIsSynthetic(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var field = context.getFieldFromFieldObject(stack[sb]);
+
+		var field = context.getFieldFromFieldObject(stack[sp]);
 		if (field === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Field not found!");
 		}
-		thread
-				.nativeReturnInt((field.accessFlags & FyConst.FY_ACC_SYNTHETIC) ? 1
-						: 0);
+		thread.nativeReturnInt(sp,
+				(field.accessFlags & FyConst.FY_ACC_SYNTHETIC) ? 1 : 0);
 		return ops - 1;
 	}
 
@@ -565,16 +560,16 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function fieldIsEnumConstant(context, thread, ops) {
+	function fieldIsEnumConstant(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var field = context.getFieldFromFieldObject(stack[sb]);
+
+		var field = context.getFieldFromFieldObject(stack[sp]);
 		if (field === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Field not found!");
 		}
-		thread.nativeReturnInt((field.accessFlags & FyConst.FY_ACC_ENUM) ? 1
-				: 0);
+		thread.nativeReturnInt(sp,
+				(field.accessFlags & FyConst.FY_ACC_ENUM) ? 1 : 0);
 		return ops - 1;
 	}
 
@@ -586,11 +581,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function fieldGetObject(context, thread, ops) {
+	function fieldGetObject(context, thread, sp, ops) {
 		var heap = context.heap;
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var field = context.getFieldFromFieldObject(stack[sb]);
+
+		var field = context.getFieldFromFieldObject(stack[sp]);
 		if (field === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Field not found!");
@@ -603,21 +598,21 @@
 			if ((field.accessFlags & FyConst.FY_ACC_FINAL)
 					&& field.constantValueData) {
 				// static final Field value in constant must be string
-				thread.nativeReturnInt(heap.literalWithConstant(
+				thread.nativeReturnInt(sp, heap.literalWithConstant(
 						field.owner.global, field.constantValueData));
 			} else {
-				thread.nativeReturnInt(heap.getStaticRaw(field.owner,
+				thread.nativeReturnInt(sp, heap.getStaticRaw(field.owner,
 						field.posAbs));
 			}
 		} else {
-			var type = heap.getObjectClass(stack[sb + 1]);
+			var type = heap.getObjectClass(stack[sp + 1]);
 			if (!context.classLoader.canCast(type, field.owner)) {
 				throw new FyException(FyConst.FY_EXCEPTION_ARGU,
 						"Can't cast from " + type.name + " to "
 								+ field.owner.name);
 			}
-			thread.nativeReturnInt(heap
-					.getFieldRaw(stack[sb + 1], field.posAbs));
+			thread.nativeReturnInt(sp, heap.getFieldRaw(stack[sp + 1],
+					field.posAbs));
 		}
 		return ops - 1;
 	}
@@ -634,11 +629,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function getter(name, type, context, thread, ops) {
+	function getter(name, type, context, thread, sp, ops) {
 		var heap = context.heap;
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var field = context.getFieldFromFieldObject(stack[sb]);
+
+		var field = context.getFieldFromFieldObject(stack[sp]);
 		if (field === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Field not found!");
@@ -649,18 +644,16 @@
 					+ field.uniqueName + " is not " + name + " typed");
 		}
 		if (field.accessFlags & FyConst.FY_ACC_STATIC) {
-			heap.getStaticRaw32To(field.owner, field.posAbs, thread.sp);
-			thread.nativeReturn(1);
+			heap.getStaticRaw32To(field.owner, field.posAbs, sp);
 		} else {
-			var type = heap.getObjectClass(stack[sb + 1]);
+			var type = heap.getObjectClass(stack[sp + 1]);
 			if (!context.classLoader.canCast(type, field.owner)) {
 				throw new FyException(FyConst.FY_EXCEPTION_ARGU,
 						"Can't cast from " + type.name + " to "
 								+ field.owner.name);
 			}
 
-			heap.getFieldRaw32To(stack[sb + 1], field.posAbs, thread.sp);
-			thread.nativeReturn(1);
+			heap.getFieldRaw32To(stack[sp + 1], field.posAbs, sp);
 		}
 		return ops - 1;
 	}
@@ -677,11 +670,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function getterW(name, type, context, thread, ops) {
+	function getterW(name, type, context, thread, sp, ops) {
 		var heap = context.heap;
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var field = context.getFieldFromFieldObject(stack[sb]);
+
+		var field = context.getFieldFromFieldObject(stack[sp]);
 		if (field === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Field not found!");
@@ -692,17 +685,17 @@
 					+ field.uniqueName + " is not " + name + " typed");
 		}
 		if (field.accessFlags & FyConst.FY_ACC_STATIC) {
-			heap.getStaticRaw64To(field.owner, field.posAbs, sb);
-			thread.nativeReturn(2);
+			heap.getStaticRaw64To(field.owner, field.posAbs, sp);
+
 		} else {
-			var type = heap.getObjectClass(stack[sb + 1]);
+			var type = heap.getObjectClass(stack[sp + 1]);
 			if (!context.classLoader.canCast(type, field.owner)) {
 				throw new FyException(FyConst.FY_EXCEPTION_ARGU,
 						"Can't cast from " + type.name + " to "
 								+ field.owner.name);
 			}
-			heap.getFieldRaw64To(stack[sb + 1], field.posAbs, sb);
-			thread.nativeReturn(2);
+			heap.getFieldRaw64To(stack[sp + 1], field.posAbs, sp);
+
 		}
 		return ops - 1;
 	}
@@ -724,15 +717,15 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function fieldGetModifiers(context, thread, ops) {
+	function fieldGetModifiers(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var field = context.getFieldFromFieldObject(stack[sb]);
+
+		var field = context.getFieldFromFieldObject(stack[sp]);
 		if (field === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Field not found!");
 		}
-		thread.nativeReturnInt(field.accessFlags);
+		thread.nativeReturnInt(sp, field.accessFlags);
 		return ops - 1;
 	}
 
@@ -744,16 +737,16 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function fieldGetName(context, thread, ops) {
+	function fieldGetName(context, thread, sp, ops) {
 		var heap = context.heap;
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var field = context.getFieldFromFieldObject(stack[sb]);
+
+		var field = context.getFieldFromFieldObject(stack[sp]);
 		if (field === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Field not found!");
 		}
-		thread.nativeReturnInt(heap.literal(field.name));
+		thread.nativeReturnInt(sp, heap.literal(field.name));
 		return ops - 1;
 	}
 
@@ -765,15 +758,15 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function fieldGetType(context, thread, ops) {
+	function fieldGetType(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var field = context.getFieldFromFieldObject(stack[sb]);
+
+		var field = context.getFieldFromFieldObject(stack[sp]);
 		if (field === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Field not found!");
 		}
-		thread.nativeReturnInt(context.getClassObjectHandle(field.type));
+		thread.nativeReturnInt(sp, context.getClassObjectHandle(field.type));
 		return ops - 1;
 	}
 
@@ -785,15 +778,15 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function fieldGetDeclaringClass(context, thread, ops) {
+	function fieldGetDeclaringClass(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var field = context.getFieldFromFieldObject(stack[sb]);
+
+		var field = context.getFieldFromFieldObject(stack[sp]);
 		if (field === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Field not found!");
 		}
-		thread.nativeReturnInt(context.getClassObjectHandle(field.owner));
+		thread.nativeReturnInt(sp, context.getClassObjectHandle(field.owner));
 		return ops - 1;
 	}
 
@@ -805,11 +798,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function fieldSetObject(context, thread, ops) {
+	function fieldSetObject(context, thread, sp, ops) {
 		var heap = context.heap;
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var field = context.getFieldFromFieldObject(stack[sb]);
+
+		var field = context.getFieldFromFieldObject(stack[sp]);
 		if (field === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Field not found!");
@@ -819,9 +812,9 @@
 					"Field " + field.uniqueName + " is primitive");
 		}
 		if (field.accessFlags & FyConst.FY_ACC_STATIC) {
-			heap.putStaticInt(field.type, field.posAbs, stack[sb + 2]);
+			heap.putStaticInt(field.type, field.posAbs, stack[sp + 2]);
 		} else {
-			heap.putFieldInt(stack[sb + 1], field.posAbs, stack[sb + 2]);
+			heap.putFieldInt(stack[sp + 1], field.posAbs, stack[sp + 2]);
 		}
 		return ops - 1;
 	}
@@ -834,11 +827,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function fieldSetPrim(context, thread, ops) {
+	function fieldSetPrim(context, thread, sp, ops) {
 		var heap = context.heap;
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var field = context.getFieldFromFieldObject(stack[sb]);
+
+		var field = context.getFieldFromFieldObject(stack[sp]);
 		if (field === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Field not found!");
@@ -848,9 +841,9 @@
 					"Field " + field.uniqueName + " is primitive");
 		}
 		if (field.accessFlags & FyConst.FY_ACC_STATIC) {
-			heap.putStaticRaw32From(field.owner, field.posAbs, sb + 2);
+			heap.putStaticRaw32From(field.owner, field.posAbs, sp + 2);
 		} else {
-			heap.putFieldRaw32From(stack[sb + 1], field.posAbs, sb + 2);
+			heap.putFieldRaw32From(stack[sp + 1], field.posAbs, sp + 2);
 		}
 		return ops - 1;
 	}
@@ -863,11 +856,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function fieldSetWidePrim(context, thread, ops) {
+	function fieldSetWidePrim(context, thread, sp, ops) {
 		var heap = context.heap;
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var field = context.getFieldFromFieldObject(stack[sb]);
+
+		var field = context.getFieldFromFieldObject(stack[sp]);
 		if (field === undefined) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					"Field not found!");
@@ -878,9 +871,9 @@
 		}
 
 		if (field.accessFlags & FyConst.FY_ACC_STATIC) {
-			heap.putStaticRaw64From(field.owner, field.posAbs, sb + 2);
+			heap.putStaticRaw64From(field.owner, field.posAbs, sp + 2);
 		} else {
-			heap.putFieldRaw64From(stack[sb + 1], field.posAbs, sb + 2);
+			heap.putFieldRaw64From(stack[sp + 1], field.posAbs, sp + 2);
 		}
 		return ops - 1;
 	}
@@ -893,12 +886,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function fieldGetUniqueName(context, thread, ops) {
+	function fieldGetUniqueName(context, thread, sp, ops) {
 		var heap = context.heap;
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var field = context.getFieldFromFieldObject(stack[sb]);
-		thread.nativeReturnInt(heap.literal(field.uniqueName));
+
+		var field = context.getFieldFromFieldObject(stack[sp]);
+		thread.nativeReturnInt(sp, heap.literal(field.uniqueName));
 		return ops - 1;
 	}
 
@@ -968,20 +961,20 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function classPrivateGetDeclaredMethods(context, thread, ops) {
+	function classPrivateGetDeclaredMethods(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
 		var heap = context.heap;
 		var count = clazz.methods.length;
-		var handle = stack[sb] = heap.allocateArray(
+		var handle = stack[sp] = heap.allocateArray(
 				context.lookupClass(FyClassLoader
 						.getArrayName(FyConst.FY_BASE_OBJECT)), count);
 		for (var i = 0; i < count; i++) {
 			heap.putArrayInt(handle, i, context
 					.getMethodObjectHandle(clazz.methods[i]));
 		}
-		thread.nativeReturn(1);
+
 		return ops - 1;
 	}
 
@@ -993,20 +986,20 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function classPrivateGetDeclaredFields(context, thread, ops) {
+	function classPrivateGetDeclaredFields(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
 		var heap = context.heap;
 		var count = clazz.fields.length;
-		var handle = stack[sb] = heap.allocateArray(
+		var handle = stack[sp] = heap.allocateArray(
 				context.lookupClass(FyClassLoader
 						.getArrayName(FyConst.FY_BASE_OBJECT)), count);
 		for (var i = 0; i < count; i++) {
 			heap.putArrayInt(handle, i, context
 					.getFieldObjectHandle(clazz.fields[i]));
 		}
-		thread.nativeReturn(1);
+
 		return ops - 1;
 	}
 
@@ -1018,15 +1011,15 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function classGetComponentType(context, thread, ops) {
+	function classGetComponentType(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
 		if (clazz.type === FyConst.TYPE_ARRAY) {
-			thread.nativeReturnInt(context
+			thread.nativeReturnInt(sp, context
 					.getClassObjectHandle(clazz.contentClass));
 		} else {
-			thread.nativeReturnInt(0);
+			thread.nativeReturnInt(sp, 0);
 		}
 		return ops - 1;
 	}
@@ -1039,12 +1032,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function classForName(context, thread, ops) {
+	function classForName(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var name = context.heap.getString(stack[sb]).replace(/\./g, "/");
+
+		var name = context.heap.getString(stack[sp]).replace(/\./g, "/");
 		var clazz = context.lookupClass(name);
-		thread.nativeReturnInt(context.getClassObjectHandle(clazz));
+		thread.nativeReturnInt(sp, context.getClassObjectHandle(clazz));
 		return ops - 1;
 	}
 
@@ -1056,13 +1049,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function classNewInstanceA(context, thread, ops) {
+	function classNewInstanceA(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
-		thread
-				.nativeReturnInt(context.heap.allocateArray(clazz,
-						stack[sb + 1]));
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
+		thread.nativeReturnInt(sp, context.heap.allocateArray(clazz,
+				stack[sp + 1]));
 		return ops - 5;
 	}
 
@@ -1074,15 +1066,15 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function classNewInstanceO(context, thread, ops) {
+	function classNewInstanceO(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
 		var handle = context.heap.allocate(clazz);
-		thread.nativeReturnInt(handle);
-		stack[thread.sp++] = handle;
+		thread.nativeReturnInt(sp, handle);
+		thread.nativeReturnInt(sp + 1, handle);
 		return thread.invokeVirtual(context.lookupMethodVirtual(clazz,
-				FyConst.FY_METHODF_INIT), ops);
+				FyConst.FY_METHODF_INIT), sp + 2, ops);
 		// return thread.pushMethod(context.lookupMethodVirtual(clazz,
 		// FyConst.FY_METHODF_INIT), ops);
 	}
@@ -1095,12 +1087,63 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function classIsInstance(context, thread, ops) {
+	function classIsInstance(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
-		var objClazz = context.heap.getObjectClass(stack[sb + 1]);
-		thread.nativeReturnInt(context.classLoader.canCast(objClazz, clazz) ? 1
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
+		var objClazz = context.heap.getObjectClass(stack[sp + 1]);
+		thread.nativeReturnInt(sp,
+				context.classLoader.canCast(objClazz, clazz) ? 1 : 0);
+		return ops - 1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function classIsAssignableFrom(context, thread, sp, ops) {
+		var stack = thread.stack;
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
+		var targetClazz = context.getClassFromClassObject(stack[sp + 1]);
+		thread.nativeReturnInt(sp, context.classLoader.canCast(targetClazz,
+				clazz) ? 1 : 0);
+		return ops - 1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function classIsArray(context, thread, sp, ops) {
+		var stack = thread.stack;
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
+		thread.nativeReturnInt(sp, (clazz.type === FyConst.TYPE_ARRAY) ? 1 : 0);
+		return ops - 1;
+	}
+
+	/**
+	 * @param {FyContext}
+	 *            context
+	 * @param {FyThread}
+	 *            thread
+	 * @param {Number}
+	 *            ops
+	 */
+	function classIsPrimitive(context, thread, sp, ops) {
+		var stack = thread.stack;
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
+		thread.nativeReturnInt(sp, (clazz.type === FyConst.TYPE_PRIMITIVE) ? 1
 				: 0);
 		return ops - 1;
 	}
@@ -1113,14 +1156,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function classIsAssignableFrom(context, thread, ops) {
+	function classIsInterface(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
-		var targetClazz = context.getClassFromClassObject(stack[sb + 1]);
-		thread
-				.nativeReturnInt(context.classLoader
-						.canCast(targetClazz, clazz) ? 1 : 0);
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
+		thread.nativeReturnInt(sp,
+				(clazz.accessFlags & FyConst.FY_ACC_INTERFACE) ? 1 : 0);
 		return ops - 1;
 	}
 
@@ -1132,61 +1173,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function classIsArray(context, thread, ops) {
+	function classGetSuperclass(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
-		thread.nativeReturnInt((clazz.type === FyConst.TYPE_ARRAY) ? 1 : 0);
-		return ops - 1;
-	}
 
-	/**
-	 * @param {FyContext}
-	 *            context
-	 * @param {FyThread}
-	 *            thread
-	 * @param {Number}
-	 *            ops
-	 */
-	function classIsPrimitive(context, thread, ops) {
-		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
-		thread.nativeReturnInt((clazz.type === FyConst.TYPE_PRIMITIVE) ? 1 : 0);
-		return ops - 1;
-	}
-
-	/**
-	 * @param {FyContext}
-	 *            context
-	 * @param {FyThread}
-	 *            thread
-	 * @param {Number}
-	 *            ops
-	 */
-	function classIsInterface(context, thread, ops) {
-		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
-		thread
-				.nativeReturnInt((clazz.accessFlags & FyConst.FY_ACC_INTERFACE) ? 1
-						: 0);
-		return ops - 1;
-	}
-
-	/**
-	 * @param {FyContext}
-	 *            context
-	 * @param {FyThread}
-	 *            thread
-	 * @param {Number}
-	 *            ops
-	 */
-	function classGetSuperclass(context, thread, ops) {
-		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]).superClass;
-		thread.nativeReturnInt(clazz === undefined ? 0 : context
+		var clazz = context.getClassFromClassObject(stack[sp]).superClass;
+		thread.nativeReturnInt(sp, clazz === undefined ? 0 : context
 				.getClassObjectHandle(clazz));
 		return ops - 1;
 	}
@@ -1199,19 +1190,19 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function classGetInterfaces(context, thread, ops) {
+	function classGetInterfaces(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
 		var classArrayClazz = context.lookupClass("[L" + FyConst.FY_BASE_CLASS
 				+ ";");
-		stack[sb] = context.heap.allocateArray(classArrayClazz,
+		stack[sp] = context.heap.allocateArray(classArrayClazz,
 				clazz.interfaces.length);
 		for (var i = 0, max = clazz.interfaces.length; i < max; i++) {
 			var intf = context.getClassObjectHandle(clazz.interfaces[i]);
-			context.heap.putArrayInt(stack[sb], i, intf);
+			context.heap.putArrayInt(stack[sp], i, intf);
 		}
-		thread.nativeReturn(1);
+
 		return ops - 1;
 	}
 
@@ -1223,13 +1214,13 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function classGetNativeName(context, thread, ops) {
+	function classGetNativeName(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
 		var ret = context.heap.allocate(context
 				.lookupClass(FyConst.FY_BASE_STRING));
-		thread.nativeReturnInt(ret);
+		thread.nativeReturnInt(sp, ret);
 		context.heap.fillString(ret, clazz.name);
 		return ops - 1;
 	}
@@ -1242,11 +1233,11 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function classGetModifiers(context, thread, ops) {
+	function classGetModifiers(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
-		thread.nativeReturnInt(clazz.accessFlags);
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
+		thread.nativeReturnInt(sp, clazz.accessFlags);
 		return ops - 1;
 	}
 
@@ -1258,12 +1249,12 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function classIsEnum(context, thread, ops) {
+	function classIsEnum(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
-		thread.nativeReturnInt((clazz.accessFlags & FyConst.FY_ACC_ENUM) ? 1
-				: 0);
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
+		thread.nativeReturnInt(sp,
+				(clazz.accessFlags & FyConst.FY_ACC_ENUM) ? 1 : 0);
 		return ops - 1;
 	}
 
@@ -1275,21 +1266,21 @@
 	 * @param {Number}
 	 *            ops
 	 */
-	function arrayNewInstance(context, thread, ops) {
+	function arrayNewInstance(context, thread, sp, ops) {
 		var stack = thread.stack;
-		var sb = thread.sp;
-		var clazz = context.getClassFromClassObject(stack[sb]);
+
+		var clazz = context.getClassFromClassObject(stack[sp]);
 		var heap = context.heap;
 		var name = clazz.name;
-		var len = heap.arrayLength(stack[sb + 1]);
+		var len = heap.arrayLength(stack[sp + 1]);
 		var sizes = new Array(len);
 		for (var i = 0; i < len; i++) {
 			name = FyClassLoader.getArrayName(name);
-			sizes[i] = heap.getArrayInt(stack[sb + 1], i);
+			sizes[i] = heap.getArrayInt(stack[sp + 1], i);
 		}
 		// context.lookupArrayClass(clazz) is wrong here...
-		thread.nativeReturnInt(heap.multiNewArray(context.lookupClass(name),
-				len, sizes, 0));
+		thread.nativeReturnInt(sp, heap.multiNewArray(
+				context.lookupClass(name), len, sizes, 0));
 		return ops - 5;
 	}
 
