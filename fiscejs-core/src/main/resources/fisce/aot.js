@@ -311,6 +311,9 @@ var __FyAOTUtil;
 			var oprand2 = method.code[base + 2];
 			var opsCheck = op >>> 16;
 			op = op & 0x3FF;
+			if (op == $ACMD.IINC && oprand2 > 32767) {
+				oprand2 = oprand2 | 0xffff0000;
+			}
 			/**
 			 * @returns {String}
 			 */
