@@ -43,6 +43,7 @@
 	</properties>
 	<modules>
 		<module>fiscejs-runtime</module>
+		<module>fiscejs-classloader</module>
 		<module>fiscejs-utils</module>
 		<module>fiscejs-core</module>
 		<module>fiscejs-maven-plugin</module>

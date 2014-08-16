@@ -69,26 +69,27 @@
 		var floatStack = thread.floatStack;
 		var ip = thread.getCurrentIp();
 		var lip = 0;
+		ops = ops | 0;
 
 		/**
 		 * @returns {FyField}
 		 */
-		var tmpField;
+		var tmpField = FyField.empty;
 
 		/**
 		 * @returns {FyClass}
 		 */
-		var tmpClass;
+		var tmpClass = FyField.empty;
 
 		/**
 		 * @returns {FyClass}
 		 */
-		var clinitClass;
+		var clinitClass = FyField.empty;
 
 		/**
 		 * @returns {FyMethod}
 		 */
-		var tmpMethod;
+		var tmpMethod = FyField.empty;
 
 		var tmpInt1 = 0;
 
@@ -124,13 +125,7 @@
 					return 0;
 				}
 				// ###
-				// ##OP-AALOAD -2 1
-				thread.localToFrame($ip, $ip + 1);
-				heap.getArrayRaw32ToHeap(stack[sb + $spo - 2], stack[sb + $spo
-						- 1], sb + $spo - 2);
-				// ###
-			case 1:
-				// ##OP-FALOAD|IALOAD -2 1
+				// ##OP-AALOAD|FALOAD|IALOAD -2 1
 				thread.localToFrame($ip, $ip + 1);
 				heap.getArrayRaw32ToHeap(stack[sb + $spo - 2], stack[sb + $spo
 						- 1], sb + $spo - 2);
@@ -869,39 +864,8 @@
 				// ###
 			case 151:
 				// ##OP-LDC 0 X-LDC
-
-				switch ($2) {
-				case 0:
-					// int/float
-					stack[sb + $spo] = global.constants[constants[$1]];
-					"#!";
-					console.log(stack[sb + $spo]);
-					"!#";
-					break;
-				case 1:
-					stack[sb + $spo] = global.constants[constants[$1]];
-					stack[sb + $spo + 1] = global.constants[constants[$1] + 1];
-					"#!";
-					console.log([ stack[sb + $spo], stack[sb + $spo + 1] ]);
-					"!#";
-					break;
-				case 2:
-					thread.localToFrame($ip, $ip + 1);
-					stack[sb + $spo] = heap.literalWithConstant(global,
-							constants[$1]);
-					"#!";
-					console.log([ constants[$1], stack[sb + $spo] ]);
-					"!#";
-					break;
-				case 3:
-					thread.localToFrame($ip, $ip + 1);
-					stack[sb + $spo] = context.getClassObjectHandle(context
-							.lookupClassFromConstant(global, constants[$1]));
-					"#!";
-					console.log([ constants[$1], stack[sb + $spo] ]);
-					"!#";
-					break;
-				}
+				throw new FyException(undefined,
+						"LDC should be compiled in aot");
 				// ###
 			case 152:
 				// ##OP-LDIV -4 2

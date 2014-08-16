@@ -11,6 +11,7 @@ var HashMapIObj;
 	function Entry(idx, obj) {
 		this.idx = idx;
 		this.obj = obj;
+		Object.preventExtensions(this);
 	}
 	
 	/**
@@ -32,6 +33,7 @@ var HashMapIObj;
 		this.factor = factor;
 		this.content = new Array(this.cap);
 		this.size = 0;
+		Object.preventExtensions(this);
 	};
 
 	HashMapIObj.prototype._findPosition = function(key) {

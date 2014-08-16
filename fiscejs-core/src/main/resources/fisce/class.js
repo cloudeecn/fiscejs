@@ -104,5 +104,6 @@ var FyClass;
 	FyClass.prototype.toString = function() {
 		return this.name;
 	};
-
+	
+	FyClass.empty = new FyClass(0);
 })();

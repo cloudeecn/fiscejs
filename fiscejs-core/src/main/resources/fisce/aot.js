@@ -749,8 +749,8 @@ var __FyAOTUtil;
 						fun = FyContext.staticNativeAOT[tmpMethod.uniqueName];
 					}
 					if (fun) {
-						code.push(fun(thread, method, ip, (stackSize
-								- tmpMethod.paramStackUsage)));
+						code.push(fun(thread, method, ip,
+								(stackSize - tmpMethod.paramStackUsage)));
 					} else if (tmpMethod.invoke) {
 						code
 								.push("heap.beginProtect();thread.localToFrame("
@@ -775,6 +775,60 @@ var __FyAOTUtil;
 									+ ",ops);if(ops<=0) {return 0;}ops = tmpMethod.invoke(context,thread,sb+"
 									+ (stackSize - tmpMethod.paramStackUsage)
 									+ ",ops);if(ops<=0) {return 0;}");
+				}
+				break;
+			case 0x12/* $.LDC */:
+			case 0x13:
+			case 0x14:
+				switch (oprand2) {
+				case 0:
+					// int/float
+					code.push("stack[sb + " + stackSize + "]="
+							+ global.constants[clazz.constants[oprand1]] + ";");
+					if (FyConfig.debugMode) {
+						code
+								.push("console.log(stack[sb + " + stackSize
+										+ "]);");
+					}
+					break;
+				case 1:
+					code.push("stack[sb + " + stackSize + "]="
+							+ global.constants[clazz.constants[oprand1]] + ";");
+					code.push("stack[sb + " + (stackSize + 1) + "]="
+							+ global.constants[clazz.constants[oprand1] + 1]
+							+ ";");
+					if (FyConfig.debugMode) {
+						code.push("console.log([stack[sb + " + stackSize
+								+ "],stack[sb + " + (stackSize + 1) + "]]);");
+					}
+					break;
+				case 2:
+					code.push("thread.localToFrame(" + ip + ", " + (ip + 1)
+							+ ");");
+					code.push("stack[sb + " + stackSize
+							+ "] = heap.literalWithConstant(global,"
+							+ clazz.constants[oprand1] + ");");
+					if (FyConfig.debugMode) {
+						code.push("console.log([ constants[" + oprand1
+								+ "], stack[sb + " + stackSize + "] ]);");
+					}
+					break;
+				case 3:
+					code.push("thread.localToFrame(" + ip + ", " + (ip + 1)
+							+ ");");
+					code
+							.push("stack[sb + "
+									+ stackSize
+									+ "] = context.getClassObjectHandle(context.lookupClassFromConstant(global,"
+									+ clazz.constants[oprand1] + "));");
+					if (FyConfig.debugMode) {
+						code.push("console.log([ constants[" + oprand1
+								+ "], stack[sb + " + stackSize + "] ]);");
+					}
+					break;
+				default:
+					throw new FyException(undefined, "Illegal ldc mode="
+							+ oprand2);
 				}
 				break;
 			default:
@@ -802,6 +856,8 @@ var __FyAOTUtil;
 			// + method.uniqueName + "\n" + result);
 			// method.invoke = foo;
 			method.invoke = new Function("return (function __aot_f_" + this.mid
+					+ method.owner.name.replace(/\//g, "_") + "_"
+					+ method.name.replace(/[<>]/g, "_")
 					+ "(context,thread,sb,ops){" + body + "});")();
 			// method.invoke = __aot(this.mid | 0, body);
 		} catch (e) {

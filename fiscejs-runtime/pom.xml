@@ -38,14 +38,14 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.cirnoworks.fisce</groupId>
-			<artifactId>fiscevm-classloader</artifactId>
-			<version>${fiscevm.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.cirnoworks.fisce</groupId>
 			<artifactId>fiscevm-runtime</artifactId>
 			<version>${fiscevm.version}</version>
 			<optional>true</optional>
+		</dependency>
+		<dependency>
+			<groupId>${project.groupId}</groupId>
+			<artifactId>fiscejs-classloader</artifactId>
+			<version>${project.version}</version>
 		</dependency>
 	</dependencies>
 </project>

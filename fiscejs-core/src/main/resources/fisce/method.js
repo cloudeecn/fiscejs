@@ -85,4 +85,5 @@ var FyMethod;
 		return "{Method}" + this.uniqueName;
 	};
 
+	FyMethod.empty = new FyMethod();
 })();

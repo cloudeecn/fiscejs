@@ -20,8 +20,8 @@ var FyField;
 	/**
 	 * @returns {FyClass}
 	 */
-	var dummyClass=undefined;
-	
+	var dummyClass = undefined;
+
 	FyField = function() {
 		this.name = "";
 		this.descriptor = "";
@@ -42,12 +42,13 @@ var FyField;
 		this.type = dummyClass;
 
 		this.posAbs = 0;
-		
+
 		Object.preventExtensions(this);
 	};
 
 	FyField.prototype.toString = function() {
 		return "{Field}" + this.uniqueName;
 	};
-	
+
+	FyField.empty = new FyField();
 })();
