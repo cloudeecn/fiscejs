@@ -26,38 +26,45 @@
 <script type="text/javascript" src="../fisce/nh.core.js"></script>
 <script type="text/javascript" src="../fisce/nh.reflect.js"></script>
 <script type="text/javascript" src="../fisce/nh.math.js"></script>
-<script type="text/javascript" src="../fisce/jquery.minjs"></script>
-
 <script type="text/javascript">
-	if (window.console) {
-		window.oldConsole = window.console;
-	} else {
-		window = oldConsole = {
-			log : function() {
+	var clazz = "com/cirnoworks/fisce/privat/Profile";
+	var context = new FyContext();
+</script>
+
+</head>
+<body onload="startup();">
+	<pre id="console">Loading...</pre>
+	<script type="text/javascript" src="../fisce/rt.gzjs"></script>
+	<script type="text/javascript" src="../fisce/rt-vfs.gzjs"></script>
+	<script type="text/javascript">
+		function startup() {
+			if (window.console) {
+				window.oldConsole = window.console;
+			} else {
+				window = oldConsole = {
+					log : function() {
+					}
+				}
 			}
-		}
-	}
-	window.console = {
-		log : function(param) {
-			$("#console").append(document.createTextNode(param));
-			$("#console").append("\n");
-			window.oldConsole.log.apply(window.oldConsole, arguments);
-		}
-	}
-
-	var tests = [];
-	var vm;
-
-	$(function() {
-		var targets = {
-			"../rt.gzjson" : 1
-		};
-
-		var datas = {};
-
-		function checkTargets() {
-			"use strict";
-
+			window.console = {
+				log : function(param) {
+					document.getElementById("console").appendChild(
+							document.createTextNode(param + "\n"));
+					window.oldConsole.log.apply(window.oldConsole, arguments);
+				}
+			}
+			context
+					.registerNativeHandler(
+							"EXCLUDE/fisce/test/TestService.fail0.(Ljava/lang/String;)V",
+							function(context, thread, ops) {
+								throw new FyException(
+										"java/lang/Error",
+										"Test failed: "
+												+ context.heap
+														.getString(thread.stack[thread.sp]));
+								return 0;
+							});
+			context.bootup(clazz);
 			function Exec(context) {
 				this.context = context;
 				this.message = new FyMessage();
@@ -99,65 +106,9 @@
 				};
 				this.f2 = this.fun.bind(this);
 			}
-			;
-
-			var done = true;
-			for ( var target in targets) {
-				console.log("##Checking " + target);
-				if (targets[target]) {
-					console.log("##Checking " + target + "... wait");
-					done = false;
-					break;
-				} else {
-					console.log("##Checking " + target + "... done");
-				}
-			}
-			if (done) {
-				var clazz = "com/cirnoworks/fisce/js/JSProfile";
-				var context = new FyContext();
-				vm = context;
-				for ( var idx in datas) {
-					var data = JSON.parse(datas[idx]);
-					context.addClassDef(data);
-				}
-				context
-						.registerNativeHandler(
-								"EXCLUDE/fisce/test/TestService.fail0.(Ljava/lang/String;)V",
-								function(context, thread, ops) {
-									throw new FyException(
-											"java/lang/Error",
-											"Test failed: "
-													+ context.heap
-															.getString(thread.stack[thread.sp]));
-									return 0;
-								});
-				context.bootup(clazz);
-
-				var exec = new Exec(context);
-				setTimeout(exec.f2, 1);
-			}
+			var exec = new Exec(context);
+			setTimeout(exec.f2, 1);
 		}
-
-		for ( var target in targets) {
-			(function(t) {
-				$.ajax({
-					url : target,
-					dataType : "text",
-					success : function(data) {
-						targets[t] = 0;
-						datas[t] = data;
-						checkTargets();
-					},
-					fail : function() {
-						targets[t] = 2;
-					}
-				});
-			})(target);
-		}
-	});
-</script>
-</head>
-<body>
-	<pre id="console"></pre>
+	</script>
 </body>
 </html>
