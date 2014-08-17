@@ -14,17 +14,18 @@
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
-			<source>src/main/resources/fisce/jquery.minjs</source>
-			<outputDirectory>/</outputDirectory>
-		</file>
-		<file>
 			<source>target/fiscejs-${project.version}.gzjs</source>
 			<destName>fisce.gzjs</destName>
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
-			<source>target/json/rt-${fiscevm.version}.gzjson</source>
-			<destName>rt.gzjson</destName>
+			<source>target/jsonp/rt-${fiscevm.version}.gzjs</source>
+			<destName>rt.gzjs</destName>
+			<outputDirectory>/</outputDirectory>
+		</file>
+		<file>
+			<source>target/jsonp/rt-vfs-${fiscevm.version}.gzjs</source>
+			<destName>rt-vfs.gzjs</destName>
 			<outputDirectory>/</outputDirectory>
 		</file>
 	</files>
