@@ -224,7 +224,7 @@ public class ClassConverter {
 							int ip = j / 3;
 							switch (j % 3) {
 							case 0:
-								if (code[j] > 65535) {
+								if (code[j] > 0x3ff) {
 									throw new IllegalArgumentException(
 											"Illegal op=" + code[j] + " @ "
 													+ name + "."
@@ -246,6 +246,9 @@ public class ClassConverter {
 									}
 									if (method.isJumpIn(ip)) {
 										code[j] |= 0x8000;// jumpIn
+									}
+									if (method.isJumpOut(ip)) {
+										code[j] |= 0x4000;
 									}
 								}
 								break;

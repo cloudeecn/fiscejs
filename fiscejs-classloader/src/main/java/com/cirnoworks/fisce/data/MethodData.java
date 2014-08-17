@@ -172,6 +172,15 @@ public final class MethodData extends MethodNode {
 		ins.add(from);
 	}
 
+	private void addJumpIn(Integer to) {
+		TreeSet<Integer> ins = jumpIns.get(to);
+		if (ins == null) {
+			ins = new TreeSet<Integer>();
+			jumpIns.put(to, ins);
+		}
+		ins.add(-1);
+	}
+
 	public void visitEnd() {
 		super.visitEnd();
 
@@ -499,6 +508,10 @@ public final class MethodData extends MethodNode {
 
 	public boolean isJumpIn(int op) {
 		return jumpIns.containsKey(op);
+	}
+
+	public boolean isJumpOut(int op) {
+		return jumpOuts.containsKey(op);
 	}
 
 	public ArrayList<TableSwitchTarget> getTableSwitchTargets() {

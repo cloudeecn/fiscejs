@@ -16,6 +16,7 @@
  */
 package com.cirnoworks.fisce.js;
 
+import com.cirnoworks.fisce.privat.FiScEVM;
 
 /**
  * 
@@ -64,7 +65,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long noop() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		long t = System.nanoTime();
 		for (int i = 0; i < 50000; i++) {
 		}
@@ -72,7 +73,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long stack() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		int k = 0;
 		long t = System.nanoTime();
 		for (int i = 0; i < 50000; i++) {
@@ -80,9 +81,9 @@ public class JSProfile extends PSuper implements Runnable {
 		}
 		return System.nanoTime() - t;
 	}
-	
+
 	private long stackFloat() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		float k = 0;
 		long t = System.nanoTime();
 		for (float i = 0; i < 50000; i++) {
@@ -90,9 +91,9 @@ public class JSProfile extends PSuper implements Runnable {
 		}
 		return System.nanoTime() - t;
 	}
-	
+
 	private long stackDouble() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		double k = 0;
 		long t = System.nanoTime();
 		for (double i = 0; i < 50000; i++) {
@@ -100,9 +101,9 @@ public class JSProfile extends PSuper implements Runnable {
 		}
 		return System.nanoTime() - t;
 	}
-	
+
 	private long stackLong() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		long k = 0;
 		long t = System.nanoTime();
 		for (long i = 0; i < 50000; i++) {
@@ -112,7 +113,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long field() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		int k = 0;
 		long t = System.nanoTime();
 		for (j = 0; j < 50000; j++) {
@@ -122,7 +123,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long staticField() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		int k = 0;
 		long t = System.nanoTime();
 		for (s = 0; s < 50000; s++) {
@@ -132,7 +133,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long iRootI() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		Intf in = new Impl();
 		int k = 0;
 		long t = System.nanoTime();
@@ -144,7 +145,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long iFooI() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		Intf in = new Impl();
 		int k = 0;
 		long t = System.nanoTime();
@@ -156,7 +157,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long rootS() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		Impl im = new Impl();
 		int k = 0;
 		long t = System.nanoTime();
@@ -168,7 +169,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long rootV() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		Impl im = new Impl();
 		int k = 0;
 		long t = System.nanoTime();
@@ -180,7 +181,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long rootF() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		Impl im = new Impl();
 		int k = 0;
 		long t = System.nanoTime();
@@ -192,7 +193,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long rootI() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		Impl im = new Impl();
 		int k = 0;
 		long t = System.nanoTime();
@@ -204,7 +205,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long fooS() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		Impl im = new Impl();
 		int k = 0;
 		long t = System.nanoTime();
@@ -216,7 +217,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long fooF() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		Impl im = new Impl();
 		int k = 0;
 		long t = System.nanoTime();
@@ -228,7 +229,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long fooI() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		Impl im = new Impl();
 		int k = 0;
 		long t = System.nanoTime();
@@ -240,7 +241,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long inh() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		Impl im = new Impl();
 		int k = 0;
 		long t = System.nanoTime();
@@ -252,7 +253,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long pubTest() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		int k = 0;
 		long t = System.nanoTime();
 		for (int i = 0; i < 50000; i++) {
@@ -263,7 +264,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long fnlTest() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		int k = 0;
 		long t = System.nanoTime();
 		for (int i = 0; i < 50000; i++) {
@@ -274,7 +275,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long prvTest() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		int k = 0;
 		long t = System.nanoTime();
 		for (int i = 0; i < 50000; i++) {
@@ -285,7 +286,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long protTest() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		int k = 0;
 		long t = System.nanoTime();
 		for (int i = 0; i < 50000; i++) {
@@ -296,7 +297,7 @@ public class JSProfile extends PSuper implements Runnable {
 	}
 
 	private long pfTest() {
-		//FiScEVM.breakpoint();
+		FiScEVM.breakpoint();
 		int k = 0;
 		long t = System.nanoTime();
 		for (int i = 0; i < 50000; i++) {
@@ -342,7 +343,7 @@ public class JSProfile extends PSuper implements Runnable {
 
 		final int max = 9;
 		final int min = 4;
-		
+
 		sleep();
 
 		for (int u = 0; u < max; u++) {
@@ -364,7 +365,7 @@ public class JSProfile extends PSuper implements Runnable {
 			}
 
 			sleep();
-			
+
 			if (u >= min) {
 				ttStackFloat += stackFloat();
 			} else {
@@ -372,7 +373,7 @@ public class JSProfile extends PSuper implements Runnable {
 			}
 
 			sleep();
-			
+
 			if (u >= min) {
 				ttStackDouble += stackDouble();
 			} else {
@@ -380,7 +381,7 @@ public class JSProfile extends PSuper implements Runnable {
 			}
 
 			sleep();
-			
+
 			if (u >= min) {
 				ttStackLong += stackLong();
 			} else {

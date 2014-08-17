@@ -297,6 +297,7 @@ var __FyAOTUtil;
 		var result;
 		var clazz = method.owner;
 		var global = clazz.global;
+		var nextNeedCase = false;
 		/**
 		 * @returns {String}
 		 */
@@ -310,14 +311,22 @@ var __FyAOTUtil;
 					"mid" : this.mid
 				}));
 		code.push("\n");
+		var exceptionHandlers = {};
+		for (var i = 0, max = method.exceptionTable.length; i < max; i += 4) {
+			var handler = method.exceptionTable[i + 3];
+			exceptionHandlers[handler] = true;
+		}
 		for (var ip = 0; ip < len; ip++) {
 			var base = ip * 3;
 			var op = method.code[base];
 			var oprand1 = method.code[base + 1];
 			var oprand2 = method.code[base + 2];
-			var opsCheck = op >>> 16;
+			var opsCheck = (op >>> 16) & 0x7fff;
 			var stackSize = oprand2 >>> 16;
+			var needCase = false;
+			var caseInsertPoint = code.length;
 			oprand2 &= 0xffff;
+			var isJumpIn = op & 0x8000;
 			op = op & 0x3FF;
 			if (op == $ACMD.IINC && oprand2 > 32767) {
 				oprand2 = oprand2 | 0xffff0000;
@@ -343,9 +352,30 @@ var __FyAOTUtil;
 			}
 
 			// TODO not all statments needs case
-			code.push("case ");
-			code.push(ip);
-			code.push(": ");
+			if (ip == 0) {
+				needCase = true;
+			}
+			if (nextNeedCase) {
+				nextNeedCase = false;
+				needCase = true;
+			}
+			if (isJumpIn || opsCheck) {
+				needCase = true;
+			}
+			if (op == 0xC2 // MONITORENTER
+					|| op == 0xC3// MONITOREXIT
+			) {
+				nextNeedCase = true;
+			}
+
+			if (op == 0xBB // NEW
+			) {
+				// new may call <clinit>
+				needCase = true;
+			}
+			if (exceptionHandlers[ip]) {
+				needCase = true;
+			}
 
 			if (FyConfig.debugMode) {
 				code.push("// ");
@@ -410,6 +440,7 @@ var __FyAOTUtil;
 							"Field " + tmpField.uniqueName + " is not static");
 				}
 				if (thread.clinit(tmpField.owner)) {
+					needCase = true;
 					code.push("lip=" + ip + ";tmpClass=context.classes["
 							+ tmpField.owner.classId + "];");
 					code.push(this.replaceAll(macros["CLINIT"], ip, oprand1,
@@ -447,6 +478,7 @@ var __FyAOTUtil;
 				 * tmpField.uniqueName + " is final"); }
 				 */
 				if (thread.clinit(tmpField.owner)) {
+					needCase = true;
 					code.push("lip=" + ip + ";tmpClass=context.classes["
 							+ tmpField.owner.classId + "];");
 					code.push(this.replaceAll(macros["CLINIT"], ip, oprand1,
@@ -557,6 +589,8 @@ var __FyAOTUtil;
 				break;
 			case 0xB6/* $.INVOKEVIRTUAL */:
 			case 0xB9/* $.INVOKEINTERFACE */:
+				needCase = true;
+				nextNeedCase = true;
 				var tmpMethod = context.lookupMethodVirtualFromConstant(global,
 						clazz.constants[oprand1]);
 				if ((tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
@@ -652,6 +686,8 @@ var __FyAOTUtil;
 				}
 				break;
 			case 0xB7/* $.INVOKESPECIAL */:
+				needCase = true;
+				nextNeedCase = true;
 				var tmpMethod = context.lookupMethodVirtualFromConstant(global,
 						clazz.constants[oprand1]);
 				if ((tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
@@ -727,6 +763,8 @@ var __FyAOTUtil;
 				}
 				break;
 			case 0xB8/* $.INVOKESTATIC */:
+				needCase = true;
+				nextNeedCase = true;
 				var tmpMethod = context.lookupMethodVirtualFromConstant(global,
 						clazz.constants[oprand1]);
 				if (!(tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
@@ -785,7 +823,7 @@ var __FyAOTUtil;
 					// int/float
 					code.push("stack[sb + " + stackSize + "]="
 							+ global.constants[clazz.constants[oprand1]] + ";");
-					if (FyConfig.debugMode) {
+					if (FyConfig.verboseMode) {
 						code
 								.push("console.log(stack[sb + " + stackSize
 										+ "]);");
@@ -797,7 +835,7 @@ var __FyAOTUtil;
 					code.push("stack[sb + " + (stackSize + 1) + "]="
 							+ global.constants[clazz.constants[oprand1] + 1]
 							+ ";");
-					if (FyConfig.debugMode) {
+					if (FyConfig.verboseMode) {
 						code.push("console.log([stack[sb + " + stackSize
 								+ "],stack[sb + " + (stackSize + 1) + "]]);");
 					}
@@ -808,7 +846,7 @@ var __FyAOTUtil;
 					code.push("stack[sb + " + stackSize
 							+ "] = heap.literalWithConstant(global,"
 							+ clazz.constants[oprand1] + ");");
-					if (FyConfig.debugMode) {
+					if (FyConfig.verboseMode) {
 						code.push("console.log([ constants[" + oprand1
 								+ "], stack[sb + " + stackSize + "] ]);");
 					}
@@ -821,7 +859,7 @@ var __FyAOTUtil;
 									+ stackSize
 									+ "] = context.getClassObjectHandle(context.lookupClassFromConstant(global,"
 									+ clazz.constants[oprand1] + "));");
-					if (FyConfig.debugMode) {
+					if (FyConfig.verboseMode) {
 						code.push("console.log([ constants[" + oprand1
 								+ "], stack[sb + " + stackSize + "] ]);");
 					}
@@ -837,6 +875,9 @@ var __FyAOTUtil;
 				break;
 			}
 			code.push("\n\n");
+			if (needCase) {
+				code.splice(caseInsertPoint, 0, "case " + ip + ":");
+			}
 		}
 		code.push(macros["TAIL"].toString());
 		result = code.join("").toString();
