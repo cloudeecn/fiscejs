@@ -219,16 +219,18 @@ public class ClassConverter {
 						SimpleJSONUtil.add(sb, 3, "\"code\"", "[", false);
 						SimpleJSONUtil.addIndent(sb, 4);
 						int[] check = method.getCheckOps();
+
 						for (int j = 0, maxj = code.length; j < maxj; j++) {
-							if (j % 3 == 0) {
-								if (code[j] > 65535) {
+							int ip = j / 3;
+							switch (j % 3) {
+							case 0:
+								if (code[j] > 0x3ff) {
 									throw new IllegalArgumentException(
 											"Illegal op=" + code[j] + " @ "
 													+ name + "."
 													+ method.getName() + "."
 													+ method.getDescriptor());
 								} else {
-									int ip = j / 3;
 									if (check[ip] >= 0) {
 										if (check[ip] > 32768) {
 											throw new IllegalArgumentException(
@@ -242,7 +244,52 @@ public class ClassConverter {
 										}
 										code[j] |= (check[ip]) << 16;
 									}
+									if (method.isJumpIn(ip)) {
+										code[j] |= 0x8000;// jumpIn
+									}
+									if (method.isJumpOut(ip)) {
+										code[j] |= 0x4000;
+									}
 								}
+								break;
+							case 2:
+								if (code[j] > 65535) {
+									throw new IllegalArgumentException(
+											"Illegal oprand2 op=" + code[j - 2]
+													+ " oprand1=" + code[j - 1]
+													+ " oprand2=" + code[j]
+													+ " @ " + name + "."
+													+ method.getName() + "."
+													+ method.getDescriptor());
+								}
+								Frame<BasicValue> frame = method.getRawFrames()[ip];
+								if (frame == null) {
+									throw new NullPointerException(
+											"Can't find frame @" + j + " for "
+													+ name + "."
+													+ method.getName() + "."
+													+ method.getDescriptor());
+								}
+								int frameSize = frame.getLocals()
+										+ frame.getStackSize();
+								for (int k = 0, maxk = frame.getStackSize(); k < maxk; k++) {
+									BasicValue v = frame.getStack(k);
+									if (v.getSize() == 2) {
+										frameSize++;
+									}
+								}
+								if (frameSize > 32768) {
+									throw new NullPointerException(
+											"Too large frame size, localSize="
+													+ frame.getLocals()
+													+ " stackSize="
+													+ frame.getStackSize()
+													+ " " + name + "."
+													+ method.getName() + "."
+													+ method.getDescriptor());
+								}
+								code[j] |= frameSize << 16;
+								break;
 							}
 							sb.append(code[j]);
 							if (j < maxj - 1) {

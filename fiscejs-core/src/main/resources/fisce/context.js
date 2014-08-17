@@ -27,11 +27,13 @@ var FyClassDef;
 		}
 		this.strings = strings;
 		this.constants = constants;
+		Object.preventExtensions(this);
 	};
 
 	FyClassDef = function(context, data) {
 		this.classes = data.classes;
 		this.global = new FyGlobal(context, data.strings, data.constants);
+		Object.preventExtensions(this);
 	};
 
 	/**

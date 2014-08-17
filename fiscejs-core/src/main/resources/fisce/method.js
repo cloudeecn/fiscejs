@@ -50,6 +50,7 @@ var FyMethod;
 		/** Filled in by class loader* */
 		this.methodId = 0;
 
+		this.stackOfs = [];
 		this.frames = [];
 		this.tableSwitchTargets = [];
 		this.lookupSwitchTargets = [];
@@ -76,8 +77,13 @@ var FyMethod;
 		return -2;
 	};
 
+	FyMethod.prototype.getSpOfs = function(ip) {
+		return this.stackOfs[ip];
+	}
+
 	FyMethod.prototype.toString = function() {
 		return "{Method}" + this.uniqueName;
 	};
 
+	FyMethod.empty = new FyMethod();
 })();

@@ -70,7 +70,7 @@ public class JSCompilerPlugin extends AbstractMojo {
 			// regenerate
 			Compiler compiler = new Compiler();
 			CompilerOptions options = new CompilerOptions();
-			CompilationLevel.SIMPLE_OPTIMIZATIONS
+			CompilationLevel.WHITESPACE_ONLY
 					.setOptionsForCompilationLevel(options);
 
 			SourceFile extern = SourceFile.fromCode("externs.js",

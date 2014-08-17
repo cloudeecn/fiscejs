@@ -40,7 +40,6 @@ var FyThread;
 		this.bottom = context.heap.allocateStack(threadId) + 16;
 		this.top = (this.bottom + FyConfig.stackSize - 16) | 0;
 
-		this.sp = this.bottom;
 		this.framePos = this.top;
 		this.yield = false;
 		this.handle = 0;
@@ -148,16 +147,13 @@ var FyThread;
 	/**
 	 * 
 	 * @param {Number}
-	 *            sp
-	 * @param {Number}
 	 *            lip
 	 * @param {Number}
 	 *            ip
 	 */
-	FyThread.prototype.localToFrame = function(sp, lip, ip) {
+	FyThread.prototype.localToFrame = function(lip, ip) {
 		// console.log("Local=>Frame: "+sp+" "+lip+" "+ip);
 		var fp = this.framePos;
-		this.sp = sp;
 		this.stack[fp + 2] = ip;
 		this.stack[fp + 3] = lip;
 	};
@@ -168,22 +164,21 @@ var FyThread;
 	 *            method
 	 * @returns {Number} the frame pos now
 	 */
-	FyThread.prototype.pushFrame = function(method) {
+	FyThread.prototype.pushFrame = function(method, sp) {
 		// if(method.name=="<clinit>"){
 		// console.log("#Thread "+this.threadId+" push method
 		// "+method.uniqueName);
 		// }
 		var stack = this.stack;
-		if (this.sp + method.maxLocals + method.maxStack >= this.framePos - 4) {
+		if (sp + method.maxLocals + method.maxStack >= this.framePos - 4) {
 			throw new FyException(undefined, "stack overflow for thread "
 					+ this.threadId);
 		}
 		this.framePos -= 4;
 		stack[this.framePos + 0] = method.methodId;
-		stack[this.framePos + 1] = this.sp;
+		stack[this.framePos + 1] = sp;
 		stack[this.framePos + 2] = 0;
 		stack[this.framePos + 3] = 0;
-		this.sp += method.maxLocals;
 		return this.framePos;
 	};
 
@@ -194,11 +189,11 @@ var FyThread;
 	 *            method
 	 * @returns {Number}
 	 */
-	FyThread.prototype.pushMethod = function(method, ops) {
+	FyThread.prototype.pushMethod = function(method, sp, ops) {
 		if (ops !== ops) {
 			throw new FyException(undefined, "Illegal ops");
 		}
-		var ret = this.pushFrame(method);
+		var ret = this.pushFrame(method, sp);
 		if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
 			this
 					.monitorEnter((method.accessFlags & FyConst.FY_ACC_STATIC) ? this.context
@@ -215,7 +210,7 @@ var FyThread;
 	 *            ops
 	 * @return {Number} ops left
 	 */
-	FyThread.prototype.invokeStatic = function(method, ops) {
+	FyThread.prototype.invokeStatic = function(method, sp, ops) {
 		if (!(method.accessFlags & FyConst.FY_ACC_STATIC)) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					tmpMethod.uniqueName + " is not static");
@@ -229,7 +224,7 @@ var FyThread;
 				// no thread is running it, so let this run
 				clinitClass.clinitThreadId = this.threadId;
 				this.rollbackCurrentIp();
-				this.pushFrame(clinitClass.clinit);
+				this.pushFrame(clinitClass.clinit, sp);
 				return 0;
 			} else {
 				// wait for other thread clinit
@@ -238,11 +233,11 @@ var FyThread;
 			}
 		}
 
-		this.sp -= method.paramStackUsage;
+		sp -= method.paramStackUsage;
 		if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
 			if (method.invoke) {
 				this.context.heap.beginProtect();
-				ops = method.invoke(this.context, this, ops);
+				ops = method.invoke(this.context, this, sp, ops);
 				this.context.heap.endProtect();
 				if (this.yield) {
 					return 0;
@@ -257,11 +252,11 @@ var FyThread;
 			if (method.invoke === undefined) {
 				FyAOTUtil.aot(this, method);
 			}
-			ops = this.pushMethod(method, ops);
+			ops = this.pushMethod(method, sp, ops);
 			if (ops <= 0) {
 				return 0;
 			}
-			ops = method.invoke(this.context, this, ops);
+			ops = method.invoke(this.context, this, sp, ops);
 			return ops;
 		}
 	};
@@ -273,31 +268,31 @@ var FyThread;
 	 *            method
 	 * @param ops
 	 */
-	FyThread.prototype.invokeVirtual = function(method, ops) {
+	FyThread.prototype.invokeVirtual = function(method, sp, ops) {
 		if ((method.accessFlags & FyConst.FY_ACC_STATIC)) {
 			throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 					method.uniqueName + " is static");
 		}
 
-		this.sp -= method.paramStackUsage + 1;
-		if (this.stack[this.sp] === 0) {
+		sp -= method.paramStackUsage + 1;
+		if (this.stack[sp] === 0) {
 			// this = null!!!
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "while invoking "
 					+ method.uniqueName);
 		}
-		if (this.context.heap.getObjectClass(this.stack[this.sp]) === undefined) {
-			throw new FyException(undefined, "#Bug! Object #"
-					+ this.stack[this.sp] + " is gabage collected");
+		if (this.context.heap.getObjectClass(this.stack[sp]) === undefined) {
+			throw new FyException(undefined, "#Bug! Object #" + this.stack[sp]
+					+ " is gabage collected");
 		}
 		if (!(method.accessFlags & FyConst.FY_ACC_FINAL)) {
 			// Virtual lookup
 			method = this.context.lookupMethodVirtualByMethod(this.context.heap
-					.getObjectClass(this.stack[this.sp]), method);
+					.getObjectClass(this.stack[sp]), method);
 		}
 		if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
 			if (method.invoke) {
 				this.context.heap.beginProtect();
-				ops = method.invoke(this.context, this, ops);
+				ops = method.invoke(this.context, this, sp, ops);
 				this.context.heap.endProtect();
 				if (this.yield) {
 					return 0;
@@ -312,11 +307,11 @@ var FyThread;
 			if (method.invoke === undefined) {
 				FyAOTUtil.aot(this, method);
 			}
-			ops = this.pushMethod(method, ops);
+			ops = this.pushMethod(method, sp, ops);
 			if (ops <= 0) {
 				return 0;
 			}
-			ops = method.invoke(this.context, this, ops);
+			ops = method.invoke(this.context, this, sp, ops);
 			return ops;
 		}
 	};
@@ -324,10 +319,10 @@ var FyThread;
 	FyThread.prototype.popFrame = function(pushes) {
 		// console.log("#Thread "+this.threadId+" pop method
 		// "+this.getCurrentMethod().uniqueName);
-		this.sp = this.stack[this.framePos + 1];
+		var sp = this.stack[this.framePos + 1];
 		this.framePos += 4;
 		// if (pushes !== undefined) {
-		this.sp += pushes;
+		return sp + pushes;
 		// }
 	};
 
@@ -509,7 +504,7 @@ var FyThread;
 		this.context.lookupClass("[L" + FyConst.FY_BASE_STRING + ";");
 		this.handle = threadHandle;
 		this.context.heap.setObjectMultiUsageData(threadHandle, this.threadId);
-		this.pushFrame(method);
+		this.pushFrame(method, this.bottom);
 		this.stack[this.bottom] = 0;
 	};
 
@@ -535,7 +530,7 @@ var FyThread;
 				FyConst.FY_METHODF_RUN);
 		this.context.heap.setObjectMultiUsageData(threadHandle, this.threadId);
 		this.handle = threadHandle;
-		this.pushFrame(runner);
+		this.pushFrame(runner, this.bottom);
 		this.stack[this.bottom] = threadHandle;
 	};
 
@@ -568,6 +563,7 @@ var FyThread;
 		 */
 		var method;
 		var handlerIp;
+		var lip;
 		while (ops > 0) {
 			if (this.framePos === this.top) {
 				message.type = FyMessage.message_thread_dead;
@@ -589,13 +585,13 @@ var FyThread;
 						+ " at thread #" + this.threadId);
 				while (true) {
 					method = this.getCurrentMethod();
+					lip = this.getCurrentLastIp();
 					handlerIp = this.getExceptionHandlerIp(
-							this.currentThrowable, this.getCurrentLastIp());
+							this.currentThrowable, lip);
 					if (handlerIp >= 0) {
-						this.localToFrame(this.getCurrentStackBase()
-								+ method.maxLocals, handlerIp, handlerIp);
-						this.stack[this.sp] = this.currentThrowable;
-						this.sp++;
+						this.localToFrame(handlerIp, handlerIp);
+						this.stack[this.getCurrentStackBase()
+								+ method.getSpOfs(handlerIp) - 1] = this.currentThrowable;
 						this.currentThrowable = 0;
 						break;
 					} else {
@@ -639,7 +635,8 @@ var FyThread;
 					}
 				}
 			}
-			ops = method.invoke(this.context, this, ops);
+			ops = method.invoke(this.context, this, this.getCurrentStackBase(),
+					ops);
 			if (this.pendingNative !== undefined) {
 				message.type = FyMessage.message_invoke_native;
 				message.nativeMethod = this.pendingNative;
@@ -679,26 +676,21 @@ var FyThread;
 		this.yield = false;
 	};
 
-	FyThread.prototype.nativeReturn = function(size) {
-		this.sp += size | 0;
+	FyThread.prototype.nativeReturnInt = function(sp, value) {
+		this.stack[sp] = value;
 	};
 
-	FyThread.prototype.nativeReturnInt = function(value) {
-		this.stack[this.sp++] = value;
+	FyThread.prototype.nativeReturnFloat = function(sp, value) {
+		this.floatStack[sp] = value;
 	};
 
-	FyThread.prototype.nativeReturnFloat = function(value) {
-		this.floatStack[this.sp++] = value;
+	FyThread.prototype.nativeReturnDouble = function(sp, value) {
+		FyPortable.doubleToIeee64(value, this.stack, sp);
 	};
 
-	FyThread.prototype.nativeReturnDouble = function(value) {
-		FyPortable.doubleToIeee64(value, this.stack, this.sp);
-		this.sp += 2;
-	};
-
-	FyThread.prototype.nativeReturnLong = function(container, ofs) {
-		this.stack[this.sp++] = container[ofs];
-		this.stack[this.sp++] = container[ofs + 1];
+	FyThread.prototype.nativeReturnLong = function(sp, container, ofs) {
+		this.stack[sp++] = container[ofs++];
+		this.stack[sp] = container[ofs];
 	};
 
 	/**
@@ -738,7 +730,7 @@ var FyThread;
 					var imax;
 					if (isTop) {
 						isTop = false;
-						imax = thread.sp - sb;
+						imax = method.getSpOfs(lip);
 					} else {
 						imax = thread.getStackBase(frameId + 1) - sb;
 					}

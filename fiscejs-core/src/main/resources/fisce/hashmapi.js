@@ -28,6 +28,7 @@ var HashMapI;
 				this.content[i] = nullNumber;
 			}
 		}
+		Object.preventExtensions(this);
 	};
 
 	HashMapI.prototype._findPosition = function(key) {
