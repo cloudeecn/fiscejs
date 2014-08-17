@@ -244,6 +244,9 @@ public class ClassConverter {
 										}
 										code[j] |= (check[ip]) << 16;
 									}
+									if (method.isJumpIn(ip)) {
+										code[j] |= 0x8000;// jumpIn
+									}
 								}
 								break;
 							case 2:

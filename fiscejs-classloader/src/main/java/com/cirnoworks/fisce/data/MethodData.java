@@ -320,8 +320,8 @@ public final class MethodData extends MethodNode {
 				for (ip = 0; ip < newLength; ip++) {
 					AbstractInsnNode inst = rawInstructions[ip];
 					if (jumpIns.containsKey(ip + 1)
-//							|| jumpOuts.containsKey(ip + 1)
-							) {
+					// || jumpOuts.containsKey(ip + 1)
+					) {
 						checkOps[ip] = tmpIpLength;
 						hintFrame[ip] = true;
 						tmpIpLength = 0;
@@ -368,24 +368,6 @@ public final class MethodData extends MethodNode {
 								.getConstantIdByClassName(tcbn.type);
 					}
 				}
-
-				// int[] sps = new int[newLength];
-				// int[] jumpTargets = new int[1024];
-				// jumpTargets[0] = 0;
-				// int pos = 1;
-				// while (pos > 0) {
-				// int i = jumpTargets[--pos];
-				// while (true) {
-				// AbstractInsnNode inst = instructions.get(i);
-				// switch (inst.getType()) {
-				// case AbstractInsnNode.JUMP_INSN:
-				// case AbstractInsnNode.TABLESWITCH_INSN:
-				// case AbstractInsnNode.LOOKUPSWITCH_INSN:
-				// }
-				//
-				// i++;
-				// }
-				// }
 
 				code = new int[newLength * 3];
 				for (ip = 0; ip < newLength; ip++) {
@@ -513,6 +495,10 @@ public final class MethodData extends MethodNode {
 
 	public int[] getCheckOps() {
 		return checkOps;
+	}
+
+	public boolean isJumpIn(int op) {
+		return jumpIns.containsKey(op);
 	}
 
 	public ArrayList<TableSwitchTarget> getTableSwitchTargets() {
