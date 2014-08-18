@@ -174,7 +174,21 @@ public class ClassConverterUtil {
 	}
 
 	public static void convert(Iterable<String> jarPaths, String jsonPath,
-			String vfsPath, boolean jsonp) throws IOException {
+			String vfsPath, boolean jsonp, boolean gz) throws IOException {
+		if (gz && jsonp) {
+			jsonPath += ".js.gz";
+			vfsPath += ".js.gz";
+		} else if (gz && !jsonp) {
+			jsonPath += ".json.gz";
+			vfsPath += ".json.gz";
+		} else if (!gz && jsonp) {
+			jsonPath += ".js";
+			vfsPath += ".js";
+		} else {
+			// !gz && !jsonp
+			jsonPath += ".json";
+			vfsPath += ".json";
+		}
 		File runtimeJsFile = new File(jsonPath);
 
 		File vfsJsFile = new File(vfsPath);
@@ -206,26 +220,40 @@ public class ClassConverterUtil {
 					iss.add(new FileInputStream(in));
 				}
 				osr = new FileOutputStream(runtimeJsFile);
-				GZIPOutputStream gosr = new GZIPOutputStream(osr);
-				OutputStreamWriter writerr = new OutputStreamWriter(gosr,
-						"utf-8");
+				GZIPOutputStream gosr = null;
+				OutputStreamWriter writerr;
+				if (gz) {
+					gosr = new GZIPOutputStream(osr);
+					writerr = new OutputStreamWriter(gosr, "utf-8");
+				} else {
+					writerr = new OutputStreamWriter(osr, "utf-8");
+				}
 
 				osv = new FileOutputStream(vfsJsFile);
-				GZIPOutputStream gosv = new GZIPOutputStream(osv);
-				OutputStreamWriter writerv = new OutputStreamWriter(gosv,
-						"utf-8");
+				GZIPOutputStream gosv = null;
+				OutputStreamWriter writerv;
+				if (gz) {
+					gosv = new GZIPOutputStream(osv);
+					writerv = new OutputStreamWriter(gosv, "utf-8");
+				} else {
+					writerv = new OutputStreamWriter(osv, "utf-8");
+				}
 
 				if (jsonp) {
-					ClassConverterUtil.convertJars(iss, "context.addClassDef(", ");", writerr,
-							"context.vfs.add(", ");", writerv);
+					ClassConverterUtil.convertJars(iss, "context.addClassDef(",
+							");", writerr, "context.vfs.add(", ");", writerv);
 				} else {
 					ClassConverterUtil.convertJars(iss, null, null, writerr,
 							null, null, writerv);
 				}
 				writerr.close();
 				writerv.close();
-				gosr.close();
-				gosv.close();
+				if (gosr != null) {
+					gosr.close();
+				}
+				if (gosv != null) {
+					gosv.close();
+				}
 			} finally {
 				for (FileInputStream is : iss) {
 					try {

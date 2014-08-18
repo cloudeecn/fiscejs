@@ -14,18 +14,18 @@
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
-			<source>target/fiscejs-${project.version}.gzjs</source>
-			<destName>fisce.gzjs</destName>
+			<source>target/fiscejs-${project.version}.js.gz</source>
+			<destName>fisce.js.gz</destName>
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
-			<source>target/jsonp/rt-${fiscevm.version}.gzjs</source>
-			<destName>rt.gzjs</destName>
+			<source>target/jsonp/rt-${fiscevm.version}.js.gz</source>
+			<destName>rt.js.gz</destName>
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
-			<source>target/jsonp/rt-vfs-${fiscevm.version}.gzjs</source>
-			<destName>rt-vfs.gzjs</destName>
+			<source>target/jsonp/rt-vfs-${fiscevm.version}.js.gz</source>
+			<destName>rt-vfs.js.gz</destName>
 			<outputDirectory>/</outputDirectory>
 		</file>
 	</files>

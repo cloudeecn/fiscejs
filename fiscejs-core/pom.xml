@@ -56,7 +56,7 @@
 				<executions>
 					<execution>
 						<id>assembly</id>
-						<phase>prepare-package</phase>
+						<phase>compile</phase>
 						<goals>
 							<goal>single</goal>
 						</goals>
@@ -86,6 +86,37 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.6</version>
+				<executions>
+					<execution>
+						<id>copy-test-resources</id>
+						<!-- here the phase you need -->
+						<phase>generate-test-resources</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${basedir}/target/test</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${basedir}/src/main/resources/fisce</directory>
+									<includes>
+										<include>gunzip.minjs</include>
+									</includes>
+								</resource>
+								<resource>
+									<directory>${basedir}/src/main/resources/test</directory>
+									<includes>
+										<include>test-node.js</include>
+									</includes>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>com.cirnoworks.fisce</groupId>
 				<artifactId>fiscejs-maven-plugin</artifactId>
 				<version>${project.version}</version>
@@ -107,8 +138,20 @@
 						</goals>
 						<configuration>
 							<zipFile>${project.build.directory}/assembly-js.zip</zipFile>
-							<extras><extra>${basedir}/src/main/resources/fisce/gunzip.minjs</extra></extras>
-							<compiledFile>${project.build.directory}/fiscejs-${project.version}.gzjs</compiledFile>
+							<compiledFile>${project.build.directory}/fiscejs-${project.version}</compiledFile>
+							<gz>true</gz>
+						</configuration>
+					</execution>
+					<execution>
+						<id>compile-test</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>compile-zip</goal>
+						</goals>
+						<configuration>
+							<zipFile>${project.build.directory}/assembly-js.zip</zipFile>
+							<compiledFile>${project.build.directory}/test/fiscejs</compiledFile>
+							<gz>false</gz>
 						</configuration>
 					</execution>
 					<execution>
@@ -123,8 +166,9 @@
 								<jar>${com.cirnoworks.fisce:fiscejs-classloader:jar}</jar>
 								<jar>${com.cirnoworks.fisce:fiscejs-runtime:jar}</jar>
 							</jars>
-							<outputFilename>rt-${fiscevm.version}.gzjson</outputFilename>
-							<outputVFSFilename>rt-vfs-${fiscevm.version}.gzjson</outputVFSFilename>
+							<outputFilename>rt-${fiscevm.version}</outputFilename>
+							<outputVFSFilename>rt-vfs-${fiscevm.version}</outputVFSFilename>
+							<gz>true</gz>
 						</configuration>
 					</execution>
 					<execution>
@@ -140,9 +184,29 @@
 								<jar>${com.cirnoworks.fisce:fiscejs-runtime:jar}</jar>
 							</jars>
 							<outputDir>${project.build.directory}/jsonp</outputDir>
-							<outputFilename>rt-${fiscevm.version}.gzjs</outputFilename>
-							<outputVFSFilename>rt-vfs-${fiscevm.version}.gzjs</outputVFSFilename>
+							<outputFilename>rt-${fiscevm.version}</outputFilename>
+							<outputVFSFilename>rt-vfs-${fiscevm.version}</outputVFSFilename>
 							<jsonp>true</jsonp>
+							<gz>true</gz>
+						</configuration>
+					</execution>
+					<execution>
+						<id>convertp-test</id>
+						<phase>process-test-classes</phase>
+						<goals>
+							<goal>convert</goal>
+						</goals>
+						<configuration>
+							<jars>
+								<jar>${com.cirnoworks.fisce:fiscevm-runtime:jar}</jar>
+								<jar>${com.cirnoworks.fisce:fiscejs-classloader:jar}</jar>
+								<jar>${com.cirnoworks.fisce:fiscejs-runtime:jar}</jar>
+							</jars>
+							<outputDir>${project.build.directory}/test</outputDir>
+							<outputFilename>rt</outputFilename>
+							<outputVFSFilename>rt-vfs</outputVFSFilename>
+							<jsonp>false</jsonp>
+							<gz>false</gz>
 						</configuration>
 					</execution>
 				</executions>

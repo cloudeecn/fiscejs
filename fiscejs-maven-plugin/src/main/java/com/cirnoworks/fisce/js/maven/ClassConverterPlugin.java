@@ -28,12 +28,12 @@ public class ClassConverterPlugin extends AbstractMojo {
 	private String outputDir;
 
 	/**
-	 * @parameter default-value="rt.gzjson"
+	 * @parameter default-value="rt"
 	 */
 	private String outputFilename;
 
 	/**
-	 * @parameter default-value="rt-vfs.gzjson"
+	 * @parameter default-value="rt-vfs"
 	 */
 	private String outputVFSFilename;
 
@@ -41,6 +41,11 @@ public class ClassConverterPlugin extends AbstractMojo {
 	 * @parameter default-value=false
 	 */
 	private boolean jsonp;
+
+	/**
+	 * @parameter default-value=true
+	 */
+	private boolean gz;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -59,7 +64,7 @@ public class ClassConverterPlugin extends AbstractMojo {
 				outputDirFile.mkdirs();
 			}
 			ClassConverterUtil.convert(Arrays.asList(jars), outputDir
-					+ outputFilename, outputDir + outputVFSFilename, jsonp);
+					+ outputFilename, outputDir + outputVFSFilename, jsonp, gz);
 		} catch (IOException e) {
 			throw new MojoExecutionException("Exception occored", e);
 		} finally {

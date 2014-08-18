@@ -18,15 +18,13 @@ var HashMapI;
 		this.cap = 1 << capShift;
 		this.capMask = this.cap - 1;
 		this.factor = factor;
-		this.content = new Int32Array(this.cap << 1);
+		this.content = new Array(this.cap << 1);
 		this.nullNumber = nullNumber;
 		this.size = 0;
 		this.contentsNullKey = false;
-		this.nullKeyValue = this.nullNumber;
-		if (nullNumber != 0) {
-			for (var i = 0; i < this.content.length; i++) {
-				this.content[i] = nullNumber;
-			}
+		this.nullKeyValue = nullNumber;
+		for (var i = 0; i < this.content.length; i++) {
+			this.content[i] = nullNumber;
 		}
 		Object.preventExtensions(this);
 	};
@@ -34,16 +32,19 @@ var HashMapI;
 	HashMapI.prototype._findPosition = function(key) {
 		var pos = (key & this.capMask) << 1;
 		var content = this.content;
+		var ret = 0;
 		while (true) {
 			var keyGot = content[pos];
 			if (keyGot === this.nullNumber || keyGot === key) {
-				return pos;
+				ret = pos;
+				break;
 			}
 			pos += 2;
 			if (pos >= content.length) {
 				pos = 0;
 			}
 		}
+		return ret | 0;
 	};
 
 	HashMapI.prototype._expand = function() {
@@ -51,12 +52,10 @@ var HashMapI;
 		this.cap = 1 << this.capShift;
 		this.capMask = this.cap - 1;
 		var old = this.content;
-		var content = this.content = new Int32Array(this.cap << 1);
+		var content = this.content = new Array(this.cap << 1);
 		var imax;
-		if (this.nullNumber != 0) {
-			for (var i = 0; i < content.length; i++) {
-				content[i] = this.nullNumber;
-			}
+		for (var i = 0; i < content.length; i++) {
+			content[i] = this.nullNumber;
 		}
 		imax = old.length >> 1;
 		for (var i = 0; i < imax; i++) {
@@ -106,10 +105,9 @@ var HashMapI;
 
 	HashMapI.prototype.get = function(key) {
 		if (key === this.nullNumber) {
-			return this.nullKeyValue;
+			return this.nullKeyValue | 0;
 		} else {
-			var pos = this._findPosition(key);
-			return this.content[pos + 1];
+			return this.content[this._findPosition(key) + 1];
 		}
 	};
 

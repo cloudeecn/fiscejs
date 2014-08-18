@@ -49,8 +49,8 @@ public class FiScEJSListener implements ServletContextListener {
 		basePath.mkdirs();
 		try {
 			ClassConverterUtil.convert(paths(context, "/WEB-INF/runtime.jar"),
-					context.getRealPath("/fisce/rt.gzjson"),
-					context.getRealPath("/fisce/rt-vfs.gzjson"), false);
+					context.getRealPath("/fisce/rt.json.gz"),
+					context.getRealPath("/fisce/rt-vfs.json.gz"), false, true);
 
 			{
 				String aotOutputPath = context

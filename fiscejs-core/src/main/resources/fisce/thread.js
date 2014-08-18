@@ -613,7 +613,7 @@ var FyThread;
 							var data = this.context
 									.dumpStackTrace(this.currentThrowable);
 							this.context.log(2, "Uncaught exception occored");
-							for ( var idx in data) {
+							for (var idx = 0, maxIdx = data.length; idx < maxIdx; idx++) {
 								this.context.log(2, data[idx]);
 							}
 							message.type = FyMessage.message_thread_dead;

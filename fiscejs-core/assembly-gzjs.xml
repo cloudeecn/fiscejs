@@ -10,7 +10,7 @@
 	<includeBaseDirectory>false</includeBaseDirectory>
 	<files>
 		<file>
-			<source>${project.build.directory}/fiscejs-${project.version}.gzjs</source>
+			<source>${project.build.directory}/fiscejs-${project.version}.js.gz</source>
 			<outputDirectory>/</outputDirectory>
 		</file>
 	</files>

@@ -32,7 +32,7 @@ public class JSCompilerPlugin extends AbstractMojo {
 	private File zipFile;
 
 	/**
-	 * @parameter default-value="${project.build.directory}/compiled.gzjs"
+	 * @parameter default-value="${project.build.directory}/compiled"
 	 */
 	private File compiledFile;
 
@@ -41,9 +41,16 @@ public class JSCompilerPlugin extends AbstractMojo {
 	 */
 	private File[] extras;
 
+	/**
+	 * @parameter default-value=true
+	 */
+	private boolean gz;
+
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		try {
+			compiledFile = new File(compiledFile.getAbsolutePath()
+					+ (gz ? ".js.gz" : ".js"));
 			File outputDir = compiledFile.getParentFile();
 			if (!outputDir.exists()) {
 				outputDir.mkdirs();
@@ -79,8 +86,14 @@ public class JSCompilerPlugin extends AbstractMojo {
 			String output = compiler.toSource();
 			FileOutputStream fos = new FileOutputStream(compiledFile);
 			try {
-				GZIPOutputStream gos = new GZIPOutputStream(fos);
-				OutputStreamWriter writer = new OutputStreamWriter(gos, "utf-8");
+				GZIPOutputStream gos = null;
+				OutputStreamWriter writer;
+				if (gz) {
+					gos = new GZIPOutputStream(fos);
+					writer = new OutputStreamWriter(gos, "utf-8");
+				} else {
+					writer = new OutputStreamWriter(fos, "utf-8");
+				}
 				writer.write(output);
 				if (extras != null) {
 					char[] cbuf = new char[65536];
@@ -103,7 +116,9 @@ public class JSCompilerPlugin extends AbstractMojo {
 					}
 				}
 				writer.close();
-				gos.close();
+				if (gos != null) {
+					gos.close();
+				}
 			} finally {
 				try {
 					fos.close();
