@@ -117,7 +117,7 @@ var FyThreadManager;
 			// console.log(new Error().stack);
 			throw new FyException(FyConst.FY_EXCEPTION_MONITOR, "Thread #"
 					+ threadId + ": tries to exit monitor " + monitorId
-					+ " owned by #" + monitor.monitorOwnerId);
+					+ " owned by #" + owner);
 		}
 		heap.setObjectMonitorOwnerTimes(monitorId, heap
 				.getObjectMonitorOwnerTimes(monitorId)

@@ -636,7 +636,8 @@ var __FyAOTUtil;
 											+ ip
 											+ ","
 											+ (ip + 1)
-											+ ");thread.pendingNative=tmpMethod;return 0;");
+											+ ");thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+"+(stackSize
+													- tmpMethod.paramStackUsage - 1)+";return 0;");
 						}
 					} else {
 						code.push("thread.localToFrame(" + ip + "," + (ip + 1)
@@ -669,7 +670,8 @@ var __FyAOTUtil;
 									+ (stackSize - tmpMethod.paramStackUsage - 1)
 									+ ",ops);heap.endProtect();if(ops<=0) {return 0;}\n");
 					code.push("}else{\n");
-					code.push("thread.pendingNative=tmpMethod;return 0;\n");
+					code.push("thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+"+(stackSize
+													- tmpMethod.paramStackUsage - 1)+";return 0;\n");
 					code.push("}\n");
 					code.push("}else{\n");
 					code
@@ -747,7 +749,8 @@ var __FyAOTUtil;
 										+ ",ops);heap.endProtect();if(ops<=0){return 0;}");
 					} else {
 						code.push("thread.localToFrame(" + ip + "," + (ip + 1)
-								+ ");thread.pendingNative=tmpMethod;return 0;");
+								+ ");thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+"+(stackSize
+													- tmpMethod.paramStackUsage - 1)+";return 0;");
 					}
 				} else {
 					code
@@ -800,7 +803,8 @@ var __FyAOTUtil;
 										+ ",ops);heap.endProtect();if(ops<=0) {return 0;}");
 					} else {
 						code.push("thread.localToFrame(" + ip + "," + (ip + 1)
-								+ ");thread.pendingNative=tmpMethod;return 0;");
+								+ ");thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+"+(stackSize
+													- tmpMethod.paramStackUsage)+";return 0;");
 					}
 				} else {
 					code

@@ -18,7 +18,7 @@ var HashMapI;
 		this.cap = 1 << capShift;
 		this.capMask = this.cap - 1;
 		this.factor = factor;
-		this.content = new Array(this.cap << 1);
+		this.content = new Int32Array(this.cap << 1);
 		this.nullNumber = nullNumber;
 		this.size = 0;
 		this.contentsNullKey = false;
@@ -149,6 +149,13 @@ var HashMapI;
 			if (this.content[i] !== this.nullNumber) {
 				fun(this.content[i], this.content[i + 1], data);
 			}
+		}
+	};
+
+	HashMapI.prototype.clear = function() {
+		this.size = 0;
+		for (var i = 0; i < this.content.length; i++) {
+			this.content[i] = this.nullNumber;
 		}
 	};
 

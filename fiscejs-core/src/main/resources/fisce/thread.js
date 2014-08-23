@@ -35,8 +35,8 @@ var FyThread;
 	FyThread = function(context, threadId) {
 		this.context = context;
 		this.threadId = threadId;
-		this.stack = context.heap._heap;
-		this.floatStack = context.heap._heapFloat;
+		this.stack = context.heap.heap;
+		this.floatStack = context.heap.heapFloat;
 		this.bottom = context.heap.allocateStack(threadId) + 16;
 		this.top = (this.bottom + FyConfig.stackSize - 16) | 0;
 
@@ -57,11 +57,12 @@ var FyThread;
 		this.destroyPending = false;
 
 		this.pendingNative = undefined;
+		this.pendingNativeSP = 0;
 
 		/**
 		 * @returns {__FyLongOps}
 		 */
-		this.longOps = FyPortable.getLongOps(context.heap._heap,
+		this.longOps = FyPortable.getLongOps(context.heap.heap,
 				this.bottom - 16);
 		Object.preventExtensions(this);
 	};
@@ -246,6 +247,7 @@ var FyThread;
 				}
 			} else {
 				this.pendingNative = method;
+				this.pendingNativeSP = sp;
 				return 0;
 			}
 		} else {
@@ -301,6 +303,7 @@ var FyThread;
 				}
 			} else {
 				this.pendingNative = method;
+				this.pendingNativeSP = sp;
 				return 0;
 			}
 		} else {
@@ -640,8 +643,10 @@ var FyThread;
 			if (this.pendingNative !== undefined) {
 				message.type = FyMessage.message_invoke_native;
 				message.nativeMethod = this.pendingNative;
+				message.sp = this.pendingNativeSP;
 				message.thread = this;
 				this.pendingNative = undefined;
+				this.pendingNativeSP = 0;
 				ops = 0;
 			}
 			if (this.yield) {

@@ -10,26 +10,26 @@
 	<includeBaseDirectory>false</includeBaseDirectory>
 	<files>
 		<file>
-			<source>src/main/resources/fisce/profile.html</source>
+			<source>src/main/resources/profile.html</source>
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
-			<source>src/main/resources/fisce/gunzip.minjs</source>
+			<source>src/main/resources/gunzip.minjs</source>
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
-			<source>target/fiscejs-${project.version}.js.gz</source>
-			<destName>fisce.js.gz</destName>
+			<source>target/fiscejs-${project.version}.js</source>
+			<destName>fisce.js</destName>
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
-			<source>target/jsonp/rt-${fiscevm.version}.js.gz</source>
-			<destName>rt.js.gz</destName>
+			<source>target/jsonp/rt-${fiscevm.version}.js</source>
+			<destName>rt.js</destName>
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
-			<source>target/jsonp/rt-vfs-${fiscevm.version}.js.gz</source>
-			<destName>rt-vfs.js.gz</destName>
+			<source>target/jsonp/rt-vfs-${fiscevm.version}.js</source>
+			<destName>rt-vfs.js</destName>
 			<outputDirectory>/</outputDirectory>
 		</file>
 	</files>

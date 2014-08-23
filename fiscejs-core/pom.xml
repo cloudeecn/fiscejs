@@ -69,14 +69,14 @@
 						</configuration>
 					</execution>
 					<execution>
-						<id>assembly-gzjs</id>
+						<id>assembly-all</id>
 						<phase>package</phase>
 						<goals>
 							<goal>single</goal>
 						</goals>
 						<configuration>
 							<descriptors>
-								<descriptor>assembly-gzjs.xml</descriptor>
+								<descriptor>assembly-core-js.xml</descriptor>
 								<descriptor>assembly-json.xml</descriptor>
 								<descriptor>assembly-jsonp.xml</descriptor>
 								<descriptor>assembly-profile.xml</descriptor>
@@ -139,18 +139,6 @@
 						<configuration>
 							<zipFile>${project.build.directory}/assembly-js.zip</zipFile>
 							<compiledFile>${project.build.directory}/fiscejs-${project.version}</compiledFile>
-							<gz>true</gz>
-						</configuration>
-					</execution>
-					<execution>
-						<id>compile-test</id>
-						<phase>test-compile</phase>
-						<goals>
-							<goal>compile-zip</goal>
-						</goals>
-						<configuration>
-							<zipFile>${project.build.directory}/assembly-js.zip</zipFile>
-							<compiledFile>${project.build.directory}/test/fiscejs</compiledFile>
 							<gz>false</gz>
 						</configuration>
 					</execution>
@@ -168,7 +156,7 @@
 							</jars>
 							<outputFilename>rt-${fiscevm.version}</outputFilename>
 							<outputVFSFilename>rt-vfs-${fiscevm.version}</outputVFSFilename>
-							<gz>true</gz>
+							<gz>false</gz>
 						</configuration>
 					</execution>
 					<execution>
@@ -187,25 +175,6 @@
 							<outputFilename>rt-${fiscevm.version}</outputFilename>
 							<outputVFSFilename>rt-vfs-${fiscevm.version}</outputVFSFilename>
 							<jsonp>true</jsonp>
-							<gz>true</gz>
-						</configuration>
-					</execution>
-					<execution>
-						<id>convertp-test</id>
-						<phase>process-test-classes</phase>
-						<goals>
-							<goal>convert</goal>
-						</goals>
-						<configuration>
-							<jars>
-								<jar>${com.cirnoworks.fisce:fiscevm-runtime:jar}</jar>
-								<jar>${com.cirnoworks.fisce:fiscejs-classloader:jar}</jar>
-								<jar>${com.cirnoworks.fisce:fiscejs-runtime:jar}</jar>
-							</jars>
-							<outputDir>${project.build.directory}/test</outputDir>
-							<outputFilename>rt</outputFilename>
-							<outputVFSFilename>rt-vfs</outputVFSFilename>
-							<jsonp>false</jsonp>
 							<gz>false</gz>
 						</configuration>
 					</execution>

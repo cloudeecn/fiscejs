@@ -51,7 +51,7 @@
 		/**
 		 * @returns {Int32Array}
 		 */
-		var _heap = heap._heap;
+		var _heap = heap.heap;
 
 		/**
 		 * @returns {__FyLongOps}

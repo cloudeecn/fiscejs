@@ -900,7 +900,7 @@
 	 */
 	function risReadTo(context, thread, sp, ops) {
 		var heap = context.heap;
-		var _heap8 = heap._heap8;
+		var _heap8 = heap.heap8;
 		var stack = thread.stack;
 
 		var targetHandle = stack[sp + 1];

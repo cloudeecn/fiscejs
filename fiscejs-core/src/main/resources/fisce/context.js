@@ -711,7 +711,7 @@ var FyClassDef;
 			clazz = this.lookupClass(strings[constants[constant]]);
 			if (!clazz) {
 				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
-						constant.name);
+						constant);
 			}
 			constants[constant] = clazz.classId;
 			constants[constant + 2] = 1;
