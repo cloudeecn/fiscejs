@@ -938,7 +938,7 @@ __FyLongOps.prototype.shr = function(pos, ofs) {
 		stack[pos] >>= 31;
 	} else {
 		stack[pos + 1] = ((stack[pos + 1]) >>> ofs)
-				| (stack[pos] << (32 - pos));
+				| (stack[pos] << (32 - ofs));
 		stack[pos] >>= ofs;
 	}
 };
@@ -952,7 +952,7 @@ __FyLongOps.prototype.ushr = function(pos, ofs) {
 		stack[pos + 1] = stack[pos] >>> (ofs - 32);
 		stack[pos] = 0;
 	} else {
-		stack[pos + 1] = (stack[pos + 1] >>> ofs) | (stack[pos] << (32 - pos));
+		stack[pos + 1] = (stack[pos + 1] >>> ofs) | (stack[pos] << (32 - ofs));
 		stack[pos] >>>= ofs;
 	}
 };

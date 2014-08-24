@@ -73,6 +73,7 @@
 		hltest("EXCLUDE/fisce/test/HierarchyTest");
 		hltest("EXCLUDE/fisce/test/UnicodeTest");
 		hltest("EXCLUDE/fisce/test/HelloWorld");
+		hltest("EXCLUDE/fisce/test/RandomBoundTest");
 		hltest("EXCLUDE/fisce/test/Tester");
 		hltest("EXCLUDE/fisce/test/ArrayTest");
 		hltest("EXCLUDE/fisce/test/DebugPrintStreamTest");

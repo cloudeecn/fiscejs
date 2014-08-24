@@ -70,6 +70,7 @@ var FyHeap;
 		this.protectMode = false;
 		this.protectedObjects = [];
 		this.literials = {};
+		this.literialedObjs = [];
 		this.references = [];
 		this.toEnqueue = [];
 		this.stackPool = [];
@@ -726,8 +727,9 @@ var FyHeap;
 		}
 		f3 = performance.now();
 		/* Literals */
-		for ( var literal in this.literials) {
-			var handle = this.literials[literal];
+		imax = this.literialedObjs.length;
+		for (var i = 0; i < imax; i++) {
+			var handle = this.literialedObjs[i];
 			this.markObjectInitialUsing(handle);
 		}
 		f4 = performance.now();
@@ -1251,7 +1253,7 @@ var FyHeap;
 	 */
 	FyHeap.prototype.checkLength = function(handle, idx) {
 		if (idx < 0 || idx >= this.arrayLength(handle)) {
-			throw new FyException(FyConst.FY_EXCEPTION_IOOB, idx + "/"
+			throw new FyException(FyConst.FY_EXCEPTION_AIOOB, idx + "/"
 					+ this.arrayLength(handle));
 		}
 	};
@@ -1815,6 +1817,7 @@ var FyHeap;
 					.lookupClass(FyConst.FY_BASE_STRING));
 			this.fillString(handle, str);
 			this.literials[str] = handle;
+			this.literialedObjs.push(handle);
 		}
 		return handle;
 	};
