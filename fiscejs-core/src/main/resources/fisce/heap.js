@@ -771,9 +771,11 @@ var FyHeap;
 
 		if (processSoft) {
 			// console.log("process soft");
-			for ( var key in this.references) {
-				var reference = key | 0;
-				var referent = this.references[key];
+			var keys = Object.keys(this.references);
+			imax = keys.length;
+			for (var i = 0; i < imax; i++) {
+				var reference = keys[i] | 0;
+				var referent = this.references[reference];
 				var referenceClass = this.getObjectClass(reference);
 				console.log("reference #" + reference + " got");
 				if (referenceClass === undefined) {
@@ -1056,9 +1058,11 @@ var FyHeap;
 	};
 
 	FyHeap.prototype.gcEnqueueReferences = function() {
-		for ( var reference in this.references) {
+		var keys = Object.keys(this.references);
+		var imax = keys.length;
+		for (var i = 0; i < imax; i++) {
 			// phase1
-			// TODO optimize, remove for-in
+			var reference = keys[i] | 0;
 			var referent = this.references[reference];
 			if (!this.objectExists(referent)
 					|| (!this.marks.contains(referent) && ((this
@@ -1070,8 +1074,10 @@ var FyHeap;
 	};
 
 	FyHeap.prototype.gcEnqueueReferences2 = function() {
-		// TODO optimize remove for-in
-		for ( var reference in this.references) {
+		var keys = Object.keys(this.references);
+		var imax = keys.length;
+		for (var i = 0; i < imax; i++) {
+			var reference = keys[i] | 0;
 			var referent = this.references[reference];
 			// phase2
 			if (!this.objectExists(referent) && this.marks.contains(reference)) {
