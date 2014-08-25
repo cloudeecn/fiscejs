@@ -46,9 +46,9 @@ var FyHeap;
 	var MAX_GEN = 16;
 	var EDEN_SIZE = FyConfig.edenSize | 0;
 	var COPY_SIZE = FyConfig.copySize | 0;
-	
-//	var EMPTY_ARRAY=new 
-	
+
+	// var EMPTY_ARRAY=new
+
 	/**
 	 * We use one ArrayBuffer for all data
 	 * 
@@ -90,6 +90,7 @@ var FyHeap;
 		this.totalObjects = 0;
 
 		var _buffer = new ArrayBuffer(HEAP_SIZE << 2);
+		this._buffer = _buffer;
 		this.heap = new Int32Array(_buffer);
 		this.heap8 = new Int8Array(_buffer);
 		this.heap16 = new Int16Array(_buffer);
@@ -1939,21 +1940,18 @@ var FyHeap;
 
 	FyHeap.prototype.memcpy8 = function(from, to, len) {
 		// console.log("#memcpy8 from="+from+" to="+to+" len="+len);
-		for (var i = 0; i < len; i++) {
-			this.heap8[to + i] = this.heap8[from + i];
-		}
+		var src = new Int8Array(this._buffer, from, len);
+		this.heap8.set(src, to);
 	};
 	FyHeap.prototype.memcpy16 = function(from, to, len) {
 		// console.log("#memcpy16 from="+from+" to="+to+" len="+len);
-		for (var i = 0; i < len; i++) {
-			this.heap16[to + i] = this.heap16[from + i];
-		}
+		var src = new Int16Array(this._buffer, from << 1, len);
+		this.heap16.set(src, to);
 	};
 	FyHeap.prototype.memcpy32 = function(from, to, len) {
 		// console.log("#memcpy32 from="+from+" to="+to+" len="+len);
-		for (var i = 0; i < len; i++) {
-			this.heap[to + i] = this.heap[from + i];
-		}
+		var src = new Int32Array(this._buffer, from << 2, len);
+		this.heap.set(src, to);
 	};
 	/**
 	 * 
