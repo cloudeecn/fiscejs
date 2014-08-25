@@ -43,9 +43,12 @@ var FyHeap;
 
 	var MAX_OBJECTS = FyConfig.maxObjects | 0;
 	var HEAP_SIZE = FyConfig.heapSize;
-	var MAX_GEN = 8;
+	var MAX_GEN = 16;
 	var EDEN_SIZE = FyConfig.edenSize | 0;
 	var COPY_SIZE = FyConfig.copySize | 0;
+	
+//	var EMPTY_ARRAY=new 
+	
 	/**
 	 * We use one ArrayBuffer for all data
 	 * 
@@ -74,6 +77,15 @@ var FyHeap;
 		this.references = [];
 		this.toEnqueue = [];
 		this.stackPool = [];
+		/**
+		 * new objects allocated in eden(no objects will be allocated in copy
+		 * area directly)
+		 */
+		this.edenAllocated = [];
+		/**
+		 * notice: this is a key-value sparse array
+		 */
+		this.youngAllocated = new HashMapI(0, 16, 0.6);
 		this.nextHandle = 1;
 		this.totalObjects = 0;
 
@@ -98,7 +110,7 @@ var FyHeap;
 
 		this.gcInProgress = false;
 		this.oldReleasedSize = 0;
-		this.marks = new HashMapI(0, 12, 0.75);
+		this.marks = new HashMapI(0, 12, 0.6);
 		this.from = [];
 		Object.preventExtensions(this);
 	};
@@ -146,6 +158,7 @@ var FyHeap;
 				if (gced) {
 					throw new FyException(undefined, "Out of memory: handles");
 				} else {
+					this.gc(-1);
 					return this.fetchNextHandle(true);
 				}
 			}
@@ -324,6 +337,7 @@ var FyHeap;
 	 */
 	FyHeap.prototype.allocatePerm = function(size, gced) {
 		this.heapTop -= size;
+		this.memset32(this.heapTop, size, 0);
 		if (this.heapTop < this.oldPos) {
 			if (gced) {
 				throw new FyException(undefined, "Out of memory: perm");
@@ -345,6 +359,7 @@ var FyHeap;
 	 */
 	FyHeap.prototype.allocateStatic = function(size, gced) {
 		this.heapTop -= size;
+		this.memset32(this.heapTop, size, 0);
 		if (this.heapTop < this.oldPos) {
 			if (gced) {
 				throw new FyException(undefined, "Out of memory: perm");
@@ -392,6 +407,7 @@ var FyHeap;
 		} else {
 			ret = this.edenPos;
 			this.edenPos = newEdenPos;
+			this.memset32(ret, size, 0);
 			return ret;
 		}
 	};
@@ -418,6 +434,7 @@ var FyHeap;
 		} else {
 			ret = this.copyPos;
 			this.copyPos = newCopyPos;
+			this.memset32(ret, size, 0);
 			return ret;
 		}
 	};
@@ -443,6 +460,7 @@ var FyHeap;
 		} else {
 			ret = this.oldPos;
 			this.oldPos = newOldPos;
+			this.memset32(ret, size, 0);
 			return ret;
 		}
 	};
@@ -480,7 +498,7 @@ var FyHeap;
 
 		switch (bid) {
 		case 0/* BID_AUTO */:
-			if (size > ((COPY_SIZE) >> 1)) {
+			if (size > ((COPY_SIZE))) {
 				// allocate in old directly
 				this.createObject(handle, this.allocateInOld(size
 						+ OBJ_META_SIZE, 0));
@@ -494,16 +512,19 @@ var FyHeap;
 				this.memset32(this.heap[handle] + 1, size + OBJ_META_SIZE - 1,
 						0);
 				this.setObjectBId(handle, BID_EDEN);
+				this.edenAllocated.push(handle);
 			}
 			break;
 		case 1/* BID_EDEN */:
 			// TODO check if we need to set obj->object_data->position
 			this.createObject(handle, this.allocateInEden(size + OBJ_META_SIZE,
 					1));
+			this.edenAllocated.push(handle);
 			break;
 		case 2/* BID_YOUNG */:
 			this.createObject(handle, this.allocateInCopy(size + OBJ_META_SIZE,
 					1));
+			this.youngAllocated.put(handle, 1);
 			break;
 		case 3/* BID_OLD */:
 			this.createObject(handle, this.allocateInOld(size + OBJ_META_SIZE,
@@ -915,11 +936,7 @@ var FyHeap;
 		// console.log("#Release " + handle + " ("
 		// + _getObjectClass(handle).name + ")");
 		// }
-		if (this.getObjectBId(handle) === BID_OLD) {
-			this.oldReleasedSize += this.getSizeFromObject(handle);
-		}
 		delete this.references[handle];
-		this.memset32(this.heap[handle], this.getSizeFromObject(handle), 0);
 		this.heap[handle] = 0;
 	};
 
@@ -960,78 +977,6 @@ var FyHeap;
 				+ (newPos - this.oldBottom));
 		this.oldPos = newPos;
 		this.oldReleasedSize = 0;
-	};
-
-	/**
-	 * @param {Number}
-	 *            handle
-	 */
-	FyHeap.prototype.moveToOld = function(handle) {
-		var size = this.getSizeFromObject(handle);
-		if (this.oldPos + size >= this.heapTop) {
-			this.compatOld();
-			if (this.oldPos + size >= this.heapTop) {
-				throw new FyException(undefined, "Old area full");
-			}
-		}
-		// Don't gc here, as this method is called in gc process
-		var pos = this.oldPos;
-		this.oldPos += size;
-		this.memcpy32(this.heap[handle], pos, size);
-		this.memset32(this.heap[handle], size, 0);
-		this.heap[handle] = pos;
-		this.heap[pos] = handle;
-		this.setObjectBId(handle, BID_OLD);
-	};
-
-	/**
-	 * @param {Number}
-	 *            handle
-	 */
-	FyHeap.prototype.moveToYoung = function(handle) {
-		var size = this.getSizeFromObject(handle);
-		if (this.copy2Pos + size >= this.copy2Top) {
-			this.moveToOld(handle);
-		} else {
-			var pos = this.copy2Pos;
-			this.copy2Pos += size;
-			this.memcpy32(this.heap[handle], pos, size);
-			this.memset32(this.heap[handle], size, 0);
-			this.heap[handle] = pos;
-			this.heap[pos] = handle;
-			this.setObjectBId(handle, BID_YOUNG);
-		}
-	};
-
-	FyHeap.prototype.swapCopy = function() {
-		var tmp;
-
-		tmp = this.copyBottom;
-		this.copyBottom = this.copy2Bottom;
-		this.copy2Bottom = tmp;
-
-		tmp = this.copyTop;
-		this.copyTop = this.copy2Top;
-		this.copy2Top = tmp;
-
-		this.copyPos = this.copy2Pos;
-		this.copy2Pos = this.copy2Bottom;
-	};
-
-	FyHeap.prototype.move = function(handle) {
-		var gen = this.getObjectGen(handle);
-		if (gen > MAX_GEN) {
-			// console.log("#GC move #" + handle + " to old");
-			this.moveToOld(handle);
-		} else {
-			// console.log("#GC move #" + handle + " to young");
-			this.setObjectGen(handle, gen + 1);
-			this.moveToYoung(handle);
-		}
-		if (this.getObjectClass(handle) === undefined) {
-			throw new FyException(undefined,
-					"Fatal error occored in gc process...");
-		}
 	};
 
 	FyHeap.prototype.validateObjects = function() {
@@ -1086,26 +1031,161 @@ var FyHeap;
 		}
 	};
 
-	FyHeap.prototype.gcMove = function() {
-		for (var i = 1; i < MAX_OBJECTS; i++) {
-			if (this.objectExists(i)) {
-				if (this.marks.contains(i)) {
-					switch (this.getObjectBId(i)) {
-					case 1/* BID_EDEN */:
-					case 2/* BID_YOUNG */:
-						this.move(i);
-						break;
-					case 3/* BID_OLD */:
-						break;
-					default:
-						throw new FyException(undefined, "Illegal bid "
-								+ this.getObjectBId(i) + " for object #" + i);
-					}
-				} else {
-					this.release(i);
-				}
+	/**
+	 * @param {Number}
+	 *            handle
+	 */
+	FyHeap.prototype.moveToOld = function(handle) {
+		var moved = false;
+		var size = this.getSizeFromObject(handle);
+		if (this.oldPos + size >= this.heapTop) {
+			this.compatOld();
+			if (this.oldPos + size >= this.heapTop) {
+				throw new FyException(undefined, "Old area full");
 			}
 		}
+		// Don't gc here, as this method is called in gc process
+		var pos = this.oldPos;
+		this.oldPos += size;
+		this.memcpy32(this.heap[handle], pos, size);
+		// this.memset32(this.heap[handle], size, 0);
+		this.heap[handle] = pos;
+		this.heap[pos] = handle;
+		if (this.getObjectBId(handle) === BID_YOUNG) {
+			moved = true;
+		}
+		this.setObjectBId(handle, BID_OLD);
+		return moved;
+	};
+
+	/**
+	 * @param {Number}
+	 *            handle
+	 */
+	FyHeap.prototype.moveToYoung = function(handle) {
+		var moved = false;
+		if (this.getObjectClass(handle) === undefined) {
+			throw new FyException(undefined, "Illegal class id #"
+					+ this.getObjectClassId(handle) + " for object #" + handle);
+		}
+		var size = this.getSizeFromObject(handle);
+		if (this.copy2Pos + size >= this.copy2Top) {
+			moved = this.moveToOld(handle);
+		} else {
+			var pos = this.copy2Pos;
+			this.copy2Pos += size;
+			this.memcpy32(this.heap[handle], pos, size);
+			// this.memset32(this.heap[handle], size, 0);
+			this.heap[handle] = pos;
+			this.heap[pos] = handle;
+			if (this.getObjectBId(handle) === BID_EDEN) {
+				this.setObjectBId(handle, BID_YOUNG);
+				this.youngAllocated.put(handle, 1);
+				moved = true;
+			}
+		}
+		return moved;
+	};
+
+	FyHeap.prototype.swapCopy = function() {
+		var tmp;
+
+		tmp = this.copyBottom;
+		this.copyBottom = this.copy2Bottom;
+		this.copy2Bottom = tmp;
+
+		tmp = this.copyTop;
+		this.copyTop = this.copy2Top;
+		this.copy2Top = tmp;
+
+		this.copyPos = this.copy2Pos;
+		this.copy2Pos = this.copy2Bottom;
+	};
+
+	FyHeap.prototype.move = function(handle) {
+		var moved = false;
+		var gen = this.getObjectGen(handle);
+		if (gen > MAX_GEN) {
+			// console.log("#GC move #" + handle + " to old");
+			moved = this.moveToOld(handle);
+		} else {
+			// console.log("#GC move #" + handle + " to young");
+			this.setObjectGen(handle, gen + 1);
+			moved = this.moveToYoung(handle);
+		}
+		if (this.getObjectClass(handle) === undefined) {
+			throw new FyException(undefined,
+					"Fatal error occored in gc process...");
+		}
+		return moved;
+	};
+
+	/**
+	 * @param {FyHeap}
+	 *            heap;
+	 */
+	function iteratorMove(key, value, heap) {
+		if (heap.marks.contains(key)) {
+			return heap.move(key);
+		} else {
+			heap.release(key);
+			return true;
+		}
+	}
+
+	FyHeap.prototype.gcMove = function() {
+		var imax;
+		var i;
+		var begin;
+		var moved, moveTime, releaseTime;
+		var t = performance.now();
+		imax = this.youngAllocated.iterate(iteratorMove, this);
+		this.context.log(1, imax + " young object scanned in "
+				+ (performance.now() - t) + "ms");
+
+		t = performance.now();
+		imax = this.edenAllocated.length;
+		moved = 0;
+		moveTime = 0;
+		releaseTime = 0;
+		for (i = 0; i < imax; i++) {
+			var handle = this.edenAllocated[i];
+			if (this.marks.contains(handle)) {
+				moved++;
+				begin = performance.now();
+				this.move(handle);
+				moveTime += (performance.now()) - begin;
+			} else {
+				begin = performance.now();
+				this.release(handle);
+				releaseTime += (performance.now()) - begin;
+			}
+		}
+		this.edenAllocated.length = 0;
+		this.context.log(1, imax + " eden object scanned in "
+				+ (performance.now() - t) + "ms, " + moved
+				+ " moved, moveTime=" + moveTime + ", releaseTime="
+				+ releaseTime);
+
+		// for (var i = 1; i < MAX_OBJECTS; i++) {
+		// if (this.objectExists(i)) {
+		// if (this.marks.contains(i)) {
+		// switch (this.getObjectBId(i)) {
+		// case 1/* BID_EDEN */:
+		// case 2/* BID_YOUNG */:
+		// this.move(i);
+		// break;
+		// case 3/* BID_OLD */:
+		// break;
+		// default:
+		// throw new FyException(undefined, "Illegal bid "
+		// + this.getObjectBId(i) + " for object #" + i);
+		// }
+		// } else {
+		// this.release(i);
+		// }
+		// }
+		// }
 		this.edenPos = this.edenBottom;
 		this.swapCopy();
 	};
@@ -1117,8 +1197,9 @@ var FyHeap;
 		if (this.gcInProgress) {
 			throw new FyException(undefined, "Gc should not be reentried");
 		}
-		if (requiredSize + this.oldPos + this.copyPos - this.copyBottom
-				+ this.edenPos - this.edenBottom >= this.heapTop) {
+		if (requiredSize < 0
+				|| requiredSize + this.oldPos + this.copyPos - this.copyBottom
+						+ this.edenPos - this.edenBottom >= this.heapTop) {
 			memoryStressed = true;
 		}
 		this.context.log(1, "#GC "

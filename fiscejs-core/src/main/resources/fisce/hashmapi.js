@@ -1,5 +1,13 @@
 var HashMapI;
 (function() {
+	"use strict";
+
+	function directHash(i) {
+		return i;
+	}
+
+	var hash = directHash;
+
 	/**
 	 * @param {Number}
 	 *            capShift
@@ -7,65 +15,49 @@ var HashMapI;
 	 *            factor
 	 */
 	HashMapI = function(nullNumber, capShift, factor) {
-		nullNumber = nullNumber | 0;
-		if (!capShift) {
-			capShift = 4;
-		}
-		if (!factor) {
-			factor = 0.75;
-		}
+		this.nullNumber = nullNumber | 0;
 		this.capShift = capShift | 0;
-		this.cap = 1 << capShift;
+		this.cap = 1 << this.capShift;
 		this.capMask = this.cap - 1;
-		this.factor = factor;
-		this.content = new Int32Array(this.cap << 1);
-		this.nullNumber = nullNumber;
+		this.factor = Number(factor || 0.75);
+
+		this.backend = new Array(this.cap);
 		this.size = 0;
-		this.contentsNullKey = false;
-		this.nullKeyValue = nullNumber;
-		for (var i = 0; i < this.content.length; i++) {
-			this.content[i] = nullNumber;
-		}
+		// this.expanding = false;
+		this.pendingRemove = [];
 		Object.preventExtensions(this);
 	};
 
-	HashMapI.prototype._findPosition = function(key) {
-		var pos = (key & this.capMask) << 1;
-		var content = this.content;
-		var ret = 0;
-		while (true) {
-			var keyGot = content[pos];
-			if (keyGot === this.nullNumber || keyGot === key) {
-				ret = pos;
-				break;
-			}
-			pos += 2;
-			if (pos >= content.length) {
-				pos = 0;
-			}
-		}
-		return ret | 0;
-	};
+	HashMapI.prototype.hash = directHash;
 
-	HashMapI.prototype._expand = function() {
+	HashMapI.prototype.expand = function() {
+		// if (this.expanding) {
+		// throw new FyException(undefined,
+		// "HashMapI.expand should not be reentried");
+		// }
+		// this.expanding = true;
 		this.capShift++;
-		this.cap = 1 << this.capShift;
+		this.cap <<= 1;
 		this.capMask = this.cap - 1;
-		var old = this.content;
-		var content = this.content = new Array(this.cap << 1);
-		var imax;
-		for (var i = 0; i < content.length; i++) {
-			content[i] = this.nullNumber;
-		}
-		imax = old.length >> 1;
-		for (var i = 0; i < imax; i++) {
-			var key = old[i << 1];
-			if (key !== this.nullNumber) {
-				var pos = this._findPosition(key);
-				content[pos] = key;
-				content[pos + 1] = old[(i << 1) + 1];
+		console.log("###EXPAND to: " + this.cap);
+		var oldSize = this.size;
+		var backend = this.backend;
+		this.clear();
+		for (var i = backend.length; i--;) {
+			var arr = backend[i];
+			if (arr !== undefined) {
+				var al = arr.length;
+				for (var j = 0; j < al; j += 2) {
+					var key = arr[j];
+					var value = arr[j + 1];
+					this.put(key, value);
+				}
 			}
 		}
+		// if (this.size !== oldSize) {
+		// throw new FyException(undefined, "Assertion, HashMapI.expand");
+		// }
+		// this.expanding = false;
 	};
 
 	/**
@@ -77,86 +69,136 @@ var HashMapI;
 	 * @returns {Number}
 	 */
 	HashMapI.prototype.put = function(key, value) {
-		if (key === this.nullNumber) {
-			if (!this.contentsNullKey) {
-				this.contentsNullKey = true;
-				this.size++;
-				this.nullKeyValue = value;
-				return this.nullNumber;
-			} else {
-				var old = this.nullKeyValue;
-				this.nullKeyValue = value;
-				return old;
-			}
-		} else {
-			if (this.size >= (this.content.length >> 1) * this.factor) {
-				this._expand();
-			}
-			var pos = this._findPosition(key);
-			var old = this.content[pos + 1];
-			if (this.content[pos] === this.nullNumber) {
-				this.size++;
-				this.content[pos] = key;
-			}
-			this.content[pos + 1] = value;
-			return old;
+		// if (key !== key | 0 || value !== value | 0) {
+		// throw new FyException(undefined,
+		// "Assertion exception, HashMapI.put");
+		// }
+		var pos = this.hash(key | 0) & this.capMask;
+		var arr = this.backend[pos];
+		if (arr === undefined) {
+			arr = this.backend[pos] = [];
 		}
+		var al = arr.length;
+		for (var i = 0; i < al; i += 2) {
+			if (arr[i] === key) {
+				var ret = arr[i + 1];
+				arr[i + 1] = value | 0;
+				return ret;
+			}
+		}
+		arr.push(key | 0);
+		arr.push(value | 0);
+		this.size++;
+		if (this.size > (this.cap * this.factor) | 0) {
+			this.expand();
+		}
+		return this.nullNumber;
 	};
 
 	HashMapI.prototype.get = function(key) {
-		if (key === this.nullNumber) {
-			return this.nullKeyValue | 0;
+		// if (key !== key | 0) {
+		// throw new FyException(undefined,
+		// "Assertion exception, HashMapI.get");
+		// }
+		var pos = this.hash(key | 0) & this.capMask;
+		var arr = this.backend[pos];
+		if (arr === undefined) {
+			return this.nullNumber;
 		} else {
-			return this.content[this._findPosition(key) + 1];
+			var al = arr.length;
+			for (var i = 0; i < al; i += 2) {
+				if (arr[i] === key) {
+					return arr[i + 1];
+				}
+			}
+			return this.nullNumber;
 		}
 	};
 
 	HashMapI.prototype.remove = function(key) {
-		if (key === this.nullNumber) {
-			if (this.contentsNullKey) {
-				var old = this.nullKeyValue;
-				this.nullKeyValue = this.nullNumber;
-				this.size--;
-				return old;
-			} else {
-				return this.nullNumber;
-			}
+		// if (key !== key | 0) {
+		// throw new FyException(undefined,
+		// "Assertion exception, HashMapI.remove");
+		// }
+		var pos = this.hash(key | 0) & this.capMask;
+		var arr = this.backend[pos];
+		if (arr === undefined) {
+			return this.nullNumber;
 		} else {
-			var pos = this._findPosition(key);
-			if (this.content[pos] !== this.nullNumber) {
-				this.size--;
-				var ret = this.content[pos + 1];
-				this.content[pos] = this.nullNumber;
-				this.content[pos + 1] = this.nullNumber;
-				return ret;
-			} else {
-				return this.nullNumber;
+			var al = arr.length;
+			for (var i = 0; i < al; i += 2) {
+				if (arr[i] === key) {
+					var ret = arr[i + 1];
+					arr.splice(i, 2);
+					this.size--;
+					return ret;
+				}
 			}
+			return this.nullNumber;
 		}
 	};
 
 	HashMapI.prototype.contains = function(key) {
-		var pos = this._findPosition(key);
-		return this.content[pos] !== this.nullNumber;
+		// if (key !== key | 0) {
+		// throw new FyException(undefined,
+		// "Assertion exception, HashMapI.contains");
+		// }
+		var pos = this.hash(key | 0) & this.capMask;
+		var arr = this.backend[pos];
+		if (arr === undefined) {
+			return false;
+		} else {
+			var al = arr.length;
+			for (var i = 0; i < al; i += 2) {
+				if (arr[i] === key) {
+					return true;
+				}
+			}
+			return false;
+		}
 	};
 
 	HashMapI.prototype.iterate = function(fun, data) {
-		var imax = this.content.length;
-		if (this.contentsNullKey) {
-			fun(this.nullNumber, this.nullKeyValue, data);
-		}
-		for (var i = 0; i < imax; i += 2) {
-			if (this.content[i] !== this.nullNumber) {
-				fun(this.content[i], this.content[i + 1], data);
+		var count = 0;
+		var size = this.size;
+		var backend = this.backend;
+		// var k = [];
+		for (var i = backend.length; i--;) {
+			var arr = backend[i];
+			if (arr !== undefined) {
+				var al = arr.length;
+				for (var j = 0; j < al; j += 2) {
+					var key = arr[j];
+					var value = arr[j + 1];
+					count++;
+					if (fun(key, value, data)) {
+						arr.splice(j, 2);
+						this.size--;
+						j -= 2;
+						al -= 2;
+					}
+				}
 			}
 		}
+		// if (count !== this.size) {
+		// throw new FyException(undefined,
+		// "Assertion exception, HashMapI.iterate, count=" + count
+		// + " size=" + this.size);
+		// }
+		// for (var i = 0; i < k.length; i++) {
+		// this.remove(k[i]);
+		// }
+		// if (this.size !== size - k.length) {
+		// throw new FyException(undefined,
+		// "Assertion exception, HashMapI.iterate, count=" + count
+		// + " size=" + this.size + " keys removed=" + k);
+		// }
+		return count;
 	};
 
 	HashMapI.prototype.clear = function() {
+		this.backend = new Array(this.cap);
 		this.size = 0;
-		for (var i = 0; i < this.content.length; i++) {
-			this.content[i] = this.nullNumber;
-		}
 	};
 
 })();

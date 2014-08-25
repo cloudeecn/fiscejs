@@ -60,9 +60,11 @@ var FyLookupSwitchTarget;
 	 * copy all strings and numbers from src into dest
 	 */
 	__FyUtils.prototype.simpleClone = function(src, dest, keys) {
+		var i, imax;
 		if (keys) {
-			for ( var keyId in keys) {
-				var key = keys[keyId];
+			imax = keys.length;
+			for (i = 0; i < imax; i++) {
+				var key = keys[i];
 				var value = src[key];
 				if (value === undefined) {
 				} else if (typeof value === "string"
@@ -74,7 +76,10 @@ var FyLookupSwitchTarget;
 				}
 			}
 		} else {
-			for ( var key in src) {
+			var keys = Object.keys(src);
+			imax = keys.length;
+			for (i = 0; i < imax; i++) {
+				var key = keys[i];
 				var value = src[key];
 				if (typeof value === "string" || typeof value === "number") {
 					dest[key] = value;
