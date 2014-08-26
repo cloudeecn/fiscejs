@@ -60,7 +60,6 @@ var FyClass;
 		this.phase = 0;
 
 		/* Filled by class loader */
-		this.needFinalize = false;
 		this.classId = 0;
 		this.sizeAbs = 0;
 		this.ofsInHeap = 0;

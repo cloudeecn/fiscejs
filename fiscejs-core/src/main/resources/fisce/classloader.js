@@ -487,7 +487,7 @@ var FyClassLoader;
 				if (finalizeMethod && finalizeMethod.code.length > 3) {
 					// console.log("Class " + clazz.name + " requires
 					// finalize");
-					clazz.needFinalize = true;
+					clazz.accessFlags |= FyConst.FY_ACC_NEED_FINALIZE;
 				}
 
 			} else {

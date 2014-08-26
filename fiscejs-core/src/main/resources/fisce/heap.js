@@ -26,13 +26,9 @@ var FyHeap;
 	var BID_YOUNG = 2;
 	var BID_OLD = 3;
 
-	var FIN_NOT_FINALIZED = 0;
-	var FIN_IN_FINALIZE_ARRAY = 1;
-	var FIN_FINALIZED = 2;
-
 	var OBJ_HANDLE = 0;
 	var OBJ_CLASS_ID = 1;
-	var OBJ_FINALIZE_STATUS = 2;
+	
 	var OBJ_BID = 3;
 	var OBJ_GEN = 4;
 	var OBJ_MULTI_USAGE = 5;
@@ -47,7 +43,8 @@ var FyHeap;
 	var EDEN_SIZE = FyConfig.edenSize | 0;
 	var COPY_SIZE = FyConfig.copySize | 0;
 
-	// var EMPTY_ARRAY=new
+	var EMPTY_BUFFER = new ArrayBuffer(65536);
+	var EMPTY_ARRAY_32 = new Int32Array(EMPTY_BUFFER);
 
 	/**
 	 * We use one ArrayBuffer for all data
@@ -74,7 +71,7 @@ var FyHeap;
 		this.protectedObjects = [];
 		this.literials = {};
 		this.literialedObjs = [];
-		this.references = [];
+		this.references = new HashMapI(0, 6, 0.6);
 		this.toEnqueue = [];
 		this.stackPool = [];
 		/**
@@ -82,10 +79,8 @@ var FyHeap;
 		 * area directly)
 		 */
 		this.edenAllocated = [];
-		/**
-		 * notice: this is a key-value sparse array
-		 */
-		this.youngAllocated = new HashMapI(0, 16, 0.6);
+		this.youngAllocated = new HashMapI(0, 12, 0.8);
+		this.finalizeScanNeed = new HashMapI(0, 12, 0.8);
 		this.nextHandle = 1;
 		this.totalObjects = 0;
 
@@ -177,9 +172,19 @@ var FyHeap;
 	 *            value
 	 */
 	FyHeap.prototype.memset32 = function(pos, size, value) {
-		for (var i = size; i--;) {
-			this.heap[pos + i] = value;
+		if (pos + size > this.heap.length) {
+			throw new FyException(undefined, "Heap index out of bound " + pos
+					+ "(+" + size + ")/" + this.heap.length);
 		}
+		var chunks = size >>> 14;
+		var remaining = size & 16383;
+		// this.context.log(1, "memset " + chunks + " chunks, " + remaining
+		// + " ints");
+		for (var i = 0; i < chunks; i++) {
+			this.heap.set(EMPTY_ARRAY_32, pos + (i << 14));
+		}
+		var arr = new Int32Array(EMPTY_BUFFER, 0, remaining);
+		this.heap.set(arr, pos + (chunks << 14));
 	};
 
 	FyHeap.prototype.beginProtect = function() {
@@ -260,14 +265,6 @@ var FyHeap;
 		this.setObjectClassId(handle, clazz.classId);
 	};
 
-	FyHeap.prototype.getObjectFinalizeStatus = function(handle) {
-		return this.heap[this.heap[handle] + OBJ_FINALIZE_STATUS];
-	};
-
-	FyHeap.prototype.setObjectFinalizeStatus = function(handle, value) {
-		this.heap[this.heap[handle] + OBJ_FINALIZE_STATUS] = value;
-	};
-
 	FyHeap.prototype.getObjectMultiUsageData = function(handle) {
 		return this.heap[this.heap[handle] + OBJ_MULTI_USAGE];
 	};
@@ -290,14 +287,6 @@ var FyHeap;
 
 	FyHeap.prototype.setObjectMonitorOwnerTimes = function(handle, value) {
 		this.heap[this.heap[handle] + OBJ_MONITOR_OWNER_TIME] = value;
-	};
-
-	FyHeap.prototype.getObjectFinalizeStatus = function(handle) {
-		return this.heap[this.heap[handle] + OBJ_FINALIZE_STATUS];
-	};
-
-	FyHeap.prototype.setObjectFinalizeStatus = function(handle, value) {
-		this.heap[this.heap[handle] + OBJ_FINALIZE_STATUS] = value;
 	};
 
 	FyHeap.prototype.getObjectBId = function(handle) {
@@ -536,6 +525,9 @@ var FyHeap;
 		}
 		this.setObjectMultiUsageData(handle, multiUsageData);
 		this.setObjectClassId(handle, clazz.classId);
+		if (clazz.accessFlags & FyConst.FY_ACC_NEED_FINALIZE) {
+			this.finalizeScanNeed.put(handle, 1);
+		}
 		if (this.protectMode) {
 			this.protectedObjects.push(handle);
 		}
@@ -642,26 +634,25 @@ var FyHeap;
 		reference = reference | 0;
 		if (reference === 0) {
 			throw new FyException(undefined, "Reference is null");
-		} else if (this.references[reference] !== undefined) {
-			throw new FyException(undefined, "Reference #" + reference
-					+ " is already registered with referent #"
-					+ this.references[reference]);
 		} else {
 			// console.log("Register reference #" + reference + " "
 			// + _getObjectClass(reference).name + " to referent #"
 			// + referent);
-			this.references[reference] = referent;
+			var oldReferent = this.references.put(reference, referent);
+			if (oldReferent !== 0) {
+				throw new FyException(undefined, "Reference #" + reference
+						+ " is already registered with referent #"
+						+ oldReferent);
+			}
 		}
 	};
 
 	FyHeap.prototype.clearReference = function(reference) {
-		reference = reference | 0;
-		delete this.references[reference];
+		this.references.remove(reference | 0);
 	};
 
 	FyHeap.prototype.getReferent = function(reference) {
-		reference = reference | 0;
-		return this.references[reference] | 0;
+		return this.references.get(reference | 0);
 	};
 
 	/**
@@ -692,6 +683,30 @@ var FyHeap;
 		// }
 		this.from.push(handle);
 	};
+
+	/**
+	 * @param {Number}
+	 *            reference
+	 * @param {Number}
+	 *            referent
+	 * @param {FyHeap}
+	 *            heap
+	 */
+	function markSoftReference(reference, referent, heap) {
+		var referenceClass = heap.getObjectClass(reference);
+		// console.log("reference #" + reference + " got");
+		if (referenceClass === undefined) {
+			throw new FyException(undefined, "Can't get class for reference #"
+					+ reference);
+		}
+		if (referenceClass.accessFlags & FyConst.FY_ACC_SOFT_REF) {
+			// console.log("reference #" + reference + "(" +
+			// referent
+			// + ") is added as soft ref");
+			heap.markObjectInitialUsing(referent);
+		}
+		return false;
+	}
 
 	/**
 	 * 
@@ -793,24 +808,7 @@ var FyHeap;
 
 		if (processSoft) {
 			// console.log("process soft");
-			var keys = Object.keys(this.references);
-			imax = keys.length;
-			for (var i = 0; i < imax; i++) {
-				var reference = keys[i] | 0;
-				var referent = this.references[reference];
-				var referenceClass = this.getObjectClass(reference);
-				console.log("reference #" + reference + " got");
-				if (referenceClass === undefined) {
-					throw new FyException(undefined,
-							"Can't get class for reference #" + reference);
-				}
-				if (referenceClass.accessFlags & FyConst.FY_ACC_SOFT_REF) {
-					// console.log("reference #" + reference + "(" +
-					// referent
-					// + ") is added as soft ref");
-					this.markObjectInitialUsing(referent);
-				}
-			}
+			this.references.iterate(markSoftReference, this);
 		}
 		f7 = performance.now();
 		this.context.log(0, [ (f2 - f1), (f3 - f2), (f4 - f3), (f5 - f4),
@@ -824,7 +822,7 @@ var FyHeap;
 		reference = reference | 0;
 		// console.log("#clear and enqueue #" + reference);
 		this.toEnqueue.push(reference);
-		delete this.references[reference];
+		this.references.remove(reference);
 	};
 
 	FyHeap.prototype.scanRef = function() {
@@ -937,7 +935,13 @@ var FyHeap;
 		// console.log("#Release " + handle + " ("
 		// + _getObjectClass(handle).name + ")");
 		// }
-		delete this.references[handle];
+		var access = this.getObjectClass(handle).accessFlags;
+		if (access & FyConst.FY_ACC_REF) {
+			this.references.remove(handle);
+		}
+		if (access & FyConst.FY_ACC_NEED_FINALIZE) {
+			this.finalizeScanNeed.remove(handle);
+		}
 		this.heap[handle] = 0;
 	};
 
@@ -991,45 +995,43 @@ var FyHeap;
 		}
 	};
 
-	FyHeap.prototype.gcEnqueueFinalize = function() {
-		for (var i = 1; i < MAX_OBJECTS; i++) {
-			if (this.objectExists(i) && !this.marks.contains(i)
-					&& this.getObjectClass(i).needFinalize
-					&& this.getObjectFinalizeStatus(i) == FIN_NOT_FINALIZED) {
-				this.toFinalize.push(i);
-				this.from.push(i);
-				this.setObjectFinalizeStatus(i, FIN_IN_FINALIZE_ARRAY);
-			}
+	function enqueueFinalize(handle, value, heap) {
+		if (!heap.marks.contains(handle)) {
+			heap.toFinalize.push(handle);
+			heap.from.push(handle);
+			return true;
+		} else {
+			return false;
 		}
+	}
+
+	FyHeap.prototype.gcEnqueueFinalize = function() {
+		this.finalizeScanNeed.iterate(enqueueFinalize, this);
 	};
+
+	function enqueueReferencePhase1(reference, referent, heap) {
+		if (!heap.objectExists(referent)
+				|| (!heap.marks.contains(referent) && ((heap
+						.getObjectClass(reference).accessFlags & FyConst.FY_ACC_PHANTOM_REF) === 0))) {
+			heap.from.push(reference);
+			heap.cleanAndEnqueue(reference);
+		}
+		return false;
+	}
 
 	FyHeap.prototype.gcEnqueueReferences = function() {
-		var keys = Object.keys(this.references);
-		var imax = keys.length;
-		for (var i = 0; i < imax; i++) {
-			// phase1
-			var reference = keys[i] | 0;
-			var referent = this.references[reference];
-			if (!this.objectExists(referent)
-					|| (!this.marks.contains(referent) && ((this
-							.getObjectClass(reference).accessFlags & FyConst.FY_ACC_PHANTOM_REF) === 0))) {
-				this.from.push(reference | 0);
-				this.cleanAndEnqueue(reference | 0);
-			}
-		}
+		this.references.iterate(enqueueReferencePhase1, this);
 	};
 
-	FyHeap.prototype.gcEnqueueReferences2 = function() {
-		var keys = Object.keys(this.references);
-		var imax = keys.length;
-		for (var i = 0; i < imax; i++) {
-			var reference = keys[i] | 0;
-			var referent = this.references[reference];
-			// phase2
-			if (!this.objectExists(referent) && this.marks.contains(reference)) {
-				this.cleanAndEnqueue(reference);
-			}
+	function enqueueReferencePhase2(reference, referent, heap) {
+		if (!heap.objectExists(referent) && heap.marks.contains(reference)) {
+			heap.cleanAndEnqueue(reference);
 		}
+		return false;
+	}
+
+	FyHeap.prototype.gcEnqueueReferences2 = function() {
+		this.references.iterate(enqueueReferencePhase2, this);
 	};
 
 	/**
@@ -1137,36 +1139,26 @@ var FyHeap;
 	FyHeap.prototype.gcMove = function() {
 		var imax;
 		var i;
-		var begin;
-		var moved, moveTime, releaseTime;
+
 		var t = performance.now();
 		imax = this.youngAllocated.iterate(iteratorMove, this);
 		this.context.log(1, imax + " young object scanned in "
-				+ (performance.now() - t) + "ms");
+				+ (performance.now() - t) + "ms (backend size="
+				+ this.youngAllocated.cap + ")");
 
 		t = performance.now();
 		imax = this.edenAllocated.length;
-		moved = 0;
-		moveTime = 0;
-		releaseTime = 0;
 		for (i = 0; i < imax; i++) {
 			var handle = this.edenAllocated[i];
 			if (this.marks.contains(handle)) {
-				moved++;
-				begin = performance.now();
 				this.move(handle);
-				moveTime += (performance.now()) - begin;
 			} else {
-				begin = performance.now();
 				this.release(handle);
-				releaseTime += (performance.now()) - begin;
 			}
 		}
 		this.edenAllocated.length = 0;
 		this.context.log(1, imax + " eden object scanned in "
-				+ (performance.now() - t) + "ms, " + moved
-				+ " moved, moveTime=" + moveTime + ", releaseTime="
-				+ releaseTime);
+				+ (performance.now() - t) + "ms");
 
 		// for (var i = 1; i < MAX_OBJECTS; i++) {
 		// if (this.objectExists(i)) {
@@ -1274,7 +1266,6 @@ var FyHeap;
 			var ret = this.allocateArray(clazz, this.toFinalize.length);
 			for (var i = 0; i < this.toFinalize.length; i++) {
 				this.putArrayInt(ret, i, this.toFinalize[i]);
-				this.setObjectFinalizeStatus(this.toFinalize[i], FIN_FINALIZED);
 			}
 			this.toFinalize.length = 0;
 			return ret;
