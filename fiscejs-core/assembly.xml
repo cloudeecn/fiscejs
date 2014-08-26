@@ -10,6 +10,10 @@
 	<includeBaseDirectory>false</includeBaseDirectory>
 	<files>
 		<file>
+			<source>src/main/resources/fisce/gunzip.minjs</source>
+			<outputDirectory>/</outputDirectory>
+		</file>
+		<file>
 			<source>src/main/resources/fisce/portable.js</source>
 			<outputDirectory>/</outputDirectory>
 		</file>
@@ -19,10 +23,6 @@
 		</file>
 		<file>
 			<source>src/main/resources/fisce/long.asm.js</source>
-			<outputDirectory>/</outputDirectory>
-		</file>
-		<file>
-			<source>src/main/resources/fisce/hashmapio.js</source>
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>

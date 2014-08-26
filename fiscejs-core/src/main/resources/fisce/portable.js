@@ -22,15 +22,15 @@ var FyPortable;
 
 var FyConfig = {
 	littleEndian : undefined,
-	maxObjects : 524288,
-	maxThreads : 6,
+	maxObjects : 262144,
+	maxThreads : 16,
 	gcIdv : 10000,
 	gcForceIdv : 120000,
-	heapSize : 16000000,
-	edenSize : 524288,
+	heapSize : 4000000,
+	edenSize : 1048576,
 	copySize : 262144,
 	stackSize : 16384,
-	debugMode : true,
+	debugMode : false,
 	verboseMode : false,
 	aggresiveGC : false,
 	_ : undefined

@@ -16,4 +16,3 @@ put###Int put int data to ###(byte[] char[] short[] int[] Object[])
 put###Float put float data to ###
 put###Double put double data to ###
 
-4. Use JavaScript's native new object/gc instead of a heap memory pool
