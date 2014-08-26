@@ -26,6 +26,10 @@
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
+			<source>src/main/resources/fisce/hashmapio.js</source>
+			<outputDirectory>/</outputDirectory>
+		</file>
+		<file>
 			<source>src/main/resources/fisce/hashmapi.js</source>
 			<outputDirectory>/</outputDirectory>
 		</file>
