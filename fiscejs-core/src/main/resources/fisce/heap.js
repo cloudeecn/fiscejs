@@ -39,7 +39,7 @@ var FyHeap;
 
 	var MAX_OBJECTS = FyConfig.maxObjects | 0;
 	var HEAP_SIZE = FyConfig.heapSize;
-	var MAX_GEN = 16;
+	var MAX_GEN = 6;
 	var EDEN_SIZE = FyConfig.edenSize | 0;
 	var COPY_SIZE = FyConfig.copySize | 0;
 
