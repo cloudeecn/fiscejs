@@ -44,7 +44,7 @@ var HashMapIObj;
 		this.capShift++;
 		this.cap <<= 1;
 		this.capMask = this.cap - 1;
-		var oldSize = this.size;
+//		var oldSize = this.size;
 		var backend = this.backend;
 		this.clear();
 		for (var i = backend.length; i--;) {

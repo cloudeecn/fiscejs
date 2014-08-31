@@ -154,7 +154,7 @@ var FyThread;
 	 */
 	FyThread.prototype.localToFrame = function(lip, ip) {
 		// console.log("Local=>Frame: "+sp+" "+lip+" "+ip);
-		var fp = this.framePos;
+		var fp = this.framePos | 0;
 		this.stack[fp + 2] = ip;
 		this.stack[fp + 3] = lip;
 	};
@@ -352,7 +352,7 @@ var FyThread;
 					/**
 					 * @returns {FyClass}
 					 */
-					var handlerClass = this.context.classes[classId];
+					var handlerClass = this.context.classes.get(classId);
 					if (this.context.classLoader.canCast(heap
 							.getObjectClass(handle), handlerClass)) {
 						this.context.log(0, "!!" + handler);
@@ -506,7 +506,8 @@ var FyThread;
 		}
 		this.context.lookupClass("[L" + FyConst.FY_BASE_STRING + ";");
 		this.handle = threadHandle;
-		this.context.heap.setObjectMultiUsageData(threadHandle, this.threadId);
+		this.context.heap.setObjectMultiUsageData(threadHandle,
+				this.threadId | 0);
 		this.pushFrame(method, this.bottom);
 		this.stack[this.bottom] = 0;
 	};
@@ -531,7 +532,8 @@ var FyThread;
 		}
 		var runner = this.context.lookupMethodVirtual(handlerClass,
 				FyConst.FY_METHODF_RUN);
-		this.context.heap.setObjectMultiUsageData(threadHandle, this.threadId);
+		this.context.heap.setObjectMultiUsageData(threadHandle,
+				this.threadId | 0);
 		this.handle = threadHandle;
 		this.pushFrame(runner, this.bottom);
 		this.stack[this.bottom] = threadHandle;
@@ -539,7 +541,7 @@ var FyThread;
 
 	FyThread.prototype.destroy = function() {
 		var heap = this.context.heap;
-		heap.setObjectMultiUsageData(this.handle, 0);
+		heap.setObjectMultiUsageData(this.handle, 0 | 0);
 		this.handle = 0;
 		this.waitForLockId = 0;
 		this.waitForNotifyId = 0;
@@ -592,7 +594,7 @@ var FyThread;
 					handlerIp = this.getExceptionHandlerIp(
 							this.currentThrowable, lip);
 					if (handlerIp >= 0) {
-						this.localToFrame(handlerIp, handlerIp);
+						this.localToFrame(handlerIp | 0, handlerIp | 0);
 						this.stack[this.getCurrentStackBase()
 								+ method.getSpOfs(handlerIp) - 1] = this.currentThrowable;
 						this.currentThrowable = 0;

@@ -166,8 +166,18 @@ var FyLookupSwitchTarget;
 		return i;
 	};
 
-	if (atob in window) {
-		__FyUtils.prototype.unbase64 = atob;
+	var atobReady = false;
+	try {
+		atob("AAAA");
+		atobReady = true;
+	} catch (e) {
+
+	}
+
+	if (false) {
+		__FyUtils.prototype.unbase64 = function(str){
+			return atob(str);
+		};
 	} else {
 		__FyUtils.prototype.unbase64 = function(str) {
 			var slen = str.length;
@@ -227,56 +237,56 @@ var FyLookupSwitchTarget;
 	FyUtils = new __FyUtils();
 
 	function __FyConst() {
-		this.TYPE_OBJECT = 0;
-		this.TYPE_PRIMITIVE = 1;
-		this.TYPE_ARRAY = 2;
-		this.ARRAY_TYPE_BYTE = 0;
-		this.ARRAY_TYPE_SHORT = 1;
-		this.ARRAY_TYPE_INT = 2;
-		this.ARRAY_TYPE_LONG = 3;
+		this.TYPE_OBJECT = 0 | 0;
+		this.TYPE_PRIMITIVE = 1 | 0;
+		this.TYPE_ARRAY = 2 | 0;
+		this.ARRAY_TYPE_BYTE = 0 | 0;
+		this.ARRAY_TYPE_SHORT = 1 | 0;
+		this.ARRAY_TYPE_INT = 2 | 0;
+		this.ARRAY_TYPE_LONG = 3 | 0;
 		/* Access flags */
-		this.FY_ACC_ABSTRACT = 1024;
-		this.FY_ACC_FINAL = 16;
-		this.FY_ACC_INTERFACE = 512;
-		this.FY_ACC_NATIVE = 256;
-		this.FY_ACC_PRIVATE = 2;
-		this.FY_ACC_PROTECTED = 4;
-		this.FY_ACC_PUBLIC = 1;
-		this.FY_ACC_STATIC = 8;
-		this.FY_ACC_STRICT = 2048;
-		this.FY_ACC_SUPER = 32;
-		this.FY_ACC_SYNCHRONIZED = 32;
-		this.FY_ACC_TRANSIENT = 128;
-		this.FY_ACC_VOLATILE = 64;
-		this.FY_ACC_VARARGS = 128;
-		this.FY_ACC_BRIDGE = 64;
+		this.FY_ACC_ABSTRACT = 1024 | 0;
+		this.FY_ACC_FINAL = 16 | 0;
+		this.FY_ACC_INTERFACE = 512 | 0;
+		this.FY_ACC_NATIVE = 256 | 0;
+		this.FY_ACC_PRIVATE = 2 | 0;
+		this.FY_ACC_PROTECTED = 4 | 0;
+		this.FY_ACC_PUBLIC = 1 | 0;
+		this.FY_ACC_STATIC = 8 | 0;
+		this.FY_ACC_STRICT = 2048 | 0;
+		this.FY_ACC_SUPER = 32 | 0;
+		this.FY_ACC_SYNCHRONIZED = 32 | 0;
+		this.FY_ACC_TRANSIENT = 128 | 0;
+		this.FY_ACC_VOLATILE = 64 | 0;
+		this.FY_ACC_VARARGS = 128 | 0;
+		this.FY_ACC_BRIDGE = 64 | 0;
 		/* Extended access flags */
-		this.FY_ACC_SYNTHETIC = 0x00001000;
-		this.FY_ACC_ANNOTATION = 0x00002000;
-		this.FY_ACC_ENUM = 0x00004000;
-		this.FY_ACC_SOFT_REF = 0x00008000;
-		this.FY_ACC_WEAK_REF = 0x00010000;
-		this.FY_ACC_PHANTOM_REF = 0x00020000;
+		this.FY_ACC_SYNTHETIC = 0x00001000 | 0;
+		this.FY_ACC_ANNOTATION = 0x00002000 | 0;
+		this.FY_ACC_ENUM = 0x00004000 | 0;
+		this.FY_ACC_SOFT_REF = 0x00008000 | 0;
+		this.FY_ACC_WEAK_REF = 0x00010000 | 0;
+		this.FY_ACC_PHANTOM_REF = 0x00020000 | 0;
 		this.FY_ACC_REF = this.FY_ACC_SOFT_REF | this.FY_ACC_WEAK_REF
 				| this.FY_ACC_PHANTOM_REF;
-		this.FY_ACC_NEED_FINALIZE = 0x00040000;
-		this.FY_ACC_CONSTRUCTOR = 0x00100000;
-		this.FY_ACC_CLINIT = 0x00200000;
+		this.FY_ACC_NEED_FINALIZE = 0x00040000 | 0;
+		this.FY_ACC_CONSTRUCTOR = 0x00100000 | 0;
+		this.FY_ACC_CLINIT = 0x00200000 | 0;
 
-		this.FY_TM_STATE_NEW = 0;
-		this.FY_TM_STATE_BOOT_PENDING = 1;
-		this.FY_TM_STATE_STOP = 2;
-		this.FY_TM_STATE_RUN_PENDING = 3;
-		this.FY_TM_STATE_RUNNING = 4;
-		this.FY_TM_STATE_STOP_PENDING = 5;
-		this.FY_TM_STATE_DEAD_PENDING = 6;
-		this.FY_TM_STATE_DEAD = 7;
+		this.FY_TM_STATE_NEW = 0 | 0;
+		this.FY_TM_STATE_BOOT_PENDING = 1 | 0;
+		this.FY_TM_STATE_STOP = 2 | 0;
+		this.FY_TM_STATE_RUN_PENDING = 3 | 0;
+		this.FY_TM_STATE_RUNNING = 4 | 0;
+		this.FY_TM_STATE_STOP_PENDING = 5 | 0;
+		this.FY_TM_STATE_DEAD_PENDING = 6 | 0;
+		this.FY_TM_STATE_DEAD = 7 | 0;
 
 		/* Array types */
-		this.FY_AT_BYTE = 0;
-		this.FY_AT_SHORT = 1;
-		this.FY_AT_INT = 2;
-		this.FY_AT_LONG = 3;
+		this.FY_AT_BYTE = 0 | 0;
+		this.FY_AT_SHORT = 1 | 0;
+		this.FY_AT_INT = 2 | 0;
+		this.FY_AT_LONG = 3 | 0;
 
 		/* Prm types */
 		this.FY_TYPE_BYTE = 'B';
@@ -472,16 +482,16 @@ var FyLookupSwitchTarget;
 	 * Object.preventExtensions(this); };
 	 */
 	FyTableSwitchTarget = function() {
-		this.dflt = 0;
-		this.min = 0;
-		this.max = 0;
+		this.dflt = 0 | 0;
+		this.min = 0 | 0;
+		this.max = 0 | 0;
 		this.targets = [];
 		Object.preventExtensions(this);
 	};
 
 	FyLookupSwitchTarget = function() {
-		this.dflt = 0;
-		this.targets = {};
+		this.dflt = 0 | 0;
+		this.targets = new HashMapI(-1, 1, 0.8);
 		Object.preventExtensions(this);
 	};
 

@@ -94,11 +94,7 @@ var HashMapI;
 		return this.nullNumber;
 	};
 
-	HashMapI.prototype.get = function(key) {
-		// if (key !== key | 0) {
-		// throw new FyException(undefined,
-		// "Assertion exception, HashMapI.get");
-		// }
+	HashMapI.prototype._get = function(key) {
 		var pos = this.hash(key | 0) & this.capMask;
 		var arr = this.backend[pos];
 		if (arr === undefined) {
@@ -112,6 +108,14 @@ var HashMapI;
 			}
 			return this.nullNumber;
 		}
+	};
+
+	HashMapI.prototype.get = function(key) {
+		// if (key !== key | 0) {
+		// throw new FyException(undefined,
+		// "Assertion exception, HashMapI.get");
+		// }
+		return this._get(key | 0);
 	};
 
 	HashMapI.prototype.remove = function(key) {

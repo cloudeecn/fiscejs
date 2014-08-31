@@ -14,10 +14,6 @@
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
-			<source>src/main/resources/gunzip.minjs</source>
-			<outputDirectory>/</outputDirectory>
-		</file>
-		<file>
 			<source>target/fiscejs-${project.version}.js</source>
 			<destName>fisce.js</destName>
 			<outputDirectory>/</outputDirectory>

@@ -79,17 +79,17 @@
 		/**
 		 * @returns {FyClass}
 		 */
-		var tmpClass = FyField.empty;
+		var tmpClass = FyClass.empty;
 
 		/**
 		 * @returns {FyClass}
 		 */
-		var clinitClass = FyField.empty;
+		var clinitClass = FyClass.empty;
 
 		/**
 		 * @returns {FyMethod}
 		 */
-		var tmpMethod = FyField.empty;
+		var tmpMethod = FyMethod.empty;
 
 		var tmpInt1 = 0;
 
@@ -107,12 +107,12 @@
 							// no thread is running it, so let this run
 							clinitClass.clinitThreadId = thread.threadId;
 							// Local to frame
-							thread.localToFrame($ip, $ip);
+							thread.localToFrame($ip|0, $ip|0);
 							thread.pushFrame(clinitClass.clinit, sb + $spo);
 							return 0;
 						} else {
 							// wait for other thread clinit
-							thread.localToFrame($ip, $ip);
+							thread.localToFrame($ip|0, $ip|0);
 							return 0;
 						}
 					}
@@ -121,7 +121,7 @@
 				// ##MACRO-OPS
 				ops -= $distance;
 				if (ops < 0) {
-					thread.localToFrame($ip, $ip);
+					thread.localToFrame($ip|0, $ip|0);
 					return 0;
 				}
 				// ###
@@ -413,7 +413,7 @@
 			case 1390:
 				// ##OP-IDIV -2 1
 				if (stack[sb + $spo - 1] === 0) {
-					thread.localToFrame($ip, $ip + 1);
+					thread.localToFrame($ip|0, ($ip + 1)|0);
 					throw new FyException(FyConst.FY_EXCEPTION_ARITHMETIC,
 							"Devided by zero!");
 				}
@@ -423,7 +423,7 @@
 			case 1391:
 				// ##OP-IREM -2 1
 				if (stack[sb + $spo - 1] === 0) {
-					thread.localToFrame($ip, $ip + 1);
+					thread.localToFrame($ip|0, ($ip + 1)|0);
 					throw new FyException(FyConst.FY_EXCEPTION_ARITHMETIC,
 							"Devided by zero");
 				}
@@ -520,7 +520,7 @@
 			case 1590:
 				// ##OP-LDIV -4 2
 				if (stack[sb + $spo - 2] === 0 && stack[sb + $spo - 1] === 0) {
-					thread.localToFrame($ip, $ip + 1);
+					thread.localToFrame($ip|0, ($ip + 1)|0);
 					throw new FyException(FyConst.FY_EXCEPTION_ARITHMETIC,
 							"Devided by zero!");
 				}
@@ -529,7 +529,7 @@
 			case 1591:
 				// ##OP-LREM -4 2
 				if (stack[sb + $spo - 2] === 0 && stack[sb + $spo - 1] === 0) {
-					thread.localToFrame($ip, $ip + 1);
+					thread.localToFrame($ip|0, ($ip + 1)|0);
 					throw new FyException(FyConst.FY_EXCEPTION_ARITHMETIC,
 							"Devided by zero!");
 				}
@@ -712,7 +712,7 @@
 				// ##OP-LOOKUPSWITCH -1 0
 			{
 				var lookupSwitchTarget = _m_.lookupSwitchTargets[$1];
-				tmpInt1 = ((lookupSwitchTarget.targets[stack[sb + $spo - 1]] + 1) | 0) - 1;
+				tmpInt1 = lookupSwitchTarget.targets.get(stack[sb + $spo - 1]);
 				if (tmpInt1 === -1) {
 					ip = lookupSwitchTarget.dflt;
 					break __fy_inner;
@@ -740,38 +740,38 @@
 				// CAT. ARRAY
 			case 2000:
 				// ##OP-AALOAD|FALOAD|IALOAD -2 1
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				heap.getArrayRaw32ToHeap(stack[sb + $spo - 2], stack[sb + $spo
 						- 1], sb + $spo - 2);
 				// ###
 			case 2002:
 				// ##OP-LALOAD|DALOAD -2 2
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				heap.getArrayRaw64ToHeap(stack[sb + $spo - 2], stack[sb + $spo
 						- 1], sb + $spo - 2);
 				// ###
 			case 2003:
 				// ##OP-BALOAD -2 1
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				heap.getArrayRaw8ToHeap(stack[sb + $spo - 2], stack[sb + $spo
 						- 1], sb + $spo - 2);
 				// ###
 			case 2004:
 				// ##OP-CALOAD -2 1
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				heap.getArrayRaw16ToHeap(stack[sb + $spo - 2], stack[sb + $spo
 						- 1], sb + $spo - 2);
 				stack[sb + $spo - 2] &= 0xffff;
 				// ###
 			case 2005:
 				// ##OP-SALOAD -2 1
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				heap.getArrayRaw16ToHeap(stack[sb + $spo - 2], stack[sb + $spo
 						- 1], sb + $spo - 2);
 				// ###
 			case 2010:
 				// ##OP-AASTORE -3 0
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				// 2[1]=0
 				if (stack[sb + $spo - 1] !== 0
 						&& (!context.classLoader
@@ -790,42 +790,42 @@
 				// ###
 			case 2011:
 				// ##OP-FASTORE|IASTORE -3 0
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				heap.putArrayRaw32FromHeap(stack[sb + $spo - 3], stack[sb
 						+ $spo - 2], sb + $spo - 1);
 				// ###
 			case 2012:
 				// ##OP-LASTORE|DASTORE -4 0
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				heap.putArrayRaw64FromHeap(stack[sb + $spo - 4], stack[sb
 						+ $spo - 3], sb + $spo - 2);
 				// ###
 			case 2013:
 				// ##OP-BASTORE -3 0
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				heap.putArrayRaw8FromHeap(stack[sb + $spo - 3], stack[sb + $spo
 						- 2], sb + $spo - 1);
 				// ###
 			case 2014:
 				// ##OP-CASTORE -3 0
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				heap.putArrayRaw16FromHeap(stack[sb + $spo - 3], stack[sb
 						+ $spo - 2], sb + $spo - 1);
 				// ###
 			case 2015:
 				// ##OP-SASTORE -3 0
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				heap.putArrayRaw16FromHeap(stack[sb + $spo - 3], stack[sb
 						+ $spo - 2], sb + $spo - 1);
 				// ###
 			case 2020:
 				// ##OP-ARRAYLENGTH -1 1
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				stack[sb + $spo - 1] = heap.arrayLength(stack[sb + $spo - 1]);
 				// ###
 			case 2021:
 				// ##OP-NEWARRAY -1 1
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				switch ($1) {
 				case 4:
 					stack[sb + $spo - 1] = heap.allocateArray(context
@@ -866,7 +866,7 @@
 				// ###
 			case 2022:
 				// ##OP-ANEWARRAY -1 1
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				if (stack[sb + $spo - 1] < 0) {
 					throw new FyException(FyConst.FY_EXCEPTION_AIOOB, ""
 							+ stack[sb + $spo - 1]);
@@ -878,7 +878,7 @@
 			case 2023:
 				// ##OP-MULTIANEWARRAY X-MULTIANEWARRAY 1
 
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				stack[sb + $spo - $2] = heap.multiNewArray(context
 						.lookupClassFromConstant(global, constants[$1]), $2,
 						stack, sb + $spo - $2);
@@ -887,7 +887,7 @@
 			case 3000:
 				// ##OP-RETURN 0 0
 				if (_m_.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
-					thread.localToFrame($ip, $ip + 1);
+					thread.localToFrame($ip|0, ($ip + 1)|0);
 					if (_m_.accessFlags & FyConst.FY_ACC_STATIC) {
 						thread.monitorExit(context.getClassObjectHandle(clazz));
 					} else {
@@ -904,7 +904,7 @@
 			case 3001:
 				// ##OP-IRETURN|FRETURN|ARETURN -1 0
 				if (_m_.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
-					thread.localToFrame($ip, $ip + 1);
+					thread.localToFrame($ip|0, ($ip + 1)|0);
 					if (_m_.accessFlags & FyConst.FY_ACC_STATIC) {
 						thread.monitorExit(context.getClassObjectHandle(clazz));
 					} else {
@@ -922,7 +922,7 @@
 			case 3002:
 				// ##OP-DRETURN|LRETURN -2 0
 				if (_m_.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
-					thread.localToFrame($ip, $ip + 1);
+					thread.localToFrame($ip|0, ($ip + 1)|0);
 					if (_m_.accessFlags & FyConst.FY_ACC_STATIC) {
 						thread.monitorExit(context.getClassObjectHandle(clazz));
 					} else {
@@ -939,7 +939,7 @@
 			case 4000:
 				// ##OP-ATHROW -1 0
 				thread.currentThrowable = stack[sb + $spo - 1];
-				thread.localToFrame($ip, $ip);
+				thread.localToFrame($ip|0, $ip|0);
 				return 0;
 				// ###
 
@@ -982,7 +982,7 @@
 				// ###
 			case 6100:
 				// ##OP-NEW 0 1
-				thread.localToFrame($ip, $ip + 1);
+				thread.localToFrame($ip|0, ($ip + 1)|0);
 				tmpClass = context.lookupClassFromConstant(global,
 						constants[$1]);
 				if (tmpClass.accessFlags
@@ -999,12 +999,12 @@
 						// no thread is running it, so let this run
 						clinitClass.clinitThreadId = thread.threadId;
 						// Local to frame
-						thread.localToFrame($ip, $ip);
+						thread.localToFrame($ip|0, $ip|0);
 						thread.pushFrame(clinitClass.clinit, sb + $spo);
 						return 0;
 					} else {
 						// wait for other thread clinit
-						thread.localToFrame($ip, $ip);
+						thread.localToFrame($ip|0, $ip|0);
 						return 0;
 					}
 				}
@@ -1016,7 +1016,7 @@
 				thread.monitorEnter(stack[sb + $spo - 1]);
 				if (thread.yield) {
 					// Local to frame
-					thread.localToFrame($ip, $ip + 1);
+					thread.localToFrame($ip|0, ($ip + 1)|0);
 					return 0;
 				}
 				// ###
@@ -1025,7 +1025,7 @@
 				thread.monitorExit(stack[sb + $spo - 1]);
 				if (thread.yield) {
 					// Local to frame
-					thread.localToFrame($ip, $ip + 1);
+					thread.localToFrame($ip|0, ($ip + 1)|0);
 					return 0;
 				}
 				// ###
@@ -1035,7 +1035,7 @@
 					if (!context.classLoader.canCast(heap
 							.getObjectClass(stack[sb + $spo - 1]), context
 							.lookupClassFromConstant(global, constants[$1]))) {
-						thread.localToFrame($ip, $ip + 1);
+						thread.localToFrame($ip|0, ($ip + 1)|0);
 						throw new FyException(FyConst.FY_EXCEPTION_CAST,
 								"Can't case "
 										+ heap.getObjectClass(stack[sb + $spo
@@ -1049,7 +1049,7 @@
 			case 8001:
 				// ##OP-INSTANCEOF -1 1
 				if (stack[sb + $spo - 1] !== 0) {
-					thread.localToFrame($ip, $ip + 1);
+					thread.localToFrame($ip|0, ($ip + 1)|0);
 					stack[sb + $spo - 1] = context.classLoader.canCast(heap
 							.getObjectClass(stack[sb + $spo - 1]), context
 							.lookupClassFromConstant(global, constants[$1]));
@@ -1063,7 +1063,7 @@
 				break;
 			// ##MACRO-TAIL
 			default:
-				thread.localToFrame(lip, ip);
+				thread.localToFrame(lip|0, ip|0);
 				throw new FyException(undefined, "IP out of sync at "
 						+ _m_.uniqueName + "." + ip);
 			} // /__fy_inner

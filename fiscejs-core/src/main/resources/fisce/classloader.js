@@ -66,19 +66,32 @@ var FyClassLoader;
 		 * @returns {FyClass}
 		 */
 		var clazz;
-		while ((clazz = this.pending.pop()) !== undefined) {
+		while (this.pending.length > 0) {
+			clazz = this.pending.pop();
 			this.fixPendingSingle(clazz);
 		}
 	};
 
 	FyClassLoader.prototype.fixPendingSingle = function(clazz) {
-		if (clazz.phase === 1) {
+		var phase = clazz.phase;
+		if (phase === 1) {
 			this.phase2(clazz);
 		}
 
-		if (clazz.phase === 2) {
+		if (phase === 2) {
 			this.phase3(clazz);
 		}
+	};
+
+	FyClassLoader.arrayContentTypeTable = {
+		"[Z" : FyConst.FY_AT_BYTE,
+		"[B" : FyConst.FY_AT_BYTE,
+
+		"[D" : FyConst.FY_AT_LONG,
+		"[J" : FyConst.FY_AT_LONG,
+
+		"[C" : FyConst.FY_AT_SHORT,
+		"[S" : FyConst.FY_AT_SHORT
 	};
 
 	/**
@@ -88,32 +101,18 @@ var FyClassLoader;
 	 *            arrayName
 	 */
 	FyClassLoader.getArrayContentType = function(arrayName) {
-		switch (arrayName.charCodeAt(1)) {
-		case 90/* FyConst.Z */:
-		case 66/* FyConst.B */:
-			return FyConst.FY_AT_BYTE;
-		case 68/* FyConst.D */:
-		case 74/* FyConst.J */:
-			return FyConst.FY_AT_LONG;
-		case 67/* FyConst.C */:
-		case 83/* FyConst.S */:
-			return FyConst.FY_AT_SHORT;
-		case 73/* FyConst.I */:
-		case 70/* FyConst.F */:
-		case 76/* FyConst.L */:
-		case 91/* FyConst.ARR */:
+		if (arrayName in FyClassLoader.arrayContentTypeTable) {
+			return FyClassLoader.arrayContentTypeTable[arrayName];
+		} else {
 			return FyConst.FY_AT_INT;
-		default:
-			throw new FyException(null, "Illegal array type: " + arrayName
-					+ "(" + arrayName.charCodeAt(1) + ")");
 		}
 	};
 
 	FyClassLoader.getArrayContentName = function(arrayName) {
-		switch (arrayName.charCodeAt(1)) {
-		case 91/* FyConst.ARR */:
+		switch (arrayName.charAt(1)) {
+		case "["/* FyConst.ARR */:
 			return arrayName.substring(1, arrayName.length);
-		case 76/* FyConst.L */:
+		case "L"/* FyConst.L */:
 			return arrayName.substring(2, arrayName.length - 1);
 		default:
 			return FyContext.primitives[arrayName.charAt(1)];
@@ -121,16 +120,305 @@ var FyClassLoader;
 	};
 
 	FyClassLoader.getArrayName = function(arrayContentName) {
-		var primitiveClassName = FyContext.mapPrimitivesRev[arrayContentName];
-		if (!!primitiveClassName) {
+		if (FyContext.mapPrimitivesRev.hasOwnProperty(arrayContentName)) {
 			// primitive
-			return "[" + primitiveClassName;
+			return "[" + FyContext.mapPrimitivesRev[arrayContentName];
 		} else if (arrayContentName.charAt(0) === FyConst.FY_TYPE_ARRAY) {
 			// array
 			return "[" + arrayContentName;
 		} else {
 			return "[L" + arrayContentName + ";";
 		}
+	};
+
+	FyClassLoader.prototype.getClassDef = function(name) {
+		var classDef = undefined;
+		var global = undefined;
+		for (var i = 0, max = this.context.classDefs.length; i < max; i++) {
+			/**
+			 * @returns {FyClassDef}
+			 */
+			var cd = this.context.classDefs[i];
+			if (cd.classes[name]) {
+				var data = FyUtils.unbase64(cd.classes[name], undefined, 0, 0);
+				var gunzip = new Zlib.Gunzip(data);
+				var utf8 = gunzip.decompress();
+				data = undefined;
+				var outArray = new Array(1);
+				var ofs = 0;
+				var str = "";
+				while (ofs < utf8.length) {
+					ofs += FyUtils.utf8Decode(utf8, ofs, outArray, 0);
+					str += String.fromCharCode(outArray[0]);
+				}
+				utf8 = undefined;
+				classDef = JSON.parse(str);
+
+				cd.classes[name] = undefined;
+
+				global = cd.global;
+				return {
+					classDef : classDef,
+					global : global
+				};
+			}
+		}
+		return undefined;
+	};
+
+	FyClassLoader.prototype._loadObjectClass = function(clazz) {
+		// Normal class
+		// iterate all class defs
+		var classDef = undefined;
+		var global = undefined;
+		{
+			var cd = this.getClassDef(clazz.name);
+			if (cd !== undefined) {
+				classDef = cd.classDef;
+				global = cd.global;
+			} else {
+				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
+						"Class not found: " + name);
+			}
+		}
+
+		clazz.global = global;
+		clazz.accessFlags = classDef.accessFlags | 0;
+		clazz.sizeRel = classDef.sizeRel | 0;
+		clazz.staticSize = classDef.staticSize | 0;
+		clazz.sourceFile = global.strings[classDef.sourceFile];
+		if (classDef.constants !== undefined) {
+			for (var idx = 0, im = classDef.constants.length; idx < im; idx++) {
+				clazz.constants.push(classDef.constants[idx] | 0);
+			}
+		}
+		clazz.constants = classDef.constants || [];
+		if (clazz.staticSize > 0) {
+			clazz.staticPos = this.context.heap.allocateStatic(
+					clazz.staticSize, false);
+		}
+		{// Interfaces
+			for (var idx = 0, im = classDef.interfaceDatas.length; idx < im; idx++) {
+				clazz.interfaces.push(this.lookupConstantAndPend(global,
+						clazz.constants[classDef.interfaceDatas[idx]]));
+			}
+		}
+		{// Methods
+			var methodDefs = classDef.methods;
+			var methods = clazz.methods = [];
+			var len = methodDefs.length;
+			for (var i = 0; i < len; i++) {
+
+				var methodDef = methodDefs[i];
+				/**
+				 * @returns {FyMethod}
+				 */
+				var method = new FyMethod();
+				methods.push(method);
+
+				method.accessFlags = methodDef.accessFlags | 0;
+				method.maxStack = methodDef.maxStack | 0;
+				method.maxLocals = methodDef.maxLocals | 0;
+				method.paramStackUsage = methodDef.paramStackUsage | 0;
+				method.parameterCount = methodDef.parameterCount | 0;
+
+				method.name = global.strings[methodDef.name];
+				method.descriptor = global.strings[methodDef.descriptor];
+				method.returnClassName = global.strings[methodDef.returnClassName];
+				method.fullName = this.context.pool("." + method.name + "."
+						+ method.descriptor);
+				method.uniqueName = this.context.pool(clazz.name
+						+ method.fullName);
+				method.owner = clazz;
+				method.lineNumberTable = methodDef.lineNumberTable;
+				method.exceptionTable = methodDef.exceptionTable;
+				switch (method.returnClassName) {
+				case "void":
+					method.returnLength = 0;
+					break;
+				case "long":
+				case "double":
+					method.returnLength = 2;
+					break;
+				default:
+					method.returnLength = 1;
+					break;
+				}
+
+				if (method.name === FyConst.FY_METHOD_CLINIT) {
+					clazz.clinit = method;
+					method.accessFlags |= FyConst.FY_ACC_CLINIT;
+				} else if (method.name === FyConst.FY_METHOD_INIT) {
+					method.accessFlags |= FyConst.FY_ACC_CONSTRUCTOR;
+				}
+				/*
+				 * if (methodDef.lineNumberTable) { for (var lnIdx = 0; lnIdx <
+				 * methodDef.lineNumberTable.length; lnIdx++) { var lineNumber =
+				 * new FyLineNumber(); var lineNumberDef =
+				 * methodDef.lineNumberTable[lnIdx];
+				 * FyUtils.simpleClone(lineNumberDef, lineNumber);
+				 * method.lineNumberTable[lnIdx] = lineNumber; } }
+				 */
+
+				if (methodDef.lookupSwitchTargets) {
+					for (var lstIdx = 0; lstIdx < methodDef.lookupSwitchTargets.length; lstIdx++) {
+						var lst = new FyLookupSwitchTarget();
+						var lstDef = methodDef.lookupSwitchTargets[lstIdx];
+						lst.dflt = lstDef.dflt | 0;
+						var keys = Object.keys(lstDef.targets);
+						for (var j = 0; j < keys.length; j++) {
+							lst.targets.put(keys[j] | 0,
+									lstDef.targets[keys[j]] | 0);
+						}
+						method.lookupSwitchTargets.push(lst);
+					}
+				}
+
+				if (methodDef.tableSwitchTargets) {
+					for (var tstIdx = 0; tstIdx < methodDef.tableSwitchTargets.length; tstIdx++) {
+						var tst = new FyTableSwitchTarget();
+						var tstDef = methodDef.tableSwitchTargets[tstIdx];
+						tst.dflt = tstDef.dflt | 0;
+						tst.min = tstDef.min | 0;
+						tst.max = tstDef.max | 0;
+						for (var j = 0; j < tstDef.targets.length; j++) {
+							tst.targets.push(tstDef.targets[j] | 0);
+						}
+						method.tableSwitchTargets.push(tst);
+					}
+				}
+
+				if (methodDef.code) {
+					method.code = methodDef.code;
+				}
+
+				for (var idx = 0, im = methodDef.frames.length; idx < im; idx += 2) {
+					method.frames[methodDef.frames[idx]] = this.context
+							.pool(global.strings[methodDef.frames[idx + 1]]);
+				}
+
+				for (var idx = 0, im = methodDef.parameterClassNames.length; idx < im; idx++) {
+					method.parameterClassNames
+							.push(global.strings[methodDef.parameterClassNames[idx]]);
+				}
+
+				for (var idx = 0, im = methodDef.exceptions.length; idx < im; idx++) {
+					method.exceptions
+							.push(global.strings[methodDef.exceptions[idx]]);
+				}
+
+				if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
+					var nativeHandler = this.context.nativeHandlers[method.uniqueName]
+							|| FyContext.staticNativeHandlers[method.uniqueName];
+					if (nativeHandler !== undefined) {
+						method.invoke = nativeHandler.func;
+						method.maxLocals += nativeHandler.extraVars | 0;
+						method.maxStack += nativeHandler.stackSize | 0;
+					}
+				}
+				this.context.registerMethod(method);
+			}
+		}
+
+		{// Fields
+			var fieldDefs = classDef.fields;
+			var fields = clazz.fields = [];
+			var len = fieldDefs.length;
+			for (var i = 0; i < len; i++) {
+				/**
+				 * @returns {FyField}
+				 */
+				var field = new FyField();
+				fields.push(field);
+				var fieldDef = fieldDefs[i];
+				FyUtils.simpleClone(fieldDef, field, [ "accessFlags", "posRel",
+						"size", "constantValueData" ]);
+				field.name = global.strings[fieldDef.name];
+				field.descriptor = global.strings[fieldDef.descriptor];
+				field.fullName = this.context.pool("." + field.name + "."
+						+ field.descriptor);
+				// console
+				// .log("#CL" + clazz.name + "." + field.name + "@"
+				// + i);
+				field.uniqueName = this.context.pool(clazz.name
+						+ field.fullName);
+				field.owner = clazz;
+				this.context.registerField(field);
+				// init static fields for reflection
+				if (fieldDef.constantValueData) {
+					if ((field.accessFlags & FyConst.FY_ACC_STATIC)
+							&& (field.accessFlags & FyConst.FY_ACC_FINAL)) {
+						switch (field.descriptor.charCodeAt(0)) {
+						case 90/* FyConst.Z */:
+						case 66/* FyConst.B */:
+						case 83/* FyConst.S */:
+						case 67/* FyConst.C */:
+						case 73/* FyConst.I */:
+						case 70/* FyConst.F */:
+							this.context.heap
+									.putStaticInt(
+											clazz,
+											field.posRel | 0,
+											global.constants[clazz.constants[fieldDef.constantValueData]] | 0);
+							break;
+						case 68/* FyConst.D */:
+						case 74/* FyConst.J */:
+							this.context.heap
+									.putStaticLongFrom(
+											clazz,
+											field.posRel,
+											global.constants,
+											clazz.constants[fieldDef.constantValueData]);
+							break;
+						case 76/* FyConst.L */:
+							field.constantValueData = clazz.constants[fieldDef.constantValueData] | 0;
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		if (classDef.superClassData) {
+			var superClassConstant = clazz.constants[classDef.superClassData];
+			clazz.superClass = this.lookupConstantAndPend(global,
+					superClassConstant);
+		}
+
+		if (!this.context.TOP_OBJECT && clazz.name === FyConst.FY_BASE_OBJECT) {
+			this.context.TOP_OBJECT = clazz;
+		} else if (!this.context.TOP_THROWABLE
+				&& clazz.name === FyConst.FY_BASE_THROWABLE) {
+			this.context.TOP_THROWABLE = clazz;
+		} else if (!this.context.TOP_ENUM
+				&& clazz.name === FyConst.FY_BASE_ENUM) {
+			this.context.TOP_ENUM = clazz;
+		} else if (!this.context.TOP_ANNOTATION
+				&& clazz.name === FyConst.FY_BASE_ANNOTATION) {
+			this.context.TOP_ANNOTATION = clazz;
+		} else if (!this.context.TOP_SOFT_REF
+				&& clazz.name === FyConst.FY_REF_SOFT) {
+			this.context.TOP_SOFT_REF = clazz;
+		} else if (!this.context.TOP_WEAK_REF
+				&& clazz.name === FyConst.FY_REF_WEAK) {
+			this.context.TOP_WEAK_REF = clazz;
+		} else if (!this.context.TOP_PHANTOM_REF
+				&& clazz.name === FyConst.FY_REF_PHANTOM) {
+			this.context.TOP_PHANTOM_REF = clazz;
+		} else if (!this.context.TOP_CLASS
+				&& clazz.name === FyConst.FY_BASE_CLASS) {
+			this.context.TOP_CLASS = clazz;
+		} else if (!this.context.TOP_METHOD
+				&& clazz.name === FyConst.FY_REFLECT_METHOD) {
+			this.context.TOP_METHOD = clazz;
+		} else if (!this.context.TOP_CONSTRUCTOR
+				&& clazz.name === FyConst.FY_REFLECT_CONSTRUCTOR) {
+			this.context.TOP_CONSTRUCTOR = clazz;
+		} else if (!this.context.TOP_FIELD
+				&& clazz.name === FyConst.FY_REFLECT_FIELD) {
+			this.context.TOP_FIELD = clazz;
+		}
+		return clazz;
 	};
 
 	/**
@@ -141,290 +429,17 @@ var FyClassLoader;
 	 */
 	FyClassLoader.prototype.loadClass = function(name) {
 		// console.log("Load " + name);
-		/**
-		 * tell eclipse JSDT clazz is a FyClass
-		 * 
-		 * @returns {FyClass}
-		 */
+		name = this.context.pool(name);
 		var clazz;
-		if (name.charAt(0) === FyConst.FY_TYPE_ARRAY) {
-			// Array
-			name = this.context.pool(name);
-			clazz = new FyClass(FyConst.TYPE_ARRAY, undefined);
-			clazz.name = name;
-			clazz.arrayType = FyClassLoader.getArrayContentType(name);
-			clazz.superClass = this.lookupAndPend(FyConst.FY_BASE_OBJECT);
-			clazz.contentClass = this.lookupAndPend(FyClassLoader
-					.getArrayContentName(name));
-		} else if (FyContext.mapPrimitivesRev[name]) {
-			// Primitive
-			name = this.context.pool(name);
-			clazz = new FyClass(FyConst.TYPE_PRIMITIVE, undefined);
-			clazz.name = name;
-			clazz.pType = FyContext.mapPrimitivesRev[name].charCodeAt(0);
-			clazz.superClass = this.lookupAndPend(FyConst.FY_BASE_OBJECT);
+		if (name.charAt(0) === "[") {
+			clazz = new FyClass(this, name).asArrayClass();
+		} else if (FyContext.mapPrimitivesRev.hasOwnProperty(name)) {
+			clazz = new FyClass(this, name).asPrimClass();
 		} else {
-			// Normal class
-			// iterate all class defs
-			var classDef = undefined;
-			var global = undefined;
-			for (var i = 0, max = this.context.classDefs.length; i < max; i++) {
-				/**
-				 * @returns {FyClassDef}
-				 */
-				var cd = this.context.classDefs[i];
-				if (cd.classes[name]) {
-					var data = FyUtils.unbase64(cd.classes[name], undefined, 0,
-							0);
-					var gunzip = new Zlib.Gunzip(data);
-					var utf8 = gunzip.decompress();
-					data = undefined;
-					var outArray = new Array(1);
-					var ofs = 0;
-					var str = "";
-					while (ofs < utf8.length) {
-						ofs += FyUtils.utf8Decode(utf8, ofs, outArray, 0);
-						str += String.fromCharCode(outArray[0]);
-					}
-					utf8 = undefined;
-					classDef = JSON.parse(str);
-
-					cd.classes[name] = undefined;
-
-					global = cd.global;
-					break;
-				}
-			}
-			if (!classDef) {
-				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
-						"Class not found: " + name);
-			}
-			name = this.context.pool(name);
-			clazz = new FyClass(FyConst.TYPE_OBJECT);
-			clazz.global = global;
-
-			FyUtils.simpleClone(classDef, clazz, [ "accessFlags", "sizeRel",
-					"staticSize", "phase" ]);
-			clazz.name = name;
-			clazz.sourceFile = global.strings[classDef.sourceFile];
-			clazz.constants = classDef.constants;
-			if (clazz.staticSize > 0) {
-				clazz.staticPos = this.context.heap
-						.allocateStatic(clazz.staticSize);
-			}
-			{// Interfaces
-				for (var idx = 0, im = classDef.interfaceDatas.length; idx < im; idx++) {
-					clazz.interfaces.push(this.lookupConstantAndPend(global,
-							clazz.constants[classDef.interfaceDatas[idx]]));
-				}
-			}
-			{// Methods
-				var methodDefs = classDef.methods;
-				var methods = clazz.methods;
-				var len = methodDefs.length;
-				for (var i = 0; i < len; i++) {
-
-					var methodDef = methodDefs[i];
-					/**
-					 * @returns {FyMethod}
-					 */
-					var method = methods[i] = new FyMethod();
-
-					FyUtils.simpleClone(methodDef, method, [ "accessFlags",
-							"maxStack", "maxLocals", "paramStackUsage",
-							"parameterCount" ]);
-					method.name = global.strings[methodDef.name];
-					method.descriptor = global.strings[methodDef.descriptor];
-					method.returnClassName = global.strings[methodDef.returnClassName];
-					method.fullName = this.context.pool("." + method.name + "."
-							+ method.descriptor);
-					method.uniqueName = this.context.pool(clazz.name
-							+ method.fullName);
-					method.owner = clazz;
-					method.lineNumberTable = methodDef.lineNumberTable;
-					method.exceptionTable = methodDef.exceptionTable;
-					switch (method.returnClassName) {
-					case "void":
-						method.returnLength = 0;
-						break;
-					case "long":
-					case "double":
-						method.returnLength = 2;
-						break;
-					default:
-						method.returnLength = 1;
-						break;
-					}
-
-					if (method.name === FyConst.FY_METHOD_CLINIT) {
-						clazz.clinit = method;
-						method.accessFlags |= FyConst.FY_ACC_CLINIT;
-					} else if (method.name === FyConst.FY_METHOD_INIT) {
-						method.accessFlags |= FyConst.FY_ACC_CONSTRUCTOR;
-					}
-					/*
-					 * if (methodDef.lineNumberTable) { for (var lnIdx = 0;
-					 * lnIdx < methodDef.lineNumberTable.length; lnIdx++) { var
-					 * lineNumber = new FyLineNumber(); var lineNumberDef =
-					 * methodDef.lineNumberTable[lnIdx];
-					 * FyUtils.simpleClone(lineNumberDef, lineNumber);
-					 * method.lineNumberTable[lnIdx] = lineNumber; } }
-					 */
-
-					if (methodDef.lookupSwitchTargets) {
-						for (var lstIdx = 0; lstIdx < methodDef.lookupSwitchTargets.length; lstIdx++) {
-							var lst = new FyLookupSwitchTarget();
-							var lstDef = methodDef.lookupSwitchTargets[lstIdx];
-							lst.dflt = lstDef.dflt;
-							lst.targets = lstDef.targets;
-							method.lookupSwitchTargets[lstIdx] = lst;
-						}
-					}
-
-					if (methodDef.tableSwitchTargets) {
-						for (var tstIdx = 0; tstIdx < methodDef.tableSwitchTargets.length; tstIdx++) {
-							var tst = new FyTableSwitchTarget();
-							var tstDef = methodDef.tableSwitchTargets[tstIdx];
-							tst.dflt = tstDef.dflt;
-							tst.min = tstDef.min;
-							tst.max = tstDef.max;
-							tst.targets = tstDef.targets;
-							method.tableSwitchTargets[tstIdx] = tst;
-						}
-					}
-
-					if (methodDef.code) {
-						method.code = methodDef.code;
-					}
-
-					for (var idx = 0, im = methodDef.frames.length; idx < im; idx += 2) {
-						method.frames[methodDef.frames[idx]] = this.context
-								.pool(global.strings[methodDef.frames[idx + 1]]);
-					}
-
-					for (var idx = 0, im = methodDef.parameterClassNames.length; idx < im; idx++) {
-						method.parameterClassNames
-								.push(global.strings[methodDef.parameterClassNames[idx]]);
-					}
-
-					for (var idx = 0, im = methodDef.exceptions.length; idx < im; idx++) {
-						method.exceptions
-								.push(global.strings[methodDef.exceptions[idx]]);
-					}
-
-					if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
-						var nativeHandler = this.context.nativeHandlers[method.uniqueName]
-								|| FyContext.staticNativeHandlers[method.uniqueName];
-						if (nativeHandler !== undefined) {
-							method.invoke = nativeHandler.func;
-							method.maxLocals += nativeHandler.extraVars;
-							method.maxStack += nativeHandler.stackSize;
-						}
-					}
-					this.context.registerMethod(method);
-				}
-			}
-
-			{// Fields
-				var fieldDefs = classDef.fields;
-				var fields = clazz.fields;
-				var len = fieldDefs.length;
-				for (var i = 0; i < len; i++) {
-					/**
-					 * @returns {FyField}
-					 */
-					var field = fields[i] = new FyField();
-					var fieldDef = fieldDefs[i];
-					FyUtils.simpleClone(fieldDef, field, [ "accessFlags",
-							"posRel", "size", "constantValueData" ]);
-					field.name = global.strings[fieldDef.name];
-					field.descriptor = global.strings[fieldDef.descriptor];
-					field.fullName = this.context.pool("." + field.name + "."
-							+ field.descriptor);
-					// console
-					// .log("#CL" + clazz.name + "." + field.name + "@"
-					// + i);
-					field.uniqueName = this.context.pool(clazz.name
-							+ field.fullName);
-					field.owner = clazz;
-					this.context.registerField(field);
-					// init static fields for reflection
-					if (fieldDef.constantValueData) {
-						if ((field.accessFlags & FyConst.FY_ACC_STATIC)
-								&& (field.accessFlags & FyConst.FY_ACC_FINAL)) {
-							switch (field.descriptor.charCodeAt(0)) {
-							case 90/* FyConst.Z */:
-							case 66/* FyConst.B */:
-							case 83/* FyConst.S */:
-							case 67/* FyConst.C */:
-							case 73/* FyConst.I */:
-							case 70/* FyConst.F */:
-								this.context.heap
-										.putStaticInt(
-												clazz,
-												field.posRel,
-												global.constants[clazz.constants[fieldDef.constantValueData]]);
-								break;
-							case 68/* FyConst.D */:
-							case 74/* FyConst.J */:
-								this.context.heap
-										.putStaticLongFrom(
-												clazz,
-												field.posRel,
-												global.constants,
-												clazz.constants[fieldDef.constantValueData]);
-								break;
-							case 76/* FyConst.L */:
-								field.constantValueData = clazz.constants[fieldDef.constantValueData];
-								break;
-							}
-						}
-					}
-				}
-			}
-
-			if (classDef.superClassData) {
-				var superClassConstant = clazz.constants[classDef.superClassData];
-				clazz.superClass = this.lookupConstantAndPend(global,
-						superClassConstant);
-			}
-
-			if (!this.context.TOP_OBJECT
-					&& clazz.name === FyConst.FY_BASE_OBJECT) {
-				this.context.TOP_OBJECT = clazz;
-			} else if (!this.context.TOP_THROWABLE
-					&& clazz.name === FyConst.FY_BASE_THROWABLE) {
-				this.context.TOP_THROWABLE = clazz;
-			} else if (!this.context.TOP_ENUM
-					&& clazz.name === FyConst.FY_BASE_ENUM) {
-				this.context.TOP_ENUM = clazz;
-			} else if (!this.context.TOP_ANNOTATION
-					&& clazz.name === FyConst.FY_BASE_ANNOTATION) {
-				this.context.TOP_ANNOTATION = clazz;
-			} else if (!this.context.TOP_SOFT_REF
-					&& clazz.name === FyConst.FY_REF_SOFT) {
-				this.context.TOP_SOFT_REF = clazz;
-			} else if (!this.context.TOP_WEAK_REF
-					&& clazz.name === FyConst.FY_REF_WEAK) {
-				this.context.TOP_WEAK_REF = clazz;
-			} else if (!this.context.TOP_PHANTOM_REF
-					&& clazz.name === FyConst.FY_REF_PHANTOM) {
-				this.context.TOP_PHANTOM_REF = clazz;
-			} else if (!this.context.TOP_CLASS
-					&& clazz.name === FyConst.FY_BASE_CLASS) {
-				this.context.TOP_CLASS = clazz;
-			} else if (!this.context.TOP_METHOD
-					&& clazz.name === FyConst.FY_REFLECT_METHOD) {
-				this.context.TOP_METHOD = clazz;
-			} else if (!this.context.TOP_CONSTRUCTOR
-					&& clazz.name === FyConst.FY_REFLECT_CONSTRUCTOR) {
-				this.context.TOP_CONSTRUCTOR = clazz;
-			} else if (!this.context.TOP_FIELD
-					&& clazz.name === FyConst.FY_REFLECT_FIELD) {
-				this.context.TOP_FIELD = clazz;
-			}
+			clazz = new FyClass(this, name);
+			this._loadObjectClass(clazz);
 		}
-		clazz.phase = 1;
+		clazz.phase = 1 | 0;
 		return clazz;
 	};
 
@@ -601,21 +616,23 @@ var FyClassLoader;
 				}
 			}
 			var fields = clazz.fields;
-			var len = fields.length;
-			// console.log(clazz.name + " $$$ " + len);
-			for (var i = 0; i < len; i++) {
-				/**
-				 * @returns {FyField}
-				 */
-				var field = fields[i];
-				if (field.accessFlags & FyConst.FY_ACC_STATIC) {
-					clazz.fieldStatic[field.posAbs] = field;
-					// console.log(clazz.name + " FieldStatic #"
-					// + field.posAbs + " = " + field.name);
-				} else {
-					clazz.fieldAbs[field.posAbs] = field;
-					// console.log(clazz.name + " FieldAbs #" + field.posAbs
-					// + " = " + field.name);
+			if (fields !== undefined) {
+				var len = fields.length;
+				// console.log(clazz.name + " $$$ " + len);
+				for (var i = 0; i < len; i++) {
+					/**
+					 * @returns {FyField}
+					 */
+					var field = fields[i];
+					if (field.accessFlags & FyConst.FY_ACC_STATIC) {
+						clazz.fieldStatic[field.posAbs] = field;
+						// console.log(clazz.name + " FieldStatic #"
+						// + field.posAbs + " = " + field.name);
+					} else {
+						clazz.fieldAbs[field.posAbs] = field;
+						// console.log(clazz.name + " FieldAbs #" + field.posAbs
+						// + " = " + field.name);
+					}
 				}
 			}
 		}

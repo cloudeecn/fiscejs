@@ -25,23 +25,28 @@ var FyField;
 	FyField = function() {
 		this.name = "";
 		this.descriptor = "";
-		this.accessFlags = 0;
-		this.posRel = 0;
-		this.size = 0;
+		this.accessFlags = 0 | 0;
+		this.posRel = 0 | 0;
+		this.size = 0 | 0;
 
 		/** Filled in by class loader phase 1* */
 		this.fullName = "";
 		this.uniqueName = "";
-		this.owner = dummyClass;
+		/**
+		 * @returns {FyClass}
+		 */
+		this.owner = undefined;
 
 		/** Filled in by class loader* */
-		this.fieldId = 0;
+		this.fieldId = 0 | 0;
 
-		this.constantValueData = undefined;
+		this.constantValueData = -1 | 0;
+		/**
+		 * @returns {FyClass}
+		 */
+		this.type = undefined;
 
-		this.type = dummyClass;
-
-		this.posAbs = 0;
+		this.posAbs = 0 | 0;
 
 		Object.preventExtensions(this);
 	};

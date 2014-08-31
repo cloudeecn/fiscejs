@@ -22,11 +22,16 @@ var FyClassDef;
 	"use strict";
 
 	FyGlobal = function(context, strings, constants) {
-		for (var i = strings.length; i--;) {
-			strings[i] = context.pool(strings[i]);
+		var s = new Array(strings.length);
+		for (var i = 0, im = strings.length; i < im; i++) {
+			s[i] = context.pool(strings[i]);
 		}
-		this.strings = strings;
-		this.constants = constants;
+		var c = new Int32Array(constants.length);
+		for (var i = 0, im = constants.length; i < im; i++) {
+			c[i] = constants[i];
+		}
+		this.strings = s;
+		this.constants = c;
 		Object.preventExtensions(this);
 	};
 
@@ -118,7 +123,7 @@ var FyClassDef;
 		this.dynamicClassDef = {};
 
 		/* Classes begins from 1 */
-		this.classes = [ undefined ];
+		this.classes = new HashMapIObj(9, 0.6);
 		this.mapClassNameToId = {};
 		this.mapClassIdToHandle = {};
 
@@ -246,16 +251,13 @@ var FyClassDef;
 	 * @returns {String} result
 	 */
 	FyContext.prototype.pool = function(string) {
-		if ("string" !== typeof string) {
-			throw new FyException(undefined, "Type of " + string
-					+ " is not string");
-		}
-		var ret = FyContext.stringPool[string];
-		if (ret !== string) {
-			ret = string;
+		if ((string in FyContext.stringPool)
+				&& "string" === typeof FyContext.stringPool[string]) {
+			return FyContext.stringPool[string];
+		} else {
 			FyContext.stringPool[string] = string;
+			return string;
 		}
-		return ret;
 	};
 
 	FyContext.prototype.getSetting = function(key, defaultValue) {
@@ -590,16 +592,19 @@ var FyClassDef;
 	 *            clazz
 	 */
 	FyContext.prototype.registerClass = function(clazz) {
-		var cid = this.mapClassNameToId[clazz.name];
-		if (cid === undefined) {
-			cid = this.classes.length;
+		var cid;
+		if (clazz.name in this.mapClassNameToId) {
+			cid = this.mapClassNameToId[clazz.name] | 0;
+			if (this.classes.contains(cid)) {
+				throw new FyException(undefined, "Duplicated class define: "
+						+ clazz.name);
+			}
+		} else {
+			cid = (this.classes.size + 1) | 0;
 			this.mapClassNameToId[clazz.name] = cid;
-		} else if (this.classes[cid]) {
-			throw new FyException(undefined, "Duplicated class define: "
-					+ clazz.name);
 		}
 		clazz.classId = cid;
-		this.classes[cid] = clazz;
+		this.classes.put(cid, clazz);
 	};
 
 	/**
@@ -610,11 +615,11 @@ var FyClassDef;
 	 * @returns {FyClass} class to return
 	 */
 	FyContext.prototype.getClass = function(name) {
-		var cid = this.mapClassNameToId[name];
-		if (cid === undefined || this.classes[cid] === undefined) {
+		if (name in this.mapClassNameToId) {
+			return this.classes.get(this.mapClassNameToId[name]);
+		} else {
 			return undefined;
 		}
-		return this.classes[cid];
 	};
 
 	/**
@@ -623,11 +628,11 @@ var FyClassDef;
 	 * @returns {FyClass}
 	 */
 	FyContext.prototype.lookupClassPhase1 = function(name) {
+		if (typeof name !== "string") {
+			throw new FyException(undefined, "Class name for load is null!");
+		}
 		var clazz = this.getClass(name);
 		if (clazz === undefined) {
-			if (!name) {
-				throw new FyException(undefined, "Class name for load is null!");
-			}
 			clazz = this.classLoader.loadClass(name);
 			this.registerClass(clazz);
 		}
@@ -691,7 +696,7 @@ var FyClassDef;
 			constants[constant] = clazz.classId;
 			constants[constant + 2] = 1;
 		} else {
-			clazz = this.classes[constants[constant]];
+			clazz = this.classes.get(constants[constant] | 0);
 		}
 		return clazz;
 	};
@@ -716,7 +721,7 @@ var FyClassDef;
 			constants[constant] = clazz.classId;
 			constants[constant + 2] = 1;
 		} else {
-			clazz = this.classes[constants[constant]];
+			clazz = this.classes.get(constants[constant] | 0);
 		}
 		return clazz;
 	};
@@ -732,7 +737,7 @@ var FyClassDef;
 			var clcl = this.lookupClass(FyConst.FY_BASE_CLASS);
 			this.heap.beginProtect();
 			handle = this.heap.allocate(clcl);
-			this.heap.setObjectMultiUsageData(handle, clazz.classId);
+			this.heap.setObjectMultiUsageData(handle, clazz.classId | 0);
 			this.mapClassIdToHandle[clazz.classId] = handle;
 		}
 		return handle;
@@ -750,7 +755,7 @@ var FyClassDef;
 							+ this.heap.getObjectClass(handle).name
 							+ ") is not a class object");
 		}
-		return this.classes[this.heap.getObjectMultiUsageData(handle)];
+		return this.classes.get(this.heap.getObjectMultiUsageData(handle) | 0);
 	};
 
 	/**
@@ -769,7 +774,7 @@ var FyClassDef;
 				handle = this.heap.allocate(this
 						.lookupClass(FyConst.FY_REFLECT_METHOD));
 			}
-			this.heap.setObjectMultiUsageData(handle, method.methodId);
+			this.heap.setObjectMultiUsageData(handle, method.methodId | 0);
 			this.mapMethodIdToHandle[method.methodId] = handle;
 		}
 		return handle;
@@ -806,7 +811,7 @@ var FyClassDef;
 			this.heap.beginProtect();
 			handle = this.heap.allocate(this
 					.lookupClass(FyConst.FY_REFLECT_FIELD));
-			this.heap.setObjectMultiUsageData(handle, field.fieldId);
+			this.heap.setObjectMultiUsageData(handle, field.fieldId | 0);
 			this.mapFieldIdToHandle[field.fieldId] = handle;
 		}
 		return handle;

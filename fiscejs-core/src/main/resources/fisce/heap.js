@@ -21,25 +21,25 @@ var FyHeap;
 	/**
 	 * 
 	 */
-	var BID_AUTO = 0;
-	var BID_EDEN = 1;
-	var BID_YOUNG = 2;
-	var BID_OLD = 3;
+	var BID_AUTO = 0 | 0;
+	var BID_EDEN = 1 | 0;
+	var BID_YOUNG = 2 | 0;
+	var BID_OLD = 3 | 0;
 
-	var OBJ_HANDLE = 0;
-	var OBJ_CLASS_ID = 1;
-	
-	var OBJ_BID = 3;
-	var OBJ_GEN = 4;
-	var OBJ_MULTI_USAGE = 5;
-	var OBJ_MONITOR_OWNER_ID = 6;
-	var OBJ_MONITOR_OWNER_TIME = 7;
+	var OBJ_HANDLE = 0 | 0;
+	var OBJ_CLASS_ID = 1 | 0;
 
-	var OBJ_META_SIZE = 8;
+	var OBJ_BID = 3 | 0;
+	var OBJ_GEN = 4 | 0;
+	var OBJ_MULTI_USAGE = 5 | 0;
+	var OBJ_MONITOR_OWNER_ID = 6 | 0;
+	var OBJ_MONITOR_OWNER_TIME = 7 | 0;
+
+	var OBJ_META_SIZE = 8 | 0;
 
 	var MAX_OBJECTS = FyConfig.maxObjects | 0;
-	var HEAP_SIZE = FyConfig.heapSize;
-	var MAX_GEN = 6;
+	var HEAP_SIZE = FyConfig.heapSize | 0;
+	var MAX_GEN = 6 | 0;
 	var EDEN_SIZE = FyConfig.edenSize | 0;
 	var COPY_SIZE = FyConfig.copySize | 0;
 
@@ -160,7 +160,7 @@ var FyHeap;
 			}
 		}
 		this.nextHandle = handle + 1;
-		return handle;
+		return handle | 0;
 	};
 
 	/**
@@ -223,7 +223,7 @@ var FyHeap;
 	 *            handle
 	 */
 	FyHeap.prototype.objectExists = function(handle) {
-		return this.heap[handle] > 0 ? 1 : 0;
+		return this.heap[handle] > 0 ? true : false;
 	};
 
 	/**
@@ -252,7 +252,7 @@ var FyHeap;
 	 * @returns {FyClass}
 	 */
 	FyHeap.prototype.getObjectClass = function(handle) {
-		return this.context.classes[this.getObjectClassId(handle)];
+		return this.context.classes.get(this.getObjectClassId(handle) | 0);
 	};
 
 	/**
@@ -333,7 +333,7 @@ var FyHeap;
 				throw new FyException(undefined, "Out of memory: perm");
 			} else {
 				this.gc(size);
-				return this.allocatePerm(size, 1);
+				return this.allocatePerm(size, true);
 			}
 		}
 		return this.heapTop;
@@ -355,7 +355,7 @@ var FyHeap;
 				throw new FyException(undefined, "Out of memory: perm");
 			} else {
 				this.gc(size);
-				return this.allocatePerm(size, 1);
+				return this.allocateStatic(size, true);
 			}
 		}
 		return this.heapTop;
@@ -474,35 +474,49 @@ var FyHeap;
 			toHandle, bid) {
 		var handle = toHandle;
 		if (handle === 0) {
-			handle = this.fetchNextHandle();
+			handle = this.fetchNextHandle(false);
 		}
+		var a, b, c, d, e, f, g, h, i, j, k;
 
 		// if (handle === 2875) {
 		// new FyException();
 		// }
 
+		a = 1000;
 		if (this.objectExists(handle)) {
 			// TODO confirm
-			throw new FyException("Object " + handle + " already exists");
+			throw new FyException(undefined, "Object " + handle
+					+ " already exists");
 		}
+		b = 2000;
 
 		switch (bid) {
 		case 0/* BID_AUTO */:
-			if (size > ((COPY_SIZE))) {
+			c = 3000;
+			if (size > ((EDEN_SIZE))) {
 				// allocate in old directly
+				d = 4000;
 				this.createObject(handle, this.allocateInOld(size
 						+ OBJ_META_SIZE, 0));
+				e = 5000;
 				this.memset32(this.heap[handle] + 1, size + OBJ_META_SIZE - 1,
 						0);
+				f = 6000;
 				this.setObjectBId(handle, BID_OLD);
+				g = 7000;
 			} else {
+				d = 4001
 				// allocate in eden;
 				this.createObject(handle, this.allocateInEden(size
 						+ OBJ_META_SIZE, 0));
+				e = 5001;
 				this.memset32(this.heap[handle] + 1, size + OBJ_META_SIZE - 1,
 						0);
+				f = 6001;
 				this.setObjectBId(handle, BID_EDEN);
+				g = 7001;
 				this.edenAllocated.push(handle);
+				g = 7002;
 			}
 			break;
 		case 1/* BID_EDEN */:
@@ -523,11 +537,16 @@ var FyHeap;
 		default:
 			throw new FyException(undefined, "Illegal bid: " + bid);
 		}
-		this.setObjectMultiUsageData(handle, multiUsageData);
+		h = 8000;
+		this.setObjectMultiUsageData(handle, multiUsageData | 0);
+		i = 9000;
 		this.setObjectClassId(handle, clazz.classId);
+		j = 10000;
 		if (clazz.accessFlags & FyConst.FY_ACC_NEED_FINALIZE) {
 			this.finalizeScanNeed.put(handle, 1);
 		}
+		k = 11000;
+		console.log(a + b + c + d + e + f + g + h + i + j + k);
 		if (this.protectMode) {
 			this.protectedObjects.push(handle);
 		}
@@ -575,11 +594,43 @@ var FyHeap;
 			throw new FyException(undefined,
 					"Please use allocateArray to allocate arrays");
 		}
-		var ret = this.allocateInternal(clazz.sizeAbs, clazz, 0, 0, BID_AUTO);
-		if (this.protectMode) {
-			this.protectedObjects.push(ret);
+		// var ret = this.allocateInternal(clazz.sizeAbs, clazz, 0, 0,
+		// BID_AUTO);
+		var handle = this.fetchNextHandle(false);
+		var size = clazz.sizeAbs | 0;
+		// if (handle === 2875) {
+		// new FyException();
+		// }
+
+		if (this.objectExists(handle)) {
+			// TODO confirm
+			throw new FyException(undefined, "Object " + handle
+					+ " already exists");
 		}
-		return ret;
+
+		if (size > ((EDEN_SIZE))) {
+			// allocate in old directly
+			this.createObject(handle, this.allocateInOld(size + OBJ_META_SIZE,
+					0));
+			this.memset32(this.heap[handle] + 1, size + OBJ_META_SIZE - 1, 0);
+			this.setObjectBId(handle, BID_OLD);
+		} else {
+			// allocate in eden;
+			this.createObject(handle, this.allocateInEden(size + OBJ_META_SIZE,
+					0));
+			this.memset32(this.heap[handle] + 1, size + OBJ_META_SIZE - 1, 0);
+			this.setObjectBId(handle, BID_EDEN);
+			this.edenAllocated.push(handle);
+		}
+		this.setObjectMultiUsageData(handle, 0);
+		this.setObjectClassId(handle, clazz.classId);
+		if (clazz.accessFlags & FyConst.FY_ACC_NEED_FINALIZE) {
+			this.finalizeScanNeed.put(handle, 1);
+		}
+		if (this.protectMode) {
+			this.protectedObjects.push(handle);
+		}
+		return handle;
 	};
 
 	/**
@@ -595,12 +646,41 @@ var FyHeap;
 			throw new FyException(undefined,
 					"Please use allocate to allocate objects.");
 		}
-		var ret = this.allocateInternal(FyHeap.getArraySizeFromLength(clazz,
-				length), clazz, length, 0, BID_AUTO);
-		if (this.protectMode) {
-			this.protectedObjects.push(ret);
+		// var ret = this.allocateInternal(FyHeap.getArraySizeFromLength(clazz,
+		// length), clazz, length, 0, BID_AUTO);
+		var size = FyHeap.getArraySizeFromLength(clazz, length);
+		var handle = this.fetchNextHandle(false);
+
+		// if (handle === 2875) {
+		// new FyException();
+		// }
+
+		if (this.objectExists(handle)) {
+			// TODO confirm
+			throw new FyException(undefined, "Object " + handle
+					+ " already exists");
 		}
-		return ret;
+
+		if (size > ((EDEN_SIZE))) {
+			// allocate in old directly
+			this.createObject(handle, this.allocateInOld(size + OBJ_META_SIZE,
+					0));
+			this.memset32(this.heap[handle] + 1, size + OBJ_META_SIZE - 1, 0);
+			this.setObjectBId(handle, BID_OLD);
+		} else {
+			// allocate in eden;
+			this.createObject(handle, this.allocateInEden(size + OBJ_META_SIZE,
+					0));
+			this.memset32(this.heap[handle] + 1, size + OBJ_META_SIZE - 1, 0);
+			this.setObjectBId(handle, BID_EDEN);
+			this.edenAllocated.push(handle);
+		}
+		this.setObjectMultiUsageData(handle, length | 0);
+		this.setObjectClassId(handle, clazz.classId);
+		if (this.protectMode) {
+			this.protectedObjects.push(handle);
+		}
+		return handle;
 	};
 
 	/**
@@ -738,12 +818,12 @@ var FyHeap;
 		}
 		f2 = performance.now();
 		/* Class static area */
-		imax = this.context.classes.length;
+		imax = this.context.classes.size;
 		for (var i = 1; i < imax; i++) {
 			/**
 			 * @returns {FyClass}
 			 */
-			var clazz = this.context.classes[i];
+			var clazz = this.context.classes.get(i);
 			for (var j = 0; j < clazz.staticSize; j++) {
 				/**
 				 * @returns {FyField}
@@ -1956,7 +2036,6 @@ var FyHeap;
 		 * @returns {FyClass}
 		 */
 		var dClass = this.getObjectClass(dHandle);
-		var i = 0;
 		if (sClass.type != FyConst.TYPE_ARRAY) {
 			throw new FyException(FyConst.FY_EXCEPTION_STORE,
 					"src is not array");

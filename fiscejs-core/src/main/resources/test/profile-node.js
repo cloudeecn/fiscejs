@@ -31,7 +31,7 @@ includeInThisContext("../fisce/nh.math.js");
 console.log(process);
 var context = new FyContext();
 context.addClassDef(JSON.parse(""
-		+ fs.readFileSync("../../../../target/test/rt.json")));
+		+ fs.readFileSync("../../../../target/json/rt-2.0.0-SNAPSHOT.json")));
 context.registerNativeHandler(
 		"EXCLUDE/fisce/test/TestService.fail0.(Ljava/lang/String;)V", function(
 				context, thread, ops) {

@@ -441,8 +441,8 @@ var __FyAOTUtil;
 				}
 				if (thread.clinit(tmpField.owner)) {
 					needCase = true;
-					code.push("lip=" + ip + ";tmpClass=context.classes["
-							+ tmpField.owner.classId + "];");
+					code.push("lip=" + ip + ";tmpClass=context.classes.get("
+							+ tmpField.owner.classId + ");");
 					code.push(this.replaceAll(macros["CLINIT"], ip, oprand1,
 							oprand2, stackSize, {
 								"clazz" : "tmpClass"
@@ -479,8 +479,8 @@ var __FyAOTUtil;
 				 */
 				if (thread.clinit(tmpField.owner)) {
 					needCase = true;
-					code.push("lip=" + ip + ";tmpClass=context.classes["
-							+ tmpField.owner.classId + "];");
+					code.push("lip=" + ip + ";tmpClass=context.classes.get("
+							+ tmpField.owner.classId + ");");
 					code.push(this.replaceAll(macros["CLINIT"], ip, oprand1,
 							oprand2, stackSize, {
 								"clazz" : "tmpClass"
@@ -514,9 +514,9 @@ var __FyAOTUtil;
 								+ (stackSize - 1)
 								+ "] === 0) {thread.localToFrame("
 								+ ip
-								+ ","
+								+ "|0,"
 								+ (ip + 1)
-								+ ");throw new FyException(FyConst.FY_EXCEPTION_NPT, '');}");
+								+ "|0);throw new FyException(FyConst.FY_EXCEPTION_NPT, '');}");
 				switch (tmpField.size) {
 				case 2:
 					code
@@ -556,9 +556,9 @@ var __FyAOTUtil;
 									+ (stackSize - 3)
 									+ "] === 0) {thread.localToFrame("
 									+ ip
-									+ ","
+									+ "|0,"
 									+ (ip + 1)
-									+ ");throw new FyException(FyConst.FY_EXCEPTION_NPT, '');}");
+									+ "|0);throw new FyException(FyConst.FY_EXCEPTION_NPT, '');}");
 					code.push("_heap[_heap[stack[sb+" + (stackSize - 3)
 							+ "]] + "
 							+ (context.heap.OBJ_META_SIZE + tmpField.posAbs)
@@ -577,9 +577,9 @@ var __FyAOTUtil;
 									+ (stackSize - 2)
 									+ "] === 0) {thread.localToFrame("
 									+ ip
-									+ ","
+									+ "|0,"
 									+ (ip + 1)
-									+ ");throw new FyException(FyConst.FY_EXCEPTION_NPT, '');}");
+									+ "|0);throw new FyException(FyConst.FY_EXCEPTION_NPT, '');}");
 					code.push("_heap[_heap[stack[sb+" + (stackSize - 2)
 							+ "]] + "
 							+ (context.heap.OBJ_META_SIZE + tmpField.posAbs)
@@ -607,9 +607,9 @@ var __FyAOTUtil;
 								+ (stackSize - tmpMethod.paramStackUsage - 1)
 								+ "]===0){thread.localToFrame("
 								+ ip
-								+ ","
+								+ "|0,"
 								+ (ip + 1)
-								+ ");throw new FyException(FyConst.FY_EXCEPTION_NPT,\"\");}");
+								+ "|0);throw new FyException(FyConst.FY_EXCEPTION_NPT,\"\");}");
 				if (tmpMethod.accessFlags & FyConst.FY_ACC_FINAL) {
 					// generate static code
 					if (tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE) {
@@ -624,9 +624,9 @@ var __FyAOTUtil;
 							code
 									.push("heap.beginProtect();thread.localToFrame("
 											+ ip
-											+ ","
+											+ "|0,"
 											+ (ip + 1)
-											+ ");ops=tmpMethod.invoke(context,thread,sb+"
+											+ "|0);ops=tmpMethod.invoke(context,thread,sb+"
 											+ (stackSize
 													- tmpMethod.paramStackUsage - 1)
 											+ ",ops);heap.endProtect();if(ops<=0){return 0;}");
@@ -634,14 +634,16 @@ var __FyAOTUtil;
 							code
 									.push("thread.localToFrame("
 											+ ip
-											+ ","
+											+ "|0,"
 											+ (ip + 1)
-											+ ");thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+"+(stackSize
-													- tmpMethod.paramStackUsage - 1)+";return 0;");
+											+ "|0);thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+"
+											+ (stackSize
+													- tmpMethod.paramStackUsage - 1)
+											+ ";return 0;");
 						}
 					} else {
-						code.push("thread.localToFrame(" + ip + "," + (ip + 1)
-								+ ");\n");
+						code.push("thread.localToFrame(" + ip + "|0," + (ip + 1)
+								+ "|0);\n");
 						code
 								.push("if(tmpMethod.invoke===undefined){FyAOTUtil.aot(thread,tmpMethod);}\n");
 						code.push("ops = thread.pushMethod(tmpMethod,sb+"
@@ -656,8 +658,8 @@ var __FyAOTUtil;
 
 				} else {
 					// generate dynamic code
-					code.push("thread.localToFrame(" + ip + "," + (ip + 1)
-							+ ");\n");
+					code.push("thread.localToFrame(" + ip + "|0," + (ip + 1)
+							+ "|0);\n");
 					code
 							.push("tmpMethod = context.lookupMethodVirtualByMethod(heap.getObjectClass(stack[sb+"
 									+ (stackSize - tmpMethod.paramStackUsage - 1)
@@ -670,8 +672,10 @@ var __FyAOTUtil;
 									+ (stackSize - tmpMethod.paramStackUsage - 1)
 									+ ",ops);heap.endProtect();if(ops<=0) {return 0;}\n");
 					code.push("}else{\n");
-					code.push("thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+"+(stackSize
-													- tmpMethod.paramStackUsage - 1)+";return 0;\n");
+					code
+							.push("thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+"
+									+ (stackSize - tmpMethod.paramStackUsage - 1)
+									+ ";return 0;\n");
 					code.push("}\n");
 					code.push("}else{\n");
 					code
@@ -741,24 +745,30 @@ var __FyAOTUtil;
 						code
 								.push("heap.beginProtect();thread.localToFrame("
 										+ ip
-										+ ","
+										+ "|0,"
 										+ (ip + 1)
-										+ ");ops=tmpMethod.invoke(context,thread,sb+"
+										+ "|0);ops=tmpMethod.invoke(context,thread,sb+"
 										+ (stackSize
 												- tmpMethod.paramStackUsage - 1)
 										+ ",ops);heap.endProtect();if(ops<=0){return 0;}");
 					} else {
-						code.push("thread.localToFrame(" + ip + "," + (ip + 1)
-								+ ");thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+"+(stackSize
-													- tmpMethod.paramStackUsage - 1)+";return 0;");
+						code
+								.push("thread.localToFrame("
+										+ ip
+										+ "|0,"
+										+ (ip + 1)
+										+ "|0);thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+"
+										+ (stackSize
+												- tmpMethod.paramStackUsage - 1)
+										+ ";return 0;");
 					}
 				} else {
 					code
 							.push("thread.localToFrame("
 									+ ip
-									+ ","
+									+ "|0,"
 									+ (ip + 1)
-									+ ");if(tmpMethod.invoke===undefined){FyAOTUtil.aot(thread,tmpMethod);} ops = thread.pushMethod(tmpMethod,sb+"
+									+ "|0);if(tmpMethod.invoke===undefined){FyAOTUtil.aot(thread,tmpMethod);} ops = thread.pushMethod(tmpMethod,sb+"
 									+ (stackSize - tmpMethod.paramStackUsage - 1)
 									+ ",ops);if(ops<=0) {return 0;}ops = tmpMethod.invoke(context,thread,sb+"
 									+ (stackSize - tmpMethod.paramStackUsage - 1)
@@ -796,23 +806,28 @@ var __FyAOTUtil;
 						code
 								.push("heap.beginProtect();thread.localToFrame("
 										+ ip
-										+ ","
+										+ "|0,"
 										+ (ip + 1)
-										+ ");ops=tmpMethod.invoke(context,thread,sb+"
+										+ "|0);ops=tmpMethod.invoke(context,thread,sb+"
 										+ (stackSize - tmpMethod.paramStackUsage)
 										+ ",ops);heap.endProtect();if(ops<=0) {return 0;}");
 					} else {
-						code.push("thread.localToFrame(" + ip + "," + (ip + 1)
-								+ ");thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+"+(stackSize
-													- tmpMethod.paramStackUsage)+";return 0;");
+						code
+								.push("thread.localToFrame("
+										+ ip
+										+ "|0,"
+										+ (ip + 1)
+										+ "|0);thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+"
+										+ (stackSize - tmpMethod.paramStackUsage)
+										+ ";return 0;");
 					}
 				} else {
 					code
 							.push("thread.localToFrame("
 									+ ip
-									+ ","
+									+ "|0,"
 									+ (ip + 1)
-									+ ");if(tmpMethod.invoke===undefined){FyAOTUtil.aot(thread,tmpMethod);} ops = thread.pushMethod(tmpMethod,sb+"
+									+ "|0);if(tmpMethod.invoke===undefined){FyAOTUtil.aot(thread,tmpMethod);} ops = thread.pushMethod(tmpMethod,sb+"
 									+ (stackSize - tmpMethod.paramStackUsage)
 									+ ",ops);if(ops<=0) {return 0;}ops = tmpMethod.invoke(context,thread,sb+"
 									+ (stackSize - tmpMethod.paramStackUsage)
@@ -845,8 +860,8 @@ var __FyAOTUtil;
 					}
 					break;
 				case 2:
-					code.push("thread.localToFrame(" + ip + ", " + (ip + 1)
-							+ ");");
+					code.push("thread.localToFrame(" + ip + "|0, " + (ip + 1)
+							+ "|0);");
 					code.push("stack[sb + " + stackSize
 							+ "] = heap.literalWithConstant(global,"
 							+ clazz.constants[oprand1] + ");");
@@ -856,8 +871,8 @@ var __FyAOTUtil;
 					}
 					break;
 				case 3:
-					code.push("thread.localToFrame(" + ip + ", " + (ip + 1)
-							+ ");");
+					code.push("thread.localToFrame(" + ip + "|0, " + (ip + 1)
+							+ "|0);");
 					code
 							.push("stack[sb + "
 									+ stackSize

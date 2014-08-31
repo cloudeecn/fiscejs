@@ -287,29 +287,29 @@
 			if (paramType.type === FyConst.TYPE_PRIMITIVE) {
 				// unwrap
 				switch (paramType.pType) {
-				case 90/* FyConst.Z */:
+				case "Z"/* FyConst.Z */:
 					heap.unwrapBooleanTo(paramHandle, sp++);
 					break;
-				case 66/* FyConst.B */:
+				case "B"/* FyConst.B */:
 					heap.unwrapByteTo(paramHandle, sp++);
 					break;
-				case 83/* FyConst.S */:
+				case "S"/* FyConst.S */:
 					heap.unwrapShortTo(paramHandle, sp++);
 					break;
-				case 67/* FyConst.C */:
+				case "C"/* FyConst.C */:
 					heap.unwrapCharTo(paramHandle, sp++);
 					break;
-				case 73/* FyConst.I */:
+				case "I"/* FyConst.I */:
 					heap.unwrapIntTo(paramHandle, sp++);
 					break;
-				case 70/* FyConst.F */:
+				case "F"/* FyConst.F */:
 					heap.unwrapFloatTo(paramHandle, sp++);
 					break;
-				case 74/* FyConst.J */:
+				case "J"/* FyConst.J */:
 					heap.unwrapLongTo(paramHandle, sp);
 					sp += 2;
 					break;
-				case 68/* FyConst.D */:
+				case "D"/* FyConst.D */:
 					heap.unwrapDoubleTo(paramHandle, sp);
 					sp += 2;
 					break;
@@ -451,29 +451,29 @@
 			if (paramType.type === FyConst.TYPE_PRIMITIVE) {
 				// unwrap
 				switch (paramType.pType) {
-				case 90 /* FyConst.Z */:
+				case "Z" /* FyConst.Z */:
 					heap.unwrapBooleanTo(paramHandle, sp++);
 					break;
-				case 66/* FyConst.B */:
+				case "B"/* FyConst.B */:
 					heap.unwrapByteTo(paramHandle, sp++);
 					break;
-				case 83/* FyConst.S */:
+				case "S"/* FyConst.S */:
 					heap.unwrapShortTo(paramHandle, sp++);
 					break;
-				case 67/* FyConst.C */:
+				case "C"/* FyConst.C */:
 					heap.unwrapCharTo(paramHandle, sp++);
 					break;
-				case 73/* FyConst.I */:
+				case "I"/* FyConst.I */:
 					heap.unwrapIntTo(paramHandle, sp++);
 					break;
-				case 70/* FyConst.F */:
+				case "F"/* FyConst.F */:
 					heap.unwrapFloatTo(paramHandle, sp++);
 					break;
-				case 74/* FyConst.J */:
+				case "J"/* FyConst.J */:
 					heap.unwrapLongTo(paramHandle, sp);
 					sp += 2;
 					break;
-				case 68/* FyConst.D */:
+				case "D"/* FyConst.D */:
 					heap.unwrapDoubleTo(paramHandle, sp);
 					sp += 2;
 					break;
@@ -700,14 +700,14 @@
 		return ops - 1;
 	}
 
-	var fieldGetBoolean = getter.bind(undefined, "boolean", FyConst.Z);
-	var fieldGetByte = getter.bind(undefined, "byte", FyConst.B);
-	var fieldGetShort = getter.bind(undefined, "short", FyConst.S);
-	var fieldGetChar = getter.bind(undefined, "char", FyConst.C);
-	var fieldGetInt = getter.bind(undefined, "int", FyConst.I);
-	var fieldGetFloat = getter.bind(undefined, "float", FyConst.F);
-	var fieldGetLong = getterW.bind(undefined, "long", FyConst.J);
-	var fieldGetDouble = getterW.bind(undefined, "double", FyConst.D);
+	var fieldGetBoolean = getter.bind(undefined, "boolean", "Z");
+	var fieldGetByte = getter.bind(undefined, "byte", "B");
+	var fieldGetShort = getter.bind(undefined, "short", "S");
+	var fieldGetChar = getter.bind(undefined, "char", "C");
+	var fieldGetInt = getter.bind(undefined, "int", "I");
+	var fieldGetFloat = getter.bind(undefined, "float", "F");
+	var fieldGetLong = getterW.bind(undefined, "long", "J");
+	var fieldGetDouble = getterW.bind(undefined, "double", "D");
 
 	/**
 	 * @param {FyContext}

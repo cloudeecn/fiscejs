@@ -18,56 +18,43 @@
 var FyClass;
 (function() {
 	"use strict";
-	/**
-	 * @returns {FyClass}
-	 */
-	var dummyClass = undefined;
-
-	/**
-	 * @returns {FyMethod}
-	 */
-	var dummyMethod = undefined;
-
-	/**
-	 * @returns {FyGlobal}
-	 */
-	var dummyGlobal = undefined;
 
 	/**
 	 * 
-	 * @param {Number}
-	 *            type
+	 * @param {FyClassLoader}
+	 *            classloader
+	 * @param {String}
+	 *            name
 	 */
-	FyClass = function(type) {
-		this.name = "";
+	FyClass = function(classloader, name) {
+		this.classloader = classloader;
+		this.name = name;
 		this.sourceFile = undefined;
 
-		this.majorVersion = 0;
-		this.minorVersion = 0;
-		this.constants = [];
+		this.constants = new Array();
 
-		this.accessFlags = 0;
+		this.accessFlags = 0 | 0;
 
 		// this.superClassData = undefined;
 		// this.interfaceDatas = undefined;
 
-		this.fields = [];
-		this.methods = [];
-		this.sizeRel = 0;
-		this.staticSize = 0;
-		this.staticPos = 0;
+		this.fields = new Array();
+		this.methods = new Array();
+		this.sizeRel = 0 | 0;
+		this.staticSize = 0 | 0;
+		this.staticPos = 0 | 0;
 
-		this.phase = 0;
+		this.phase = 0 | 0;
 
 		/* Filled by class loader */
-		this.classId = 0;
-		this.sizeAbs = 0;
-		this.ofsInHeap = 0;
+		this.classId = 0 | 0;
+		this.sizeAbs = 0 | 0;
+		this.ofsInHeap = 0 | 0;
 
-		this.interfaces = [];
+		this.interfaces = new Array();
 
-		this.superClass = dummyClass;
-		this.type = type;
+		this.superClass = undefined;
+		this.type = FyConst.TYPE_OBJECT;
 		/*
 		 * this.arr = { arrayType : 0, contentClass : undefined };
 		 * 
@@ -78,30 +65,48 @@ var FyClass;
 		/**
 		 * @return FyMethod
 		 */
-		this.clinit = dummyMethod;
+		this.clinit = undefined;
 
 		/* BEGIN GC Only */
-		this.fieldStatic = [];
-		this.fieldAbs = [];
+		this.fieldStatic = new Array();
+		this.fieldAbs = new Array();
 		/* END GC Only */
 
 		this.virtualTable = new HashMapI(-1, 3, 0.75);
 
 		/** Array only* */
-		this.contentClass = dummyClass;
-		this.arrayType = 0;
+		this.contentClass = undefined;
+		this.arrayType = 0 | 0;
 
 		/** primitive only */
 		this.pType = undefined;
 
-		this.global = dummyGlobal;
+		this.global = undefined;
 
 		Object.preventExtensions(this);
+	};
+
+	FyClass.prototype.asArrayClass = function() {
+		this.type = FyConst.TYPE_ARRAY;
+		this.arrayType = FyClassLoader.getArrayContentType(this.name);
+
+		this.superClass = this.classloader
+				.lookupAndPend(FyConst.FY_BASE_OBJECT);
+		this.contentClass = this.classloader.lookupAndPend(FyClassLoader
+				.getArrayContentName(this.name));
+		return this;
+	};
+
+	FyClass.prototype.asPrimClass = function() {
+		this.type = FyConst.TYPE_PRIMITIVE;
+		this.pType = FyContext.mapPrimitivesRev[this.name];
+		this.superClass = this.classloader
+				.lookupAndPend(FyConst.FY_BASE_OBJECT);
+		return this;
 	};
 
 	FyClass.prototype.toString = function() {
 		return this.name;
 	};
-	
-	FyClass.empty = new FyClass(0);
+
 })();

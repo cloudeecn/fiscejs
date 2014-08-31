@@ -17,20 +17,16 @@
 
 var FyMethod;
 (function() {
-	/**
-	 * @returns {FyClass}
-	 */
-	var dummyClass = undefined;
 
 	FyMethod = function() {
 		this.name = "";
 		this.descriptor = "";
 		this.accessFlags = "";
 
-		this.paramStackUsage = 0;
-		this.returnLength = 0;
+		this.paramStackUsage = 0 | 0;
+		this.returnLength = 0 | 0;
 
-		this.parameterCount = 0;
+		this.parameterCount = 0 | 0;
 		this.parameterClassNames = [];
 		this.returnClassName = "";
 
@@ -38,17 +34,17 @@ var FyMethod;
 		this.exceptionTable = [];
 		this.lineNumberTable = [];
 
-		this.maxStack = 0;
-		this.maxLocals = 0;
+		this.maxStack = 0 | 0;
+		this.maxLocals = 0 | 0;
 		this.code = [];
 
 		/** Filled in by class loader phase 1* */
 		this.fullName = "";
 		this.uniqueName = "";
-		this.owner = dummyClass;
+		this.owner = undefined;
 
 		/** Filled in by class loader* */
-		this.methodId = 0;
+		this.methodId = 0 | 0;
 
 		this.stackOfs = [];
 		this.frames = [];
@@ -79,7 +75,7 @@ var FyMethod;
 
 	FyMethod.prototype.getSpOfs = function(ip) {
 		return this.stackOfs[ip];
-	}
+	};
 
 	FyMethod.prototype.toString = function() {
 		return "{Method}" + this.uniqueName;
