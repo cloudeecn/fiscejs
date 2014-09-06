@@ -36,9 +36,30 @@ var FyConfig = {
 	_ : undefined
 };
 
+function persistStages() {
+	eval("//" + arguments);
+}
+
+var hasNative = false;
+var forceOptimize=function(param){};
+
 // now
 (function(window) {
 	"use strict";
+
+	(function() {
+		try {
+			var str = "function test(){};";
+			str += "%OptimizeFunctionOnNextCall(test);";
+			str += "test();";
+			eval(str);
+			hasNative = true;
+			forceOptimize=new Function("return (function forceOptimize(fun){if(%GetOptimizationStatus(fun)==4){throw new Error(fun+' cant be optimized');}if(%GetOptimizationStatus(fun)!=0) %OptimizeFunctionOnNextCall(fun);});")();
+			console.log("Supported native syn")
+		} catch (e) {
+			throw e;
+		}
+	})();
 
 	if (!Date.now) {
 		Date.now = function now() {
@@ -53,7 +74,8 @@ var FyConfig = {
 		console.log("Polyfill performance.now");
 		performance.now = (function() {
 			return performance.now || performance.mozNow || performance.msNow
-					|| performance.oNow || performance.webkitNow || Date.now || function() {
+					|| performance.oNow || performance.webkitNow || Date.now
+					|| function() {
 						// Doh! Crap browser!
 						return new Date().getTime();
 					};

@@ -1,4 +1,4 @@
-var HashMapIObj;
+var HashMapIStr;
 (function() {
 	"use strict";
 	
@@ -10,7 +10,7 @@ var HashMapIObj;
 
 	var hash = directHash;
 
-	function Entry(key, value) {
+	function ISEntry(key, value) {
 		this.key = key | 0;
 		this.value = value;
 		Object.preventExtensions(this);
@@ -22,7 +22,7 @@ var HashMapIObj;
 	 * @param {Number}
 	 *            factor
 	 */
-	HashMapIObj = function(capShift, factor) {
+	HashMapIStr = function(capShift, factor) {
 		this.factor = Number(factor || 0.75);
 		this.capShift = capShift | 0;
 		this.cap = 1 << this.capShift;
@@ -34,12 +34,12 @@ var HashMapIObj;
 		Object.preventExtensions(this);
 	};
 
-	HashMapIObj.prototype.hash = directHash;
+	HashMapIStr.prototype.hash = directHash;
 
-	HashMapIObj.prototype.expand = function() {
+	HashMapIStr.prototype.expand = function() {
 		// if (this.expanding) {
 		// throw new FyException(undefined,
-		// "HashMapIObj.expand should not be reentried");
+		// "HashMapIStr.expand should not be reentried");
 		// }
 		// this.expanding = true;
 		var stage1 = "stage1";
@@ -92,7 +92,7 @@ var HashMapIObj;
 				stage4, stage5, stage6, stage7, stage8, stage9, stage10,
 				stage11 ]);
 		// if (this.size !== oldSize) {
-		// throw new FyException(undefined, "Assertion, HashMapIObj.expand");
+		// throw new FyException(undefined, "Assertion, HashMapIStr.expand");
 		// }
 		// this.expanding = false;
 	};
@@ -105,17 +105,14 @@ var HashMapIObj;
 	 *            value
 	 * @returns {Number}
 	 */
-	HashMapIObj.prototype.put = function(key, value) {
+	HashMapIStr.prototype.put = function(key, value) {
 		// if (key !== key | 0 || value !== value | 0) {
 		// throw new FyException(undefined,
-		// "Assertion exception, HashMapIObj.put");
+		// "Assertion exception, HashMapIStr.put");
 		// }
 		forceOptimize(this.put);
-		if (typeof value !== "object") {
+		if (typeof value !== "string") {
 			throw new FyException(undefined, "TYPE");
-		}
-		if (value == null) {
-			throw new FyException(undefined, "NPT");
 		}
 		forceOptimize(this.put);
 		var pos = this.hash(key | 0) & this.capMask;
@@ -131,7 +128,7 @@ var HashMapIObj;
 				return ret;
 			}
 		}
-		arr.push(new Entry(key | 0, value));
+		arr.push(new ISEntry(key | 0, value));
 		this.size++;
 		if (this.size > this.maxSize) {
 			forceOptimize(this.expand);
@@ -140,10 +137,10 @@ var HashMapIObj;
 		return undefined;
 	};
 
-	HashMapIObj.prototype.get = function(key) {
+	HashMapIStr.prototype.get = function(key) {
 		// if (key !== key | 0) {
 		// throw new FyException(undefined,
-		// "Assertion exception, HashMapIObj.get");
+		// "Assertion exception, HashMapIStr.get");
 		// }
 		forceOptimize(this.get);
 		var pos = this.hash(key | 0) & this.capMask;
@@ -161,10 +158,10 @@ var HashMapIObj;
 		}
 	};
 
-	HashMapIObj.prototype.remove = function(key) {
+	HashMapIStr.prototype.remove = function(key) {
 		// if (key !== key | 0) {
 		// throw new FyException(undefined,
-		// "Assertion exception, HashMapIObj.remove");
+		// "Assertion exception, HashMapIStr.remove");
 		// }
 		forceOptimize(this.remove);
 		var pos = this.hash(key | 0) & this.capMask;
@@ -185,10 +182,10 @@ var HashMapIObj;
 		}
 	};
 
-	HashMapIObj.prototype.contains = function(key) {
+	HashMapIStr.prototype.contains = function(key) {
 		// if (key !== key | 0) {
 		// throw new FyException(undefined,
-		// "Assertion exception, HashMapIObj.contains");
+		// "Assertion exception, HashMapIStr.contains");
 		// }
 		forceOptimize(this.contains);
 		var pos = this.hash(key | 0) & this.capMask;
@@ -206,7 +203,7 @@ var HashMapIObj;
 		}
 	};
 
-	HashMapIObj.prototype.iterate = function(fun, data) {
+	HashMapIStr.prototype.iterate = function(fun, data) {
 		var count = 0;
 		// var size = this.size;
 		var backend = this.backend;
@@ -230,7 +227,7 @@ var HashMapIObj;
 		}
 		// if (count !== this.size) {
 		// throw new FyException(undefined,
-		// "Assertion exception, HashMapIObj.iterate, count=" + count
+		// "Assertion exception, HashMapIStr.iterate, count=" + count
 		// + " size=" + this.size);
 		// }
 		// for (var i = 0; i < k.length; i++) {
@@ -238,17 +235,18 @@ var HashMapIObj;
 		// }
 		// if (this.size !== size - k.length) {
 		// throw new FyException(undefined,
-		// "Assertion exception, HashMapIObj.iterate, count=" + count
+		// "Assertion exception, HashMapIStr.iterate, count=" + count
 		// + " size=" + this.size + " keys removed=" + k);
 		// }
 		return count;
 	};
 
-	HashMapIObj.prototype.clear = function() {
+	HashMapIStr.prototype.clear = function() {
 		forceOptimize(this.clear);
 		this.backend = new Array();
 		this.size = 0;
-		for (var i = 0; i < this.cap; i++) {
+		var max = this.cap;
+		for (var i = 0; i < max; i++) {
 			this.backend.push([]);
 		}
 	};

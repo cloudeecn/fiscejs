@@ -732,7 +732,7 @@ var FyThread;
 					/**
 					 * @return {String}
 					 */
-					var frame = method.frames[lip];
+					var frame = method.frames.get(lip);
 
 					var imax;
 					if (isTop) {

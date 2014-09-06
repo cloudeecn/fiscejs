@@ -2,8 +2,10 @@ var HashMapI;
 (function() {
 	"use strict";
 
+	var EMPTY_ARRAY = [];
+
 	function directHash(i) {
-		return i;
+		return i & 0x7fffffff;
 	}
 
 	var hash = directHash;
@@ -15,16 +17,15 @@ var HashMapI;
 	 *            factor
 	 */
 	HashMapI = function(nullNumber, capShift, factor) {
+//		forceOptimize(HashMapI);
 		this.nullNumber = nullNumber | 0;
 		this.capShift = capShift | 0;
 		this.cap = 1 << this.capShift;
 		this.capMask = this.cap - 1;
 		this.factor = Number(factor || 0.75);
-
-		this.backend = new Array(this.cap);
-		this.size = 0;
-		// this.expanding = false;
+		this.maxSize = (this.cap * factor) | 0;
 		this.pendingRemove = [];
+		this.clear();
 		Object.preventExtensions(this);
 	};
 
@@ -36,13 +37,21 @@ var HashMapI;
 		// "HashMapI.expand should not be reentried");
 		// }
 		// this.expanding = true;
-		this.capShift++;
-		this.cap <<= 1;
-		this.capMask = this.cap - 1;
-		var oldSize = this.size;
+		forceOptimize(this.expand);
+		var capShift = this.capShift + 1;
+		var cap = 1 << capShift;
+		var capMask = cap - 1;
+		var maxSize = (cap * this.factor) | 0;
+
+		this.capShift = capShift;
+		this.cap = cap;
+		this.capMask = capMask;
+		this.maxSize = maxSize;
+
 		var backend = this.backend;
 		this.clear();
-		for (var i = backend.length; i--;) {
+		var max = backend.length;
+		for (var i = 0; i < max; i++) {
 			var arr = backend[i];
 			if (arr !== undefined) {
 				var al = arr.length;
@@ -72,12 +81,22 @@ var HashMapI;
 		// throw new FyException(undefined,
 		// "Assertion exception, HashMapI.put");
 		// }
-		var pos = this.hash(key | 0) & this.capMask;
-		var arr = this.backend[pos];
-		if (arr === undefined) {
+		forceOptimize(this.put);
+		var stage1 = "stage1";
+		var pos = this.hash(key) & this.capMask;
+		var stage2 = "stage2";
+		var arr;
+		var stage3 = "stage3";
+		if (this.backend[pos] === undefined) {
+			stage3 = "stage3b1";
 			arr = this.backend[pos] = [];
+		} else {
+			stage3 = "stage3b2";
+			arr = this.backend[pos]
 		}
+		var stage4 = "stage4";
 		var al = arr.length;
+		var stage5 = "stage5";
 		for (var i = 0; i < al; i += 2) {
 			if (arr[i] === key) {
 				var ret = arr[i + 1];
@@ -85,12 +104,19 @@ var HashMapI;
 				return ret;
 			}
 		}
+		var stage6 = "stage6";
 		arr.push(key | 0);
+		var stage7 = "stage7";
 		arr.push(value | 0);
+		var stage8 = "stage8";
 		this.size++;
-		if (this.size > (this.cap * this.factor) | 0) {
+		var stage9 = "stage9";
+		if (this.size > this.maxSize) {
 			this.expand();
 		}
+		var stage10 = "stage10";
+		persistStages([ stage1, stage2, stage3, stage4, stage5, stage6, stage7,
+				stage8, stage9 ]);
 		return this.nullNumber;
 	};
 
@@ -115,6 +141,8 @@ var HashMapI;
 		// throw new FyException(undefined,
 		// "Assertion exception, HashMapI.get");
 		// }
+		forceOptimize(this._get);
+		forceOptimize(this.get);
 		return this._get(key | 0);
 	};
 
@@ -123,6 +151,7 @@ var HashMapI;
 		// throw new FyException(undefined,
 		// "Assertion exception, HashMapI.remove");
 		// }
+		forceOptimize(this.remove);
 		var pos = this.hash(key | 0) & this.capMask;
 		var arr = this.backend[pos];
 		if (arr === undefined) {
@@ -146,6 +175,7 @@ var HashMapI;
 		// throw new FyException(undefined,
 		// "Assertion exception, HashMapI.contains");
 		// }
+		forceOptimize(this.contains);
 		var pos = this.hash(key | 0) & this.capMask;
 		var arr = this.backend[pos];
 		if (arr === undefined) {
@@ -162,6 +192,7 @@ var HashMapI;
 	};
 
 	HashMapI.prototype.iterate = function(fun, data) {
+		forceOptimize(this.iterate);
 		var count = 0;
 		var size = this.size;
 		var backend = this.backend;
@@ -200,8 +231,12 @@ var HashMapI;
 	};
 
 	HashMapI.prototype.clear = function() {
-		this.backend = new Array(this.cap);
+		forceOptimize(this.clear);
+		this.backend = new Array();
 		this.size = 0;
+		for (var i = 0; i < this.cap; i++) {
+			this.backend.push([]);
+		}
 	};
 
 })();

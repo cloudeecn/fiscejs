@@ -23,47 +23,96 @@ var FyClass;
 	 * 
 	 * @param {FyClassLoader}
 	 *            classloader
-	 * @param {String}
-	 *            name
+	 * @param {Object}
+	 *            classDef
+	 * @param {FyGlobal}
+	 *            global
 	 */
-	FyClass = function(classloader, name) {
+	FyClass = function(classloader, name, classDef, global) {
+		var context = classloader.context;
 		this.classloader = classloader;
+
 		this.name = name;
-		this.sourceFile = undefined;
+		this.global = global;
+		this.constants = [];
 
-		this.constants = new Array();
+		this.staticSize = 0 | 0;
+		this.sizeRel = 0 | 0;
 
-		this.accessFlags = 0 | 0;
+		if (this.name.charAt(0) === "[") {
+			this.type = FyConst.TYPE_ARRAY;
 
-		// this.superClassData = undefined;
-		// this.interfaceDatas = undefined;
+			this.accessFlags = (FyConst.FY_ACC_PUBLIC & FyConst.FY_ACC_FINAL) | 0;
+			this.arrayType = FyClassLoader.getArrayContentType(this.name);
+			this.pType = undefined;
+			this.contentClass = classloader.lookupAndPend(FyClassLoader
+					.getArrayContentName(this.name));
+
+			this.sourceFile = undefined;
+			this.superClass = classloader.lookupAndPend(FyConst.FY_BASE_OBJECT);
+		} else if (this.name.charAt(0) === "<") {
+			this.type = FyConst.TYPE_PRIMITIVE;
+
+			this.accessFlags = (FyConst.FY_ACC_PUBLIC & FyConst.FY_ACC_FINAL) | 0;
+			this.arrayType = 0 | 0;
+			if (!(this.name in FyContext.mapPrimitivesRev)) {
+				throw new FyException(undefined, "Illegal class name "
+						+ this.name);
+			}
+			this.pType = FyContext.mapPrimitivesRev[this.name];
+			this.contentClass = undefined;
+
+			this.sourceFile = undefined;
+			this.superClass = classloader.lookupAndPend(FyConst.FY_BASE_OBJECT);
+		} else {
+			this.type = FyConst.TYPE_OBJECT;
+
+			FyUtils.cloneIntArray(classDef.constants, this.constants);
+
+			this.accessFlags = classDef.accessFlags | 0;
+			this.arrayType = 0 | 0;
+			this.pType = undefined;
+			this.contentClass = undefined;
+
+			this.sourceFile = undefined;
+			if ("sourceFile" in classDef && classDef.sourceFile !== 0) {
+				this.sourceFile = global.strings[classDef.sourceFile];
+			}
+			this.superClass = undefined;
+			if ("superClassData" in classDef) {
+				var superClassData = classDef.superClassData | 0;
+				if (superClassData !== 0) {
+					var superClassConstant = this.constants[classDef.superClassData];
+					this.superClass = classloader.lookupConstantAndPend(global,
+							superClassConstant);
+				}
+			}
+
+			this.staticSize += classDef.staticSize | 0;
+			this.sizeRel += classDef.sizeRel | 0;
+
+		}
+
+		if (this.staticSize > 0) {
+			this.staticPos = context.heap
+					.allocateStatic(this.staticSize, false);
+		} else {
+			this.staticPos = 0 | 0;
+		}
 
 		this.fields = new Array();
 		this.methods = new Array();
-		this.sizeRel = 0 | 0;
-		this.staticSize = 0 | 0;
-		this.staticPos = 0 | 0;
+		this.interfaces = new Array();
 
 		this.phase = 0 | 0;
 
 		/* Filled by class loader */
 		this.classId = 0 | 0;
 		this.sizeAbs = 0 | 0;
-		this.ofsInHeap = 0 | 0;
 
-		this.interfaces = new Array();
-
-		this.superClass = undefined;
-		this.type = FyConst.TYPE_OBJECT;
-		/*
-		 * this.arr = { arrayType : 0, contentClass : undefined };
-		 * 
-		 * this.prm = { pType : "" };
-		 */
-
-		this.clinitThreadId = 0;
+		this.clinitThreadId = 0 | 0;
 		/**
-		 * @return FyMethod
+		 * @returns {FyMethod}
 		 */
 		this.clinit = undefined;
 
@@ -74,36 +123,40 @@ var FyClass;
 
 		this.virtualTable = new HashMapI(-1, 3, 0.75);
 
-		/** Array only* */
-		this.contentClass = undefined;
-		this.arrayType = 0 | 0;
-
-		/** primitive only */
-		this.pType = undefined;
-
-		this.global = undefined;
-
 		Object.preventExtensions(this);
 	};
 
 	FyClass.prototype.asArrayClass = function() {
-		this.type = FyConst.TYPE_ARRAY;
-		this.arrayType = FyClassLoader.getArrayContentType(this.name);
 
-		this.superClass = this.classloader
-				.lookupAndPend(FyConst.FY_BASE_OBJECT);
-		this.contentClass = this.classloader.lookupAndPend(FyClassLoader
-				.getArrayContentName(this.name));
 		return this;
 	};
 
 	FyClass.prototype.asPrimClass = function() {
-		this.type = FyConst.TYPE_PRIMITIVE;
-		this.pType = FyContext.mapPrimitivesRev[this.name];
-		this.superClass = this.classloader
-				.lookupAndPend(FyConst.FY_BASE_OBJECT);
+
 		return this;
 	};
+
+	FyClass.prototype.asObjectClass = function(global, classDef) {
+
+		return this;
+	};
+
+	/**
+	 * 
+	 * @param {FyMethod}
+	 *            clinitMethod
+	 */
+	FyClass.prototype.setClinitMethod = function(clinitMethod) {
+		this.clinit = clinitMethod;
+	};
+
+	FyClass.prototype.setPhase = function(phase) {
+		this.phase = phase | 0;
+	};
+
+	FyClass.prototype.setClassId = function(cid) {
+		this.classId = cid | 0;
+	}
 
 	FyClass.prototype.toString = function() {
 		return this.name;

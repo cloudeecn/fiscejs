@@ -1,33 +1,14 @@
 var fs = require('fs');
 var vm = require('vm');
+var files = require('./files.js'); 
 var includeInThisContext = function(path) {
 	var code = fs.readFileSync(path);
 	vm.runInThisContext(code, path);
 }.bind(this);
-includeInThisContext("../fisce/gunzip.minjs");
-includeInThisContext("../fisce/aot.js");
-includeInThisContext("../fisce/portable.js");
-includeInThisContext("../fisce/long.asm.js");
-includeInThisContext("../fisce/hashmapio.js");
-includeInThisContext("../fisce/hashmapi.js");
-includeInThisContext("../fisce/gunzip.minjs");
-includeInThisContext("../fisce/vfs.js");
-includeInThisContext("../fisce/structs.js");
-includeInThisContext("../fisce/method.js");
-includeInThisContext("../fisce/field.js");
-includeInThisContext("../fisce/class.js");
-includeInThisContext("../fisce/context.js");
-includeInThisContext("../fisce/heap.js");
-includeInThisContext("../fisce/classloader.js");
-includeInThisContext("../fisce/thread.js");
-includeInThisContext("../fisce/threadmanager.js");
-includeInThisContext("../fisce/aot.native.js");
-
-includeInThisContext("../../../../target/aot.data.js");
-
-includeInThisContext("../fisce/nh.core.js");
-includeInThisContext("../fisce/nh.reflect.js");
-includeInThisContext("../fisce/nh.math.js");
+console.log(files);
+for(var i=0;i<files.length;i++){
+	includeInThisContext(files[i]);
+}
 var context = new FyContext();
 context.addClassDef(JSON.parse(""
 		+ fs.readFileSync("../../../../target/json/rt-2.0.0-SNAPSHOT.json")));
@@ -1079,12 +1060,13 @@ var objClasses = [
 		"com/jcraft/jzlib/ZInputStream", "com/jcraft/jzlib/ZOutputStream",
 		"com/jcraft/jzlib/ZStream", "com/jcraft/jzlib/ZStreamException" ];
 
-var classes = arrClasses;
+var classes = objClasses;
 var mloop = 0;
 var i = 0;
 var max = classes.length;
 function fun() {
 	if (i >= max) {
+		console.log(context.classes.size);
 		return;
 		i = 0;
 		mloop++;
@@ -1097,7 +1079,7 @@ function fun() {
 										.readFileSync("../../../../target/json/rt-2.0.0-SNAPSHOT.json")));
 	} else {
 		var name = classes[i];
-		if (i % 200 === 0) {
+		if (i % 50 === 0) {
 			console.log("Loading... " + i + " name=" + name);
 		}
 		context.lookupClass(name);

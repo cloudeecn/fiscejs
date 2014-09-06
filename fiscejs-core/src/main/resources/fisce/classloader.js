@@ -55,6 +55,8 @@ var FyClassLoader;
 	 * @returns {FyClass}
 	 */
 	FyClassLoader.prototype.lookupConstantAndPend = function(global, constant) {
+		eval("");
+		// TODO
 		var clazz = this.context
 				.lookupClassFromConstantPhase1(global, constant);
 		this.pending.push(clazz);
@@ -73,12 +75,11 @@ var FyClassLoader;
 	};
 
 	FyClassLoader.prototype.fixPendingSingle = function(clazz) {
-		var phase = clazz.phase;
-		if (phase === 1) {
+		if (clazz.phase === 1) {
 			this.phase2(clazz);
 		}
 
-		if (phase === 2) {
+		if (clazz.phase === 2) {
 			this.phase3(clazz);
 		}
 	};
@@ -139,7 +140,7 @@ var FyClassLoader;
 			 * @returns {FyClassDef}
 			 */
 			var cd = this.context.classDefs[i];
-			if (cd.classes[name]) {
+			if (name in cd.classes) {
 				var data = FyUtils.unbase64(cd.classes[name], undefined, 0, 0);
 				var gunzip = new Zlib.Gunzip(data);
 				var utf8 = gunzip.decompress();
@@ -154,7 +155,7 @@ var FyClassLoader;
 				utf8 = undefined;
 				classDef = JSON.parse(str);
 
-				cd.classes[name] = undefined;
+				delete cd.classes[name];
 
 				global = cd.global;
 				return {
@@ -166,225 +167,119 @@ var FyClassLoader;
 		return undefined;
 	};
 
-	FyClassLoader.prototype._loadObjectClass = function(clazz) {
-		// Normal class
-		// iterate all class defs
-		var classDef = undefined;
-		var global = undefined;
-		{
-			var cd = this.getClassDef(clazz.name);
-			if (cd !== undefined) {
-				classDef = cd.classDef;
-				global = cd.global;
-			} else {
-				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
-						"Class not found: " + name);
+	FyClassLoader.prototype._locAddInterface = function(clazz, global, constant) {
+		if (constant > clazz.constants.length) {
+			throw new FyException(undefined, "IIOB: " + constant + "/"
+					+ clazz.constants.length);
+		}
+		var cvalue = clazz.constants[constant | 0] | 0;
+		var intf = this.lookupConstantAndPend(global, cvalue);
+		clazz.interfaces.push(intf);
+	}
+
+	FyClassLoader.prototype._locAddInterfaces = function(clazz, global,
+			classDef) {
+		var idx = 0;
+		var im = classDef.interfaceDatas.length;
+		for (idx = 0; idx < im; idx++) {
+			var constant = classDef.interfaceDatas[idx] | 0;
+			this._locAddInterface(clazz, global, constant);
+		}
+	};
+
+	FyClassLoader.prototype._locAddMethod = function(clazz, methodDef, strings) {
+		/**
+		 * @returns {FyMethod}
+		 */
+		var method = new FyMethod(clazz, methodDef, strings);
+		var name = method.uniqueName;
+		if (method.accessFlags & FyConst.FY_ACC_CLINIT) {
+			// TODO
+			// clazz.setClinitMethod(method);
+		}
+		if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
+			if (method.uniqueName in this.context.nativeHandlers) {
+				var nativeHandler = this.context.nativeHandlers[method.uniqueName];
+				method.invoke = nativeHandler.func;
+				method.maxLocals += nativeHandler.extraVars | 0;
+				method.maxStack += nativeHandler.stackSize | 0;
+			} else if (method.uniqueName in FyContext.staticNativeHandlers) {
+				var nativeHandler = FyContext.staticNativeHandlers[method.uniqueName];
+				method.invoke = nativeHandler.func;
+				method.maxLocals += nativeHandler.extraVars | 0;
+				method.maxStack += nativeHandler.stackSize | 0;
 			}
 		}
+		this.context.registerMethod(method);
+		clazz.methods.push(method);
+	}
 
-		clazz.global = global;
-		clazz.accessFlags = classDef.accessFlags | 0;
-		clazz.sizeRel = classDef.sizeRel | 0;
-		clazz.staticSize = classDef.staticSize | 0;
-		clazz.sourceFile = global.strings[classDef.sourceFile];
-		if (classDef.constants !== undefined) {
-			for (var idx = 0, im = classDef.constants.length; idx < im; idx++) {
-				clazz.constants.push(classDef.constants[idx] | 0);
-			}
+	FyClassLoader.prototype._locAddMethods = function(clazz, global, classDef) {
+		var methodDefs = classDef.methods;
+		var len = methodDefs.length;
+		for (var i = 0; i < len; i++) {
+			var methodDef = methodDefs[i];
+			this._locAddMethod(clazz, methodDef, global.strings);
 		}
-		clazz.constants = classDef.constants || [];
-		if (clazz.staticSize > 0) {
-			clazz.staticPos = this.context.heap.allocateStatic(
-					clazz.staticSize, false);
-		}
-		{// Interfaces
-			for (var idx = 0, im = classDef.interfaceDatas.length; idx < im; idx++) {
-				clazz.interfaces.push(this.lookupConstantAndPend(global,
-						clazz.constants[classDef.interfaceDatas[idx]]));
-			}
-		}
-		{// Methods
-			var methodDefs = classDef.methods;
-			var methods = clazz.methods = [];
-			var len = methodDefs.length;
-			for (var i = 0; i < len; i++) {
+	};
 
-				var methodDef = methodDefs[i];
-				/**
-				 * @returns {FyMethod}
-				 */
-				var method = new FyMethod();
-				methods.push(method);
-
-				method.accessFlags = methodDef.accessFlags | 0;
-				method.maxStack = methodDef.maxStack | 0;
-				method.maxLocals = methodDef.maxLocals | 0;
-				method.paramStackUsage = methodDef.paramStackUsage | 0;
-				method.parameterCount = methodDef.parameterCount | 0;
-
-				method.name = global.strings[methodDef.name];
-				method.descriptor = global.strings[methodDef.descriptor];
-				method.returnClassName = global.strings[methodDef.returnClassName];
-				method.fullName = this.context.pool("." + method.name + "."
-						+ method.descriptor);
-				method.uniqueName = this.context.pool(clazz.name
-						+ method.fullName);
-				method.owner = clazz;
-				method.lineNumberTable = methodDef.lineNumberTable;
-				method.exceptionTable = methodDef.exceptionTable;
-				switch (method.returnClassName) {
-				case "void":
-					method.returnLength = 0;
-					break;
-				case "long":
-				case "double":
-					method.returnLength = 2;
-					break;
-				default:
-					method.returnLength = 1;
-					break;
-				}
-
-				if (method.name === FyConst.FY_METHOD_CLINIT) {
-					clazz.clinit = method;
-					method.accessFlags |= FyConst.FY_ACC_CLINIT;
-				} else if (method.name === FyConst.FY_METHOD_INIT) {
-					method.accessFlags |= FyConst.FY_ACC_CONSTRUCTOR;
-				}
-				/*
-				 * if (methodDef.lineNumberTable) { for (var lnIdx = 0; lnIdx <
-				 * methodDef.lineNumberTable.length; lnIdx++) { var lineNumber =
-				 * new FyLineNumber(); var lineNumberDef =
-				 * methodDef.lineNumberTable[lnIdx];
-				 * FyUtils.simpleClone(lineNumberDef, lineNumber);
-				 * method.lineNumberTable[lnIdx] = lineNumber; } }
-				 */
-
-				if (methodDef.lookupSwitchTargets) {
-					for (var lstIdx = 0; lstIdx < methodDef.lookupSwitchTargets.length; lstIdx++) {
-						var lst = new FyLookupSwitchTarget();
-						var lstDef = methodDef.lookupSwitchTargets[lstIdx];
-						lst.dflt = lstDef.dflt | 0;
-						var keys = Object.keys(lstDef.targets);
-						for (var j = 0; j < keys.length; j++) {
-							lst.targets.put(keys[j] | 0,
-									lstDef.targets[keys[j]] | 0);
-						}
-						method.lookupSwitchTargets.push(lst);
-					}
-				}
-
-				if (methodDef.tableSwitchTargets) {
-					for (var tstIdx = 0; tstIdx < methodDef.tableSwitchTargets.length; tstIdx++) {
-						var tst = new FyTableSwitchTarget();
-						var tstDef = methodDef.tableSwitchTargets[tstIdx];
-						tst.dflt = tstDef.dflt | 0;
-						tst.min = tstDef.min | 0;
-						tst.max = tstDef.max | 0;
-						for (var j = 0; j < tstDef.targets.length; j++) {
-							tst.targets.push(tstDef.targets[j] | 0);
-						}
-						method.tableSwitchTargets.push(tst);
-					}
-				}
-
-				if (methodDef.code) {
-					method.code = methodDef.code;
-				}
-
-				for (var idx = 0, im = methodDef.frames.length; idx < im; idx += 2) {
-					method.frames[methodDef.frames[idx]] = this.context
-							.pool(global.strings[methodDef.frames[idx + 1]]);
-				}
-
-				for (var idx = 0, im = methodDef.parameterClassNames.length; idx < im; idx++) {
-					method.parameterClassNames
-							.push(global.strings[methodDef.parameterClassNames[idx]]);
-				}
-
-				for (var idx = 0, im = methodDef.exceptions.length; idx < im; idx++) {
-					method.exceptions
-							.push(global.strings[methodDef.exceptions[idx]]);
-				}
-
-				if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
-					var nativeHandler = this.context.nativeHandlers[method.uniqueName]
-							|| FyContext.staticNativeHandlers[method.uniqueName];
-					if (nativeHandler !== undefined) {
-						method.invoke = nativeHandler.func;
-						method.maxLocals += nativeHandler.extraVars | 0;
-						method.maxStack += nativeHandler.stackSize | 0;
-					}
-				}
-				this.context.registerMethod(method);
-			}
-		}
-
-		{// Fields
-			var fieldDefs = classDef.fields;
-			var fields = clazz.fields = [];
-			var len = fieldDefs.length;
-			for (var i = 0; i < len; i++) {
-				/**
-				 * @returns {FyField}
-				 */
-				var field = new FyField();
-				fields.push(field);
-				var fieldDef = fieldDefs[i];
-				FyUtils.simpleClone(fieldDef, field, [ "accessFlags", "posRel",
-						"size", "constantValueData" ]);
-				field.name = global.strings[fieldDef.name];
-				field.descriptor = global.strings[fieldDef.descriptor];
-				field.fullName = this.context.pool("." + field.name + "."
-						+ field.descriptor);
-				// console
-				// .log("#CL" + clazz.name + "." + field.name + "@"
-				// + i);
-				field.uniqueName = this.context.pool(clazz.name
-						+ field.fullName);
-				field.owner = clazz;
-				this.context.registerField(field);
-				// init static fields for reflection
-				if (fieldDef.constantValueData) {
-					if ((field.accessFlags & FyConst.FY_ACC_STATIC)
-							&& (field.accessFlags & FyConst.FY_ACC_FINAL)) {
-						switch (field.descriptor.charCodeAt(0)) {
-						case 90/* FyConst.Z */:
-						case 66/* FyConst.B */:
-						case 83/* FyConst.S */:
-						case 67/* FyConst.C */:
-						case 73/* FyConst.I */:
-						case 70/* FyConst.F */:
-							this.context.heap
-									.putStaticInt(
-											clazz,
-											field.posRel | 0,
-											global.constants[clazz.constants[fieldDef.constantValueData]] | 0);
-							break;
-						case 68/* FyConst.D */:
-						case 74/* FyConst.J */:
-							this.context.heap
-									.putStaticLongFrom(
-											clazz,
-											field.posRel,
-											global.constants,
-											clazz.constants[fieldDef.constantValueData]);
-							break;
-						case 76/* FyConst.L */:
-							field.constantValueData = clazz.constants[fieldDef.constantValueData] | 0;
-							break;
-						}
+	FyClassLoader.prototype._locAddFields = function(clazz, global, classDef) {
+		var fieldDefs = classDef.fields;
+		var fields = clazz.fields = [];
+		var len = fieldDefs.length;
+		for (var i = 0; i < len; i++) {
+			/**
+			 * @returns {FyField}
+			 */
+			var field = new FyField();
+			fields.push(field);
+			var fieldDef = fieldDefs[i];
+			FyUtils.simpleClone(fieldDef, field, [ "accessFlags", "posRel",
+					"size", "constantValueData" ]);
+			field.name = global.strings[fieldDef.name];
+			field.descriptor = global.strings[fieldDef.descriptor];
+			field.fullName = this.context.pool("." + field.name + "."
+					+ field.descriptor);
+			// console
+			// .log("#CL" + clazz.name + "." + field.name + "@"
+			// + i);
+			field.uniqueName = this.context.pool(clazz.name + field.fullName);
+			field.owner = clazz;
+			this.context.registerField(field);
+			// init static fields for reflection
+			if (fieldDef.constantValueData) {
+				if ((field.accessFlags & FyConst.FY_ACC_STATIC)
+						&& (field.accessFlags & FyConst.FY_ACC_FINAL)) {
+					switch (field.descriptor.charCodeAt(0)) {
+					case 90/* FyConst.Z */:
+					case 66/* FyConst.B */:
+					case 83/* FyConst.S */:
+					case 67/* FyConst.C */:
+					case 73/* FyConst.I */:
+					case 70/* FyConst.F */:
+						this.context.heap
+								.putStaticInt(
+										clazz,
+										field.posRel | 0,
+										global.constants[clazz.constants[fieldDef.constantValueData]] | 0);
+						break;
+					case 68/* FyConst.D */:
+					case 74/* FyConst.J */:
+						this.context.heap.putStaticLongFrom(clazz,
+								field.posRel, global.constants,
+								clazz.constants[fieldDef.constantValueData]);
+						break;
+					case 76/* FyConst.L */:
+						field.constantValueData = clazz.constants[fieldDef.constantValueData] | 0;
+						break;
 					}
 				}
 			}
 		}
+	};
 
-		if (classDef.superClassData) {
-			var superClassConstant = clazz.constants[classDef.superClassData];
-			clazz.superClass = this.lookupConstantAndPend(global,
-					superClassConstant);
-		}
-
+	FyClassLoader.prototype._locAddExtendedFlags = function(clazz, global,
+			classDef) {
 		if (!this.context.TOP_OBJECT && clazz.name === FyConst.FY_BASE_OBJECT) {
 			this.context.TOP_OBJECT = clazz;
 		} else if (!this.context.TOP_THROWABLE
@@ -418,7 +313,13 @@ var FyClassLoader;
 				&& clazz.name === FyConst.FY_REFLECT_FIELD) {
 			this.context.TOP_FIELD = clazz;
 		}
-		return clazz;
+	};
+
+	FyClassLoader.prototype._loadObjectClass = function(clazz, global, classDef) {
+		// this._locAddInterfaces(clazz, global, classDef);
+		this._locAddMethods(clazz, global, classDef);
+		// this._locAddFields(clazz, global, classDef);
+		this._locAddExtendedFlags(clazz, global, classDef);
 	};
 
 	/**
@@ -429,17 +330,32 @@ var FyClassLoader;
 	 */
 	FyClassLoader.prototype.loadClass = function(name) {
 		// console.log("Load " + name);
+		var stage1 = "stage1";
 		name = this.context.pool(name);
+		var stage2 = "stage2";
 		var clazz;
-		if (name.charAt(0) === "[") {
-			clazz = new FyClass(this, name).asArrayClass();
-		} else if (FyContext.mapPrimitivesRev.hasOwnProperty(name)) {
-			clazz = new FyClass(this, name).asPrimClass();
+		var stage3, stage4, stage5, stage6;
+		if (name.charAt(0) === "[" || name.charAt(0) === "<") {
+			stage3 = "stage3a";
+			clazz = new FyClass(this, name, {}, {});
+			stage4 = "stage4a";
+			stage5 = "";
+			stage6 = "";
 		} else {
-			clazz = new FyClass(this, name);
-			this._loadObjectClass(clazz);
+			stage3 = "stage3b";
+			var cd = this.getClassDef(name);
+			stage4 = "stage4b";
+			clazz = new FyClass(this, name, cd.classDef, cd.global);
+			stage5 = "stage5b";
+			this._loadObjectClass(clazz, cd.global, cd.classDef);
+			stage6 = "stage6b";
 		}
-		clazz.phase = 1 | 0;
+		var stage7 = "stage7";
+		clazz.setPhase(1);
+		var stage8 = "stage8";
+		persistStages(stage1 + name + stage2 + name + stage3 + name + stage4
+				+ name + stage5 + name + stage6 + name + stage7 + name + stage8
+				+ name);
 		return clazz;
 	};
 
@@ -454,6 +370,8 @@ var FyClassLoader;
 			throw new FyException(undefined,
 					"Passed illegal class to class loader phase 2");
 		}
+		clazz.setPhase(2);
+		return;
 
 		// console.log("Load phase2 " + clazz.name);
 
@@ -592,7 +510,7 @@ var FyClassLoader;
 			break;
 		}
 		}
-		clazz.phase = 2;
+		clazz.setPhase(2);
 	};
 
 	FyClassLoader.prototype.phase3 = function(clazz) {
@@ -601,6 +519,8 @@ var FyClassLoader;
 			if (clazz.superClass && clazz.superClass.phase < 3) {
 				this.fixPendingSingle(clazz.superClass);
 			}
+			clazz.setPhase(3);
+			return;
 			// console.log("Load phase3 " + clazz.name);
 			if (clazz.superClass && clazz.superClass.sizeAbs > 0) {
 				var len = clazz.superClass.sizeAbs;
@@ -636,7 +556,7 @@ var FyClassLoader;
 				}
 			}
 		}
-		clazz.phase = 3;
+		clazz.setPhase(3);
 	};
 
 	/**

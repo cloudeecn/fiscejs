@@ -44,6 +44,18 @@ var FyLookupSwitchTarget;
 
 	var __FyUtils = function() {
 	};
+
+	__FyUtils.prototype.cloneIntArray = function(src, dest) {
+		if (dest.length !== 0) {
+			throw new FyException(undefined,
+					"Dest array must be empty, dest.length=" + dest.length);
+		}
+		if (src !== undefined) {
+			for (var i = 0, max = src.length; i < max; i++) {
+				dest.push(src[i] | 0);
+			}
+		}
+	};
 	/**
 	 * copy all attributes from src into dest
 	 * 
@@ -51,7 +63,9 @@ var FyLookupSwitchTarget;
 	 * @param dest
 	 */
 	__FyUtils.prototype.shallowClone = function(src, dest) {
-		for ( var key in src) {
+		var keys = Object.keys(src);
+		for (var i = 0, max = keys.length; i < max; i++) {
+			var key = keys[i];
 			dest[key] = src[key];
 		}
 	};
@@ -175,7 +189,7 @@ var FyLookupSwitchTarget;
 	}
 
 	if (false) {
-		__FyUtils.prototype.unbase64 = function(str){
+		__FyUtils.prototype.unbase64 = function(str) {
 			return atob(str);
 		};
 	} else {
@@ -481,18 +495,57 @@ var FyLookupSwitchTarget;
 	 * this.catchClass = undefined; this.handler = 0;
 	 * Object.preventExtensions(this); };
 	 */
-	FyTableSwitchTarget = function() {
-		this.dflt = 0 | 0;
-		this.min = 0 | 0;
-		this.max = 0 | 0;
-		this.targets = [];
+	FyTableSwitchTarget = function(def) {
+		this.targets = new Array();
+		if ("dflt" in def) {
+			this.dflt = def.dflt | 0;
+		} else {
+			this.dflt = 0;
+		}
+		if ("min" in def) {
+			this.min = def.min | 0;
+		} else {
+			this.min = 0;
+		}
+		if ("max" in def) {
+			this.max = def.max | 0;
+		} else {
+			this.max = 0;
+		}
+
+		var targets = this.targets;
+		var defTargets = def.targets;
+		for (var j = 0; j < defTargets.length; j++) {
+			var target = defTargets[j] | 0;
+			targets.push(target);
+		}
 		Object.preventExtensions(this);
 	};
 
-	FyLookupSwitchTarget = function() {
-		this.dflt = 0 | 0;
+	FyLookupSwitchTarget = function(def) {
+		if ("dflt" in def) {
+			this.dflt = def.dflt | 0;
+		} else {
+			this.dflt = 0;
+		}
 		this.targets = new HashMapI(-1, 1, 0.8);
+
+		var targets = this.targets;
+		var defTargets = def.targets;
+
+		for (var j = 0, max = defTargets.length - 1; j < max; j += 2) {
+			var key = defTargets[j] | 0;
+			var value = defTargets[j + 1] | 0;
+			targets.put(key, value);
+		}
 		Object.preventExtensions(this);
+
+		// var keys = Object.keys(def.targets);
+		// for (var j = 0; j < keys.length; j++) {
+		// var key = Number(keys[j]) | 0;
+		// var value = Number(def.targets[key]) | 0;
+		// this.targets.put(key, value);
+		// }
 	};
 
 	if (FyConfig.debugMode) {

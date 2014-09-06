@@ -137,35 +137,35 @@ public class DescriptorAnalyzer {
 		switch (ret.charAt(0)) {
 		case 'B':
 			returnType = TYPE_INT;
-			returnClassName = "byte";
+			returnClassName = "<byte";
 			break;
 		case 'C':
 			returnType = TYPE_INT;
-			returnClassName = "char";
+			returnClassName = "<char";
 			break;
 		case 'F':
 			returnType = TYPE_INT;
-			returnClassName = "float";
+			returnClassName = "<float";
 			break;
 		case 'I':
 			returnType = TYPE_INT;
-			returnClassName = "int";
+			returnClassName = "<int";
 			break;
 		case 'S':
 			returnType = TYPE_INT;
-			returnClassName = "short";
+			returnClassName = "<short";
 			break;
 		case 'Z':
 			returnType = TYPE_INT;
-			returnClassName = "boolean";
+			returnClassName = "<boolean";
 			break;
 		case 'D':
 			returnType = TYPE_WIDE;
-			returnClassName = "double";
+			returnClassName = "<double";
 			break;
 		case 'J':
 			returnType = TYPE_WIDE;
-			returnClassName = "long";
+			returnClassName = "<long";
 			break;
 		case '[':
 			returnType = TYPE_HANDLE;
@@ -177,7 +177,7 @@ public class DescriptorAnalyzer {
 			break;
 		case 'V':
 			returnType = TYPE_UNKNOWN;
-			returnClassName = "void";
+			returnClassName = "<void";
 			break;
 		default: {
 			throw new IllegalArgumentException("Illegal descriptor: "

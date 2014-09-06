@@ -123,7 +123,7 @@ var FyClassDef;
 		this.dynamicClassDef = {};
 
 		/* Classes begins from 1 */
-		this.classes = new HashMapIObj(9, 0.6);
+		this.classes = new HashMapIObj(1, 0.6);
 		this.mapClassNameToId = {};
 		this.mapClassIdToHandle = {};
 
@@ -202,27 +202,27 @@ var FyClassDef;
 	};
 
 	FyContext.primitives = {
-		'Z' : 'boolean',
-		'B' : 'byte',
-		'S' : 'short',
-		'C' : 'char',
-		'I' : 'int',
-		'F' : 'float',
-		'J' : 'long',
-		'D' : 'double',
-		'V' : 'void'
+		Z : '<boolean',
+		B : '<byte',
+		S : '<short',
+		C : '<char',
+		I : '<int',
+		F : '<float',
+		J : '<long',
+		D : '<double',
+		V : '<void'
 	};
 
 	FyContext.mapPrimitivesRev = {
-		'boolean' : 'Z',
-		'byte' : 'B',
-		'short' : 'S',
-		'char' : 'C',
-		'int' : 'I',
-		'float' : 'F',
-		'long' : 'J',
-		'double' : 'D',
-		'void' : 'V'
+		'<boolean' : 'Z',
+		'<byte' : 'B',
+		'<short' : 'S',
+		'<char' : 'C',
+		'<int' : 'I',
+		'<float' : 'F',
+		'<long' : 'J',
+		'<double' : 'D',
+		'<void' : 'V'
 	};
 
 	FyContext.stringPool = {};
@@ -238,8 +238,8 @@ var FyClassDef;
 	FyContext.registerStaticNH = function(name, func, extraVars, extraStack) {
 		this.staticNativeHandlers[name] = {
 			func : func,
-			extraVars : extraVars,
-			stackSize : extraStack
+			extraVars : extraVars | 0,
+			stackSize : extraStack | 0
 		};
 	};
 
@@ -592,7 +592,7 @@ var FyClassDef;
 	 *            clazz
 	 */
 	FyContext.prototype.registerClass = function(clazz) {
-		var cid;
+		var cid = 0 | 0;
 		if (clazz.name in this.mapClassNameToId) {
 			cid = this.mapClassNameToId[clazz.name] | 0;
 			if (this.classes.contains(cid)) {
@@ -601,9 +601,9 @@ var FyClassDef;
 			}
 		} else {
 			cid = (this.classes.size + 1) | 0;
-			this.mapClassNameToId[clazz.name] = cid;
+			this.mapClassNameToId[clazz.name] = cid | 0;
 		}
-		clazz.classId = cid;
+		clazz.setClassId(cid);
 		this.classes.put(cid, clazz);
 	};
 
@@ -634,7 +634,11 @@ var FyClassDef;
 		var clazz = this.getClass(name);
 		if (clazz === undefined) {
 			clazz = this.classLoader.loadClass(name);
-			this.registerClass(clazz);
+			if (clazz !== undefined) {
+				// TODO remove
+				forceOptimize(this.registerClass);
+				this.registerClass(clazz);
+			}
 		}
 		return clazz;
 	};
@@ -682,22 +686,41 @@ var FyClassDef;
 	 */
 	FyContext.prototype.lookupClassFromConstantPhase1 = function(global,
 			constant) {
+		var stage1 = "stage1";
 		var constants = global.constants;
+		var stage2 = "stage2";
 		var clazz = undefined;
-		if (!constants[constant + 2]) {
+		var stage3, stage4, stage5, stage6, stage7, stage8;
+		if (constants[constant + 2] === 0) {
+			stage3 = "stage3a";
 			var strings = global.strings;
+			stage4 = "stage4a";
 			// console.log(constant + ", " + constants[constant] + ", "
 			// + strings[constants[constant]]);
 			clazz = this.lookupClassPhase1(strings[constants[constant]]);
-			if (!clazz) {
+			stage5 = "stage5a";
+			if (clazz === undefined) {
 				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 						constant.name);
 			}
+			stage6 = "stage6a";
 			constants[constant] = clazz.classId;
+			stage7 = "stage7a";
 			constants[constant + 2] = 1;
+			stage8 = "stage8a";
 		} else {
+			stage3 = "stage3a";
 			clazz = this.classes.get(constants[constant] | 0);
+			stage4 = "stage4a";
+			stage5 = "";
+			stage6 = "";
+			stage7 = "";
+			stage8 = "";
 		}
+		persistStages(stage1 + clazz.name + stage2 + clazz.name + stage3
+				+ clazz.name + stage4 + clazz.name + stage5 + clazz.name
+				+ stage6 + clazz.name + stage7 + clazz.name + stage8
+				+ clazz.name);
 		return clazz;
 	};
 
@@ -1001,8 +1024,8 @@ var FyClassDef;
 				for (var i = 0, max = name.length; i < max; i++) {
 					this.nativeHandlers[name.name] = {
 						func : name.func,
-						extraVars : name.extraVars,
-						stackSize : name.stackSize
+						extraVars : name.extraVars | 0,
+						stackSize : name.stackSize | 0
 					};
 				}
 			} else {
@@ -1023,8 +1046,8 @@ var FyClassDef;
 			}
 			this.nativeHandlers[name] = {
 				func : func,
-				extraVars : extraVars,
-				stackSize : stackSize
+				extraVars : extraVars | 0,
+				stackSize : stackSize | 0
 			};
 		}
 	};

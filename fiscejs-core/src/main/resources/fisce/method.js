@@ -18,42 +18,130 @@
 var FyMethod;
 (function() {
 
-	FyMethod = function() {
-		this.name = "";
-		this.descriptor = "";
-		this.accessFlags = "";
+	/**
+	 * @param {FyClass}
+	 *            owner
+	 * @param {Object}
+	 *            methodDef
+	 * @param {Array}
+	 *            strings
+	 */
+	FyMethod = function(owner, methodDef, strings) {
+		var stage = "stage0";
+		this.owner = owner;
+		this.name = strings[methodDef.name];
+		stage = this.name;
+		this.descriptor = strings[methodDef.descriptor];
+		this.fullName = "." + this.name + "." + this.descriptor;
+		this.uniqueName = owner.name + this.fullName;
+		this.returnClassName = strings[methodDef.returnClassName];
+		stage = this.returnClassName;
+		var stage1 = "stage1";
 
-		this.paramStackUsage = 0 | 0;
-		this.returnLength = 0 | 0;
+		this.maxStack = methodDef.maxStack | 0;
+		this.maxLocals = methodDef.maxLocals | 0;
+		this.paramStackUsage = methodDef.paramStackUsage | 0;
+		this.parameterCount = methodDef.parameterCount | 0;
+		this.accessFlags = methodDef.accessFlags | 0;
+		var stage2 = "stage2";
 
-		this.parameterCount = 0 | 0;
+		if (this.name === FyConst.FY_METHOD_CLINIT) {
+			this.accessFlags |= FyConst.FY_ACC_CLINIT | 0;
+		} else if (this.name === FyConst.FY_METHOD_INIT) {
+			this.accessFlags |= FyConst.FY_ACC_CONSTRUCTOR | 0;
+		}
+		var stage3 = "stage3";
+
+		this.lineNumberTable = [];
+		this.exceptionTable = [];
+		FyUtils.cloneIntArray(methodDef.lineNumberTable, this.lineNumberTable);
+		FyUtils.cloneIntArray(methodDef.exceptionTable, this.exceptionTable);
+
+		var stage4 = "stage4";
+
+		if (this.returnClassName === "<void") {
+			this.returnLength = 0 | 0;
+		} else if (this.returnClassName === "<double") {
+			this.returnLength = 2 | 0;
+		} else if (this.returnClassName === "<long") {
+			this.returnLength = 2 | 0;
+		} else {
+			this.returnLength = 1 | 0;
+		}
+
+		var stage5 = "stage5";
+
+		this.tableSwitchTargets = new Array();
+		if ("tableSwitchTargets" in methodDef) {
+			var targets = methodDef.tableSwitchTargets;
+			for (var tstIdx = 0; tstIdx < targets.length; tstIdx++) {
+				var tstDef = targets[tstIdx];
+				var tst = new FyTableSwitchTarget(tstDef);
+				this.tableSwitchTargets.push(tst);
+			}
+		}
+
+		var stage6 = "stage6";
+
+		this.lookupSwitchTargets = new Array();
+		if ("lookupSwitchTargets" in methodDef) {
+			for (var lstIdx = 0; lstIdx < methodDef.lookupSwitchTargets.length; lstIdx++) {
+				var lstDef = methodDef.lookupSwitchTargets[lstIdx];
+				var lst = new FyLookupSwitchTarget(lstDef);
+				this.lookupSwitchTargets.push(lst);
+			}
+		}
+
+		var stage7 = "stage7";
+
 		this.parameterClassNames = [];
-		this.returnClassName = "";
+		for (var idx = 0, im = methodDef.parameterClassNames.length; idx < im; idx++) {
+			this.parameterClassNames
+					.push(strings[methodDef.parameterClassNames[idx]]);
+		}
+
+		var stage8 = "stage8";
 
 		this.exceptions = [];
-		this.exceptionTable = [];
-		this.lineNumberTable = [];
+		for (var idx = 0, im = methodDef.exceptions.length; idx < im; idx++) {
+			this.exceptions.push(strings[methodDef.exceptions[idx]]);
+		}
 
-		this.maxStack = 0 | 0;
-		this.maxLocals = 0 | 0;
+		var stage9 = "stage9";
+
 		this.code = [];
+		if ("code" in methodDef) {
+			FyUtils.cloneIntArray(methodDef.code, this.code);
+		}
 
-		/** Filled in by class loader phase 1* */
-		this.fullName = "";
-		this.uniqueName = "";
-		this.owner = undefined;
+		var stage10 = "stage10";
 
-		/** Filled in by class loader* */
+		this.frames = new HashMapIStr(2, 1.2);
+		for (var idx = 0, im = methodDef.frames.length; idx < im; idx += 2) {
+			this.frames.put(methodDef.frames[idx] | 0,
+					strings[methodDef.frames[idx + 1]]);
+		}
+
+		var stage11 = "stage11";
+
+		/** Filled in by class loader during register* */
 		this.methodId = 0 | 0;
 
 		this.stackOfs = [];
-		this.frames = [];
-		this.tableSwitchTargets = [];
-		this.lookupSwitchTargets = [];
+
+		var stage12 = "stage12";
 
 		// this.clinited = false;
 
 		this.invoke = undefined;
+
+		var stage13 = "stage13";
+
+		persistStages(this.name + stage + this.name + stage1 + this.name + stage2
+				+ this.name + stage3 + this.name + stage4 + this.name + stage5
+				+ this.name + stage6 + this.name + stage7 + this.name + stage8
+				+ this.name + stage9 + this.name + stage10 + this.name
+				+ stage11 + this.name + stage12 + this.name + stage13);
 
 		Object.preventExtensions(this);
 	};
@@ -80,6 +168,4 @@ var FyMethod;
 	FyMethod.prototype.toString = function() {
 		return "{Method}" + this.uniqueName;
 	};
-
-	FyMethod.empty = new FyMethod();
 })();

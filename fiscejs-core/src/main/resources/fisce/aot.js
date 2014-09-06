@@ -307,7 +307,7 @@ var __FyAOTUtil;
 		var stackOfs = method.stackOfs = Array(len);
 
 		code.push(this.replaceAll(macros["HEADER"], "$$$", "$$$", "$$$",
-				method.frames[0], {
+				method.frames.get(0), {
 					"mid" : this.mid
 				}));
 		code.push("\n");
@@ -336,10 +336,6 @@ var __FyAOTUtil;
 			 */
 			var opName = $$ACMD[op];
 			stackOfs[ip] = stackSize;
-			/**
-			 * @returns {Array}
-			 */
-			var frame = false;/* frame data will be extracted by gc */// frames[ip];
 			if (!opName) {
 				throw new FyException(undefined, "Error in preprocessing "
 						+ method.uniqueName + ": Unknown opcode: " + op);

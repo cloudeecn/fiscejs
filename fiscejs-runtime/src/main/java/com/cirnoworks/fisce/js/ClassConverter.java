@@ -379,16 +379,18 @@ public class ClassConverter {
 						SimpleJSONUtil.add(sb, 4, "{", false);
 						SimpleJSONUtil.add(sb, 5, "\"dflt\"",
 								target.getDefaultTarget(), true);
-						SimpleJSONUtil.add(sb, 5, "\"targets\"", "{", false);
+						SimpleJSONUtil.add(sb, 5, "\"targets\"", "[", false);
 
 						for (int k = 0, maxk = target.getKeys().length; k < maxk; k++) {
-							SimpleJSONUtil.add(sb, 6,
-									"\"" + String.valueOf(target.getKeys()[k])
-											+ "\"", target.getTargets()[k],
-									k < maxk - 1);
+							sb.append(target.getKeys()[k]);
+							sb.append(", ");
+							sb.append(target.getTargets()[k]);
+							if(k<maxk-1){
+								sb.append(", ");
+							}
 						}
 
-						SimpleJSONUtil.add(sb, 5, "}", false);
+						SimpleJSONUtil.add(sb, 5, "]", false);
 						SimpleJSONUtil.add(sb, 4, "}", j < maxj - 1);
 					}
 					SimpleJSONUtil.add(sb, 3, "]", true);
