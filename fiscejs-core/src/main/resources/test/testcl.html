@@ -26,24 +26,38 @@
 <script type="text/javascript" src="../fisce/nh.core.js"></script>
 <script type="text/javascript" src="../fisce/nh.reflect.js"></script>
 <script type="text/javascript" src="../fisce/nh.math.js"></script>
-<script type="text/javascript">
-	var clazz = "com/cirnoworks/fisce/privat/Profile";
-	var context = new FyContext();
-</script>
 
 </head>
-<body onload="startup();">
+<body onload="loadData();">
 	<pre id="console">Loading...</pre>
-	<script type="text/javascript" src="../rt.js"></script>
-	<script type="text/javascript" src="../rt-vfs.js"></script>
+	<script type="text/javascript">
+		var classDefs;
+		function loadData() {
+			var xmlhttp;
+			if (window.XMLHttpRequest) {// code for IE7+, Firefox, Chrome, Opera, Safari
+				xmlhttp = new XMLHttpRequest();
+			} else {// code for IE6, IE5
+				xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+			}
+			xmlhttp.onreadystatechange = function() {
+				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+					classDefs = JSON.parse(xmlhttp.responseText);
+					startup();
+				}
+			}
+			xmlhttp.open("GET", "../rt.json", true);
+			xmlhttp.send();
+		}
+	</script>
 	<script type="text/javascript">
 		function startup() {
 			var arrBase = "BCSIFJDZ".split("");
 			var arrGen = [];
 			var arrClasses = [];
-			for (var i = 0; i < arrBase.length; i++) {
-				for (var j = 1; j < 1000; j++) {
-					for (var k = 0; k < j; k++) {
+			var i, j, k;
+			for (i = 0; i < arrBase.length; i++) {
+				for (j = 1; j < 1000; j++) {
+					for (k = 0; k < j; k++) {
 						arrGen.push("[")
 					}
 					arrGen.push(arrBase[i]);
@@ -1111,18 +1125,33 @@
 					"com/jcraft/jzlib/ZStream",
 					"com/jcraft/jzlib/ZStreamException" ];
 			var classes = objClasses
+			//for (i = 0; i < arrClasses.length; i++) {
+			//	classes.push(arrClasses[i]);
+			//}
 
 			document.getElementById("console").innerHTML = "Classloading..."
 					+ classes.length;
-			var i = 0;
+			i = 0;
+			var rounds = 0;
 			function fun() {
+				if (i == 0) {
+					var defs = {};
+					FyUtils.shallowClone(classDefs, defs);
+					context = new FyContext("testcl");
+					context.addClassDef(defs);
+				}
 				if (i < classes.length) {
 					context.lookupClass(classes[i]);
 					i++;
-					setTimeout(fun, 1);
 				} else {
-					document.getElementById("console").innerHTML = context.classes.size
-							+ "/" + i;
+					document.getElementById("console").appendChild(
+							document.createTextNode(rounds + " "
+									+ context.classes.size() + "/" + i + "\n"));
+					i = 0;
+					rounds++;
+				}
+				if (rounds < 16) {
+					setTimeout(fun, 1);
 				}
 			}
 			fun();

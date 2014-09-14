@@ -596,8 +596,8 @@ var __FyAOTUtil;
 
 				// code.push("FyUtils.breakpoint();");
 
-				code.push("tmpMethod=context.methods[" + tmpMethod.methodId
-						+ "];");
+				code.push("tmpMethod=context.methods.get(" + tmpMethod.methodId
+						+ ");");
 				code
 						.push("if(stack[sb+"
 								+ (stackSize - tmpMethod.paramStackUsage - 1)
@@ -723,8 +723,8 @@ var __FyAOTUtil;
 					throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,
 							tmpMethod.uniqueName);
 				}
-				code.push("tmpMethod=context.methods[" + tmpMethod.methodId
-						+ "];");
+				code.push("tmpMethod=context.methods.get(" + tmpMethod.methodId
+						+ ");");
 				code
 						.push("if(stack[sb+"
 								+ (stackSize - tmpMethod.paramStackUsage - 1)
@@ -781,8 +781,8 @@ var __FyAOTUtil;
 							tmpMethod.uniqueName + " is not static");
 				}
 				var tmpClass = tmpMethod.owner;
-				code.push("tmpMethod=context.methods[" + tmpMethod.methodId
-						+ "];");
+				code.push("tmpMethod=context.methods.get(" + tmpMethod.methodId
+						+ ");");
 				if (context.getMethod(tmpClass.name + "."
 						+ FyConst.FY_METHOD_CLINIT + ".()V")) {
 					code.push(this.replaceAll(macros["CLINIT"], ip, oprand1,

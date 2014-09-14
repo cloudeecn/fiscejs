@@ -1,20 +1,29 @@
 var HashMapIObj;
 (function() {
 	"use strict";
-	
-	var EMPTY_ARRAY = [];
 
-	function directHash(i) {
-		return i;
-	}
-
-	var hash = directHash;
-
-	function Entry(key, value) {
+	function EntryIO(key, value) {
 		this.key = key | 0;
 		this.value = value;
-		Object.preventExtensions(this);
 	}
+
+	EntryIO.prototype.getKey = function() {
+		return this.key;
+	}
+
+	EntryIO.prototype.getValue = function() {
+		return this.value;
+	}
+
+	EntryIO.prototype.setKey = function(key) {
+		this.key = key | 0;
+	}
+
+	EntryIO.prototype.setValue = function(value) {
+		this.value = value;
+	}
+
+	var DUMMY_ENTRY = new EntryIO(0, {});
 
 	/**
 	 * @param {Number}
@@ -23,138 +32,130 @@ var HashMapIObj;
 	 *            factor
 	 */
 	HashMapIObj = function(capShift, factor) {
-		this.factor = Number(factor || 0.75);
-		this.capShift = capShift | 0;
-		this.cap = 1 << this.capShift;
-		this.capMask = this.cap - 1;
-		this.maxSize = (this.cap * this.factor) | 0;
-		this.clear();
-		// this.expanding = false;
-		this.pendingRemove = [];
-		Object.preventExtensions(this);
+		// forceOptimize(HashMapIObj);
+		var cs = capShift | 0;
+		var i;
+		var cap = (1 << cs) | 0;
+		this.capShift = cs | 0;
+		this.capMask = (cap - 1) | 0;
+		this.factor = factor;
+		this.maxSize = parseInt(cap * factor) | 0;
+		this.currentSize = 0;
+		this.backend = new Array(cap);
 	};
 
-	HashMapIObj.prototype.hash = directHash;
+	HashMapIObj.prototype._pos = function(key) {
+		return (key & this.capMask) | 0;
+	}
 
 	HashMapIObj.prototype.expand = function() {
-		// if (this.expanding) {
-		// throw new FyException(undefined,
-		// "HashMapIObj.expand should not be reentried");
-		// }
-		// this.expanding = true;
-		var stage1 = "stage1";
+		// forceOptimize(this.expand);
+		var max;
+
 		var capShift = this.capShift + 1;
-		var cap = 1 << capShift;
+		var cap = (1 << capShift);
 		var capMask = cap - 1;
-		var maxSize = (cap * this.factor) | 0;
-		var stage1a = "stage1a";
-		this.capShift = capShift;
-		var stage1b = "stage1b";
-		this.cap = cap;
-		var stage1c = "stage1c";
-		this.capMask = capMask;
-		var stage1d = "stage1d";
-		this.maxSize = maxSize;
-		var stage2 = "stage2";
-		// var oldSize = this.size;
-		var backend = this.backend;
-		this.clear();
-		var stage3 = "stage3";
-		var stage4, stage5, stage6, stage7, stage7a, stage8, stage9, stage10, stage11;
-		for (var i = backend.length; i--;) {
-			stage4 = "stage4";
-			var arr = backend[i];
-			stage5 = "stage5";
+		var maxSize = parseInt(cap * this.factor) | 0;
+		var i;
+		var j, al, entry, pos;
+		var arr;
+
+		this.capShift = capShift | 0;
+		this.capMask = capMask | 0;
+		this.maxSize = maxSize | 0;
+
+		var oldLength = this.backend.length;
+
+		this.backend.length = cap;
+
+		// for (i = this.backend.length; i < cap; i++) {
+		// this.backend.push(this.EMPTY);
+		// }
+
+		for (i = 0; i < oldLength; i++) {
+			arr = this.backend[i];
 			if (arr !== undefined) {
-				stage7a = "";
-				stage6 = "stage6";
-				var al = arr.length;
-				stage7 = "stage7";
-				for (var j = 0; j < al; j++) {
-					stage11 = "";
-					stage8 = "stage8";
-					var key = arr[j].key | 0;
-					stage9 = "stage9";
-					var value = arr[j].value;
-					stage10 = "stage10";
-					this.put(key, value);
-					stage11 = "stage11";
-					stage8 = "";
-					stage9 = "";
-					stage10 = "";
+				al = arr.length;
+				if (al == 0) {
+					// noop
+				} else if (al == 1) {
+					entry = arr[0];
+					pos = this._pos(entry.getKey());
+					if (pos !== i) {
+						this.backend[i] = undefined;
+						this.backend[pos] = arr;
+					}
+				} else {
+					for (j = 0; j < al; j++) {
+						entry = arr[j];
+						pos = this._pos(entry.getKey());
+						if (pos !== i) {
+							// move
+							if (this.backend[pos] === undefined) {
+								this.backend[pos] = [ entry ];
+							} else {
+								this.backend[pos].push(entry);
+							}
+							arr.splice(j, 1);
+							j--;
+							al--;
+						}
+					}
 				}
-				stage7a = "stage7a";
-				stage6 = "";
-				stage7 = "";
 			}
 		}
-		persistStages([ stage1, stage1b, stage1c, stage1d, stage2, stage3,
-				stage4, stage5, stage6, stage7, stage8, stage9, stage10,
-				stage11 ]);
-		// if (this.size !== oldSize) {
-		// throw new FyException(undefined, "Assertion, HashMapIObj.expand");
-		// }
-		// this.expanding = false;
 	};
 
 	/**
 	 * 
 	 * @param {Number}
 	 *            key
-	 * @param {Object}
+	 * @param {Number}
 	 *            value
 	 * @returns {Number}
 	 */
 	HashMapIObj.prototype.put = function(key, value) {
-		// if (key !== key | 0 || value !== value | 0) {
-		// throw new FyException(undefined,
-		// "Assertion exception, HashMapIObj.put");
-		// }
-		forceOptimize(this.put);
-		if (typeof value !== "object") {
-			throw new FyException(undefined, "TYPE");
-		}
-		if (value == null) {
-			throw new FyException(undefined, "NPT");
-		}
-		forceOptimize(this.put);
-		var pos = this.hash(key | 0) & this.capMask;
-		var arr = this.backend[pos];
+		key = key | 0;
+		// forceOptimize(this.put);
+		var pos = this._pos(key);
+		var arr;
+		var al;
+		var i, entry, ret;
+		arr = this.backend[pos];
 		if (arr === undefined) {
-			arr = this.backend[pos] = [];
-		}
-		var al = arr.length;
-		for (var i = 0; i < al; i++) {
-			if (arr[i].key === key) {
-				var ret = arr[i].value;
-				arr[i].value = value;
-				return ret;
+			this.backend[pos] = [ new EntryIO(key, value) ];
+			this.currentSize++;
+		} else {
+			for (i = 0; i < arr.length; i++) {
+				entry = arr[i];
+				if (entry.getKey() === key) {
+					ret = entry.getValue();
+					entry.setValue(value);
+					return ret;
+				}
 			}
+			arr.push(new EntryIO(key, value));
+			this.currentSize++;
 		}
-		arr.push(new Entry(key | 0, value));
-		this.size++;
-		if (this.size > this.maxSize) {
-			forceOptimize(this.expand);
+		if (this.currentSize > this.maxSize) {
 			this.expand();
 		}
 		return undefined;
 	};
 
 	HashMapIObj.prototype.get = function(key) {
-		// if (key !== key | 0) {
-		// throw new FyException(undefined,
-		// "Assertion exception, HashMapIObj.get");
-		// }
-		forceOptimize(this.get);
-		var pos = this.hash(key | 0) & this.capMask;
-		var arr = this.backend[pos];
+		key = key | 0;
+		var pos = this._pos(key);
+		var arr;
+		var i, entry = DUMMY_ENTRY;
+		arr = this.backend[pos];
 		if (arr === undefined) {
 			return undefined;
 		} else {
-			var al = arr.length;
-			for (var i = 0; i < al; i++) {
-				if (arr[i].key === key) {
-					return arr[i].value;
+			for (i = 0; i < arr.length; i++) {
+				entry = arr[i];
+				if (entry.getKey() === key) {
+					return entry.value;
 				}
 			}
 			return undefined;
@@ -162,23 +163,20 @@ var HashMapIObj;
 	};
 
 	HashMapIObj.prototype.remove = function(key) {
-		// if (key !== key | 0) {
-		// throw new FyException(undefined,
-		// "Assertion exception, HashMapIObj.remove");
-		// }
-		forceOptimize(this.remove);
-		var pos = this.hash(key | 0) & this.capMask;
-		var arr = this.backend[pos];
+		key = key | 0;
+		var pos = this._pos(key);
+		var arr;
+		var i, entry, al;
+		arr = this.backend[pos];
 		if (arr === undefined) {
 			return undefined;
 		} else {
-			var al = arr.length;
-			for (var i = 0; i < al; i++) {
-				if (arr[i].key === key) {
-					var ret = arr[i].value;
+			for (i = 0; i < arr.length; i++) {
+				entry = arr[i];
+				if (entry.getKey() === key) {
 					arr.splice(i, 1);
-					this.size--;
-					return ret;
+					this.currentSize--;
+					return entry.value;
 				}
 			}
 			return undefined;
@@ -186,19 +184,17 @@ var HashMapIObj;
 	};
 
 	HashMapIObj.prototype.contains = function(key) {
-		// if (key !== key | 0) {
-		// throw new FyException(undefined,
-		// "Assertion exception, HashMapIObj.contains");
-		// }
-		forceOptimize(this.contains);
-		var pos = this.hash(key | 0) & this.capMask;
-		var arr = this.backend[pos];
+		key = key | 0;
+		var pos = this._pos(key);
+		var arr;
+		var i, entry = DUMMY_ENTRY;
+		arr = this.backend[pos];
 		if (arr === undefined) {
 			return false;
 		} else {
-			var al = arr.length;
-			for (var i = 0; i < al; i++) {
-				if (arr[i].key === key) {
+			for (i = 0; i < arr.length; i++) {
+				entry = arr[i];
+				if (entry.getKey() === key) {
 					return true;
 				}
 			}
@@ -207,50 +203,39 @@ var HashMapIObj;
 	};
 
 	HashMapIObj.prototype.iterate = function(fun, data) {
+		// forceOptimize(this.iterate);
 		var count = 0;
-		// var size = this.size;
-		var backend = this.backend;
-		// var k = [];
-		for (var i = backend.length; i--;) {
-			var arr = backend[i];
+		var entry;
+		var i, j, al, arr;
+		for (i = 0; i < this.backend.length; i++) {
+			arr = this.backend[i];
 			if (arr !== undefined) {
-				var al = arr.length;
-				for (var j = 0; j < al; j++) {
-					var key = arr[j].key;
-					var value = arr[j].value;
+				al = arr.length;
+				for (j = 0; j < al; j++) {
+					entry = arr[j];
 					count++;
-					if (fun(key, value, data)) {
+					if (fun(entry.getKey(), entry.getValue(), data)) {
 						arr.splice(j, 1);
-						this.size--;
+						this.currentSize--;
 						j--;
 						al--;
 					}
 				}
 			}
 		}
-		// if (count !== this.size) {
-		// throw new FyException(undefined,
-		// "Assertion exception, HashMapIObj.iterate, count=" + count
-		// + " size=" + this.size);
-		// }
-		// for (var i = 0; i < k.length; i++) {
-		// this.remove(k[i]);
-		// }
-		// if (this.size !== size - k.length) {
-		// throw new FyException(undefined,
-		// "Assertion exception, HashMapIObj.iterate, count=" + count
-		// + " size=" + this.size + " keys removed=" + k);
-		// }
 		return count;
 	};
 
 	HashMapIObj.prototype.clear = function() {
-		forceOptimize(this.clear);
-		this.backend = new Array();
-		this.size = 0;
-		for (var i = 0; i < this.cap; i++) {
-			this.backend.push([]);
+		this.currentSize = 0;
+		var i;
+		for (i = 0; i < this.backend.length; i++) {
+			this.backend[i] = undefined;
 		}
 	};
+
+	HashMapIObj.prototype.size = function() {
+		return this.currentSize | 0;
+	}
 
 })();

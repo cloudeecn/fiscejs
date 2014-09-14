@@ -57,7 +57,7 @@ var forceOptimize=function(param){};
 			forceOptimize=new Function("return (function forceOptimize(fun){if(%GetOptimizationStatus(fun)==4){throw new Error(fun+' cant be optimized');}if(%GetOptimizationStatus(fun)!=0) %OptimizeFunctionOnNextCall(fun);});")();
 			console.log("Supported native syn")
 		} catch (e) {
-			throw e;
+//			throw e;
 		}
 	})();
 
@@ -94,12 +94,6 @@ var forceOptimize=function(param){};
 			// the shift by 0 fixes the sign on the high part
 			// the final |0 converts the unsigned value into a signed value
 			return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
-		};
-	}
-
-	if (!Object.preventExtensions) {
-		console.log("Polyfill Object.preventExtensions");
-		Object.preventExtensions = function(obj) {
 		};
 	}
 
@@ -140,7 +134,6 @@ var forceOptimize=function(param){};
 	var doubleView = new Float64Array(buffer);
 
 	var __FyPortable = function() {
-		Object.preventExtensions(this);
 	};
 
 	/**

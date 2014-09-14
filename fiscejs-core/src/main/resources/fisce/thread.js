@@ -64,7 +64,6 @@ var FyThread;
 		 */
 		this.longOps = FyPortable.getLongOps(context.heap.heap,
 				this.bottom - 16);
-		Object.preventExtensions(this);
 	};
 
 	/**

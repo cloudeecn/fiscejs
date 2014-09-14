@@ -39,6 +39,13 @@ var FyClass;
 		this.staticSize = 0 | 0;
 		this.sizeRel = 0 | 0;
 
+		this.type = 0;
+		this.accessFlags = 0;
+		this.pType = undefined;
+		this.contentClass = undefined;
+		this.sourceFile = undefined;
+		this.superClass = undefined;
+
 		if (this.name.charAt(0) === "[") {
 			this.type = FyConst.TYPE_ARRAY;
 
@@ -92,6 +99,7 @@ var FyClass;
 			this.sizeRel += classDef.sizeRel | 0;
 
 		}
+		this.sizeAbs = this.sizeRel;
 
 		if (this.staticSize > 0) {
 			this.staticPos = context.heap
@@ -108,7 +116,6 @@ var FyClass;
 
 		/* Filled by class loader */
 		this.classId = 0 | 0;
-		this.sizeAbs = 0 | 0;
 
 		this.clinitThreadId = 0 | 0;
 		/**
@@ -123,22 +130,6 @@ var FyClass;
 
 		this.virtualTable = new HashMapI(-1, 3, 0.75);
 
-		Object.preventExtensions(this);
-	};
-
-	FyClass.prototype.asArrayClass = function() {
-
-		return this;
-	};
-
-	FyClass.prototype.asPrimClass = function() {
-
-		return this;
-	};
-
-	FyClass.prototype.asObjectClass = function(global, classDef) {
-
-		return this;
 	};
 
 	/**
@@ -156,6 +147,14 @@ var FyClass;
 
 	FyClass.prototype.setClassId = function(cid) {
 		this.classId = cid | 0;
+	}
+
+	FyClass.prototype.addAccessFlag = function(flag) {
+		this.accessFlags |= flag | 0;
+	}
+
+	FyClass.prototype.getAccessFlag = function() {
+		return this.accessFlags | 0;
 	}
 
 	FyClass.prototype.toString = function() {

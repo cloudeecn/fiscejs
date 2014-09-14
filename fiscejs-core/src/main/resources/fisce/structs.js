@@ -483,18 +483,9 @@ var FyLookupSwitchTarget;
 		this.V = "V".charCodeAt(0);
 		this.ARR = "[".charCodeAt(0);
 
-		Object.preventExtensions(this);
 	}
 
 	FyConst = new __FyConst();
-	/*
-	 * FyLineNumber = function() { this.start = 0; this.line = 0;
-	 * Object.preventExtensions(this); };
-	 * 
-	 * FyExceptionHandler = function() { this.start = 0; this.end = 0;
-	 * this.catchClass = undefined; this.handler = 0;
-	 * Object.preventExtensions(this); };
-	 */
 	FyTableSwitchTarget = function(def) {
 		this.targets = new Array();
 		if ("dflt" in def) {
@@ -519,7 +510,6 @@ var FyLookupSwitchTarget;
 			var target = defTargets[j] | 0;
 			targets.push(target);
 		}
-		Object.preventExtensions(this);
 	};
 
 	FyLookupSwitchTarget = function(def) {
@@ -534,18 +524,11 @@ var FyLookupSwitchTarget;
 		var defTargets = def.targets;
 
 		for (var j = 0, max = defTargets.length - 1; j < max; j += 2) {
+			var j2=j+1;
 			var key = defTargets[j] | 0;
-			var value = defTargets[j + 1] | 0;
+			var value = defTargets[j2] | 0;
 			targets.put(key, value);
 		}
-		Object.preventExtensions(this);
-
-		// var keys = Object.keys(def.targets);
-		// for (var j = 0; j < keys.length; j++) {
-		// var key = Number(keys[j]) | 0;
-		// var value = Number(def.targets[key]) | 0;
-		// this.targets.put(key, value);
-		// }
 	};
 
 	if (FyConfig.debugMode) {
@@ -565,7 +548,6 @@ var FyLookupSwitchTarget;
 			if (clazz === undefined) {
 				clazz = undefined;
 			}
-			Object.preventExtensions(this);
 		};
 	} else {
 		/**
@@ -581,7 +563,6 @@ var FyLookupSwitchTarget;
 			this.clazz = clazz;
 			this.message = message;
 			this.stack = new Error().stack;
-			Object.preventExtensions(this);
 		};
 	}
 
@@ -601,7 +582,6 @@ var FyLookupSwitchTarget;
 		this.sleepTime = 0;
 		this.nativeMethod = undefined;
 		this.sp = 0;
-		Object.preventExtensions(this);
 	};
 
 	FyMessage.message_continue = 0; // In thread

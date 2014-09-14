@@ -2,16 +2,24 @@ var HashMapI;
 (function() {
 	"use strict";
 
-	var EMPTY_ARRAY = [];
-
-	function directHash(i) {
-		return i & 0x3fffffff;
-	}
-
-	var hash = directHash;
-
 	function EntryII(key, value) {
 		this.key = key | 0;
+		this.value = value | 0;
+	}
+
+	EntryII.prototype.getKey = function() {
+		return this.key;
+	}
+
+	EntryII.prototype.getValue = function() {
+		return this.value;
+	}
+
+	EntryII.prototype.setKey = function(key) {
+		this.key = key | 0;
+	}
+
+	EntryII.prototype.setValue = function(value) {
 		this.value = value | 0;
 	}
 
@@ -23,19 +31,21 @@ var HashMapI;
 	 */
 	HashMapI = function(nullNumber, capShift, factor) {
 		// forceOptimize(HashMapI);
-		var cap = (1 << capShift) | 0;
+		var cs = capShift | 0;
+		var i;
+		var cap = (1 << cs) | 0;
 		this.nullNumber = nullNumber | 0;
-		this.capShift = capShift | 0;
-		this.capMask = (cap) - 1;
+		this.capShift = cs | 0;
+		this.capMask = (cap - 1) | 0;
 		this.factor = factor;
 		this.maxSize = parseInt(cap * factor) | 0;
 		this.currentSize = 0;
-		this.backend = [];
-		Object.preventExtensions(this);
-		this.clearTo(cap);
+		this.backend = new Array(cap);
 	};
 
-	HashMapI.prototype.hash = directHash;
+	HashMapI.prototype._pos = function(key) {
+		return (key & this.capMask) | 0;
+	}
 
 	HashMapI.prototype.expand = function() {
 		// forceOptimize(this.expand);
@@ -45,24 +55,53 @@ var HashMapI;
 		var cap = (1 << capShift);
 		var capMask = cap - 1;
 		var maxSize = parseInt(cap * this.factor) | 0;
-		var i, i2, key, value;
-		var values = [];
+		var i;
+		var j, al, entry, pos;
+		var arr;
 
-		this.capShift = capShift;
-		this.capMask = capMask;
-		this.maxSize = maxSize;
+		this.capShift = capShift | 0;
+		this.capMask = capMask | 0;
+		this.maxSize = maxSize | 0;
 
-		this.iterate(function(key, value, data) {
-			data.push(key | 0);
-			data.push(value | 0);
-		}, values);
-		this.clearTo(cap);
-		var max = values.length - 1;
-		for (i = 0; i < max; i += 2) {
-			i2 = i + 1;
-			key = values[i];
-			value = values[i2];
-			this.put(key, value);
+		var oldLength = this.backend.length;
+
+		this.backend.length = cap;
+
+		// for (i = this.backend.length; i < cap; i++) {
+		// this.backend.push(this.EMPTY);
+		// }
+
+		for (i = 0; i < oldLength; i++) {
+			arr = this.backend[i];
+			if (arr !== undefined) {
+				al = arr.length;
+				if (al == 0) {
+					// noop
+				} else if (al == 1) {
+					entry = arr[0];
+					pos = this._pos(entry.getKey());
+					if (pos !== i) {
+						this.backend[i] = undefined;
+						this.backend[pos] = arr;
+					}
+				} else {
+					for (j = 0; j < al; j++) {
+						entry = arr[j];
+						pos = this._pos(entry.getKey());
+						if (pos !== i) {
+							// move
+							if (this.backend[pos] === undefined) {
+								this.backend[pos] = [ entry ];
+							} else {
+								this.backend[pos].push(entry);
+							}
+							arr.splice(j, 1);
+							j--;
+							al--;
+						}
+					}
+				}
+			}
 		}
 	};
 
@@ -76,29 +115,28 @@ var HashMapI;
 	 */
 	HashMapI.prototype.put = function(key, value) {
 		// forceOptimize(this.put);
-		var pos = this.hash(key | 0) & this.capMask;
+		key = key | 0;
+		value = value | 0;
+		var pos = this._pos(key);
 		var arr;
 		var al;
-		var i, i2, ret;
+		var i, entry, ret;
 		arr = this.backend[pos];
 		if (arr === undefined) {
-			arr = [];
-			this.backend[pos] = arr;
+			this.backend[pos] = [ new EntryII(key, value) ];
+			this.currentSize++;
 		} else {
-			arr = this.backend[pos]
-		}
-		al = arr.length - 1;
-		for (i = 0; i < al; i += 2) {
-			i2 = i + 1;
-			if (arr[i] === key) {
-				ret = arr[i2];
-				arr[i2] = value | 0;
-				return ret;
+			for (i = 0; i < arr.length; i++) {
+				entry = arr[i];
+				if (entry.getKey() === key) {
+					ret = entry.getValue();
+					entry.setValue(value);
+					return ret;
+				}
 			}
+			arr.push(new EntryII(key, value));
+			this.currentSize++;
 		}
-		arr.push(key | 0);
-		arr.push(value | 0);
-		this.currentSize++;
 		if (this.currentSize > this.maxSize) {
 			this.expand();
 		}
@@ -106,17 +144,18 @@ var HashMapI;
 	};
 
 	HashMapI.prototype.get = function(key) {
-		var pos = this.hash(key | 0) & this.capMask;
-		var arr = this.backend[pos];
-		var i, i2, al;
+		key = key | 0;
+		var pos = this._pos(key);
+		var arr;
+		var i, entry, al;
+		arr = this.backend[pos];
 		if (arr === undefined) {
 			return this.nullNumber;
 		} else {
-			al = arr.length - 1;
-			for (i = 0; i < al; i += 2) {
-				i2 = i + 1;
-				if (arr[i] === key) {
-					return arr[i2];
+			for (i = 0; i < arr.length; i++) {
+				entry = arr[i];
+				if (entry.getKey() === key) {
+					return entry.getValue();
 				}
 			}
 			return this.nullNumber;
@@ -124,21 +163,20 @@ var HashMapI;
 	};
 
 	HashMapI.prototype.remove = function(key) {
-		// forceOptimize(this.remove);
-		var pos = this.hash(key | 0) & this.capMask;
-		var arr = this.backend[pos];
-		var i, i2, al, ret;
+		key = key | 0;
+		var pos = this._pos(key);
+		var arr;
+		var i, entry, al;
+		arr = this.backend[pos];
 		if (arr === undefined) {
 			return this.nullNumber;
 		} else {
-			al = arr.length - 1;
-			for (i = 0; i < al; i += 2) {
-				i2 = i + 1;
-				if (arr[i] === key) {
-					ret = arr[i2];
-					arr.splice(i, 2);
+			for (i = 0; i < arr.length; i++) {
+				entry = arr[i];
+				if (entry.getKey() === key) {
+					arr.splice(i, 1);
 					this.currentSize--;
-					return ret;
+					return entry.getValue();
 				}
 			}
 			return this.nullNumber;
@@ -146,15 +184,17 @@ var HashMapI;
 	};
 
 	HashMapI.prototype.contains = function(key) {
-		// forceOptimize(this.contains);
-		var pos = this.hash(key) & this.capMask;
-		var arr = this.backend[pos];
+		key = key | 0;
+		var pos = this._pos(key);
+		var arr;
+		var i, entry, al;
+		arr = this.backend[pos];
 		if (arr === undefined) {
 			return false;
 		} else {
-			var al = arr.length - 1;
-			for (var i = 0; i < al; i += 2) {
-				if (arr[i] === key) {
+			for (i = 0; i < arr.length; i++) {
+				entry = arr[i];
+				if (entry.getKey() === key) {
 					return true;
 				}
 			}
@@ -165,22 +205,20 @@ var HashMapI;
 	HashMapI.prototype.iterate = function(fun, data) {
 		// forceOptimize(this.iterate);
 		var count = 0;
-		var backend = this.backend;
-		var max = backend.length;
-		for (var i = 0; i < max; i++) {
-			var arr = backend[i];
+		var entry;
+		var i, j, al, arr;
+		for (i = 0; i < this.backend.length; i++) {
+			arr = this.backend[i];
 			if (arr !== undefined) {
-				var al = arr.length - 1;
-				for (var j = 0; j < al; j += 2) {
-					var j2 = j + 1;
-					var key = arr[j];
-					var value = arr[j2];
+				al = arr.length;
+				for (j = 0; j < al; j++) {
+					entry = arr[j];
 					count++;
-					if (fun(key, value, data)) {
-						arr.splice(j, 2);
+					if (fun(entry.getKey(), entry.getValue(), data)) {
+						arr.splice(j, 1);
 						this.currentSize--;
-						j -= 2;
-						al -= 2;
+						j--;
+						al--;
 					}
 				}
 			}
@@ -188,25 +226,16 @@ var HashMapI;
 		return count;
 	};
 
-	HashMapI.prototype.clearTo = function(cap) {
-		var i = 0;
-		if (cap < this.backend.length) {
-			this.backend.length = cap;
-		}
-		for (i = 0; i < this.backend.length; i++) {
-			this.backend[i] = [];
-		}
-		for (i = this.backend.length; i < cap; i++) {
-			this.backend.push([]);
-		}
-	};
-
 	HashMapI.prototype.clear = function() {
-		this.clearTo(this.backend.length);
+		this.currentSize = 0;
+		var i;
+		for (i = 0; i < this.backend.length; i++) {
+			this.backend[i] = undefined;
+		}
 	};
 
 	HashMapI.prototype.size = function() {
-		return this.currentSize;
+		return this.currentSize | 0;
 	}
 
 })();

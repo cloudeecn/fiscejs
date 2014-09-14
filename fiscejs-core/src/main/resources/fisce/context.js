@@ -22,23 +22,22 @@ var FyClassDef;
 	"use strict";
 
 	FyGlobal = function(context, strings, constants) {
-		var s = new Array(strings.length);
-		for (var i = 0, im = strings.length; i < im; i++) {
-			s[i] = context.pool(strings[i]);
+		var i, im;
+		im = strings.length;
+		this.strings = new Array(im);
+		for (i = 0; i < im; i++) {
+			this.strings[i] = context.pool(strings[i]);
 		}
-		var c = new Int32Array(constants.length);
-		for (var i = 0, im = constants.length; i < im; i++) {
-			c[i] = constants[i];
+		im = constants.length;
+		this.constants = new Int32Array(im);
+		for (i = 0; i < im; i++) {
+			this.constants[i] = constants[i] | 0;
 		}
-		this.strings = s;
-		this.constants = c;
-		Object.preventExtensions(this);
 	};
 
 	FyClassDef = function(context, data) {
 		this.classes = data.classes;
 		this.global = new FyGlobal(context, data.strings, data.constants);
-		Object.preventExtensions(this);
 	};
 
 	/**
@@ -123,19 +122,19 @@ var FyClassDef;
 		this.dynamicClassDef = {};
 
 		/* Classes begins from 1 */
-		this.classes = new HashMapIObj(1, 0.6);
+		this.classes = new HashMapIObj(8, 0.6);
 		this.mapClassNameToId = {};
-		this.mapClassIdToHandle = {};
+		this.mapClassIdToHandle = new HashMapI(0, 4, 0.6);
 
 		/* Methods begins from 0 */
-		this.methods = [];
+		this.methods = new HashMapIObj(10, 0.6);
 		this.mapMethodNameToId = {};
-		this.mapMethodIdToHandle = {};
+		this.mapMethodIdToHandle = new HashMapI(0, 4, 0.6);
 
 		/* Fields begins from 0 */
-		this.fields = [];
+		this.fields = new HashMapIObj(10, 0.6);
 		this.mapFieldNameToId = {};
-		this.mapFieldIdToHandle = {};
+		this.mapFieldIdToHandle = new HashMapI(0, 4, 0.6);
 
 		this.nativeHandlers = {};
 		this.nativeAOT = {};
@@ -143,6 +142,9 @@ var FyClassDef;
 		this.classLoader = new FyClassLoader(this);
 		this.heap = new FyHeap(this);
 		this.threadManager = new FyThreadManager(this);
+		if (namespace === undefined) {
+			namespace = "default";
+		}
 		this.vfs = new FyVFS(namespace);
 
 		this.log = function(level, content) {
@@ -198,7 +200,6 @@ var FyClassDef;
 		 * @returns {FyClass}
 		 */
 		this.TOP_CONSTRUCTOR = undefined;
-		Object.preventExtensions(this);
 	};
 
 	FyContext.primitives = {
@@ -284,13 +285,15 @@ var FyClassDef;
 	 *            field
 	 */
 	FyContext.prototype.registerField = function(field) {
-		var fid = this.mapFieldNameToId[field.uniqueName];
-		if (fid === undefined) {
-			fid = this.fields.length;
-			field.fieldId = fid;
+		var fid = 0;
+		if (field.uniqueName in this.mapFieldNameToId) {
+			fid = this.mapFieldNameToId[field.uniqueName] | 0;
+		} else {
+			fid = this.fields.size() | 0;
+			field.setFieldId(fid);
 			this.mapFieldNameToId[field.uniqueName] = fid;
 		}
-		this.fields[fid] = field;
+		this.fields.put(fid, field);
 	};
 	/**
 	 * get field by name
@@ -300,11 +303,11 @@ var FyClassDef;
 	 * @returns {FyField} field
 	 */
 	FyContext.prototype.getField = function(uniqueName) {
-		var fid = this.mapFieldNameToId[uniqueName];
-		if (fid === undefined) {
+		if (uniqueName in this.mapFieldNameToId) {
+			return this.fields.get(this.mapFieldNameToId[uniqueName]);
+		} else {
 			return undefined;
 		}
-		return this.fields[fid];
 	};
 
 	/**
@@ -320,21 +323,20 @@ var FyClassDef;
 		/**
 		 * @returns {FyClass}
 		 */
-		var c;
+		var c = clazz;
+		var name;
+		var fid = 0 | 0;
 
-		var fid = this.mapFieldNameToId[this.pool(clazz.name + fullName)];
-		if (fid !== undefined) {
-			return this.fields[fid];
-		}
-
-		c = clazz.superClass;
-		while (c) {
-			var fid = this.mapFieldNameToId[c.name + fullName];
-			if (fid !== undefined) {
-				this.mapFieldNameToId[this.pool(clazz.name + fullName)] = fid;
-				return this.fields[fid];
+		whilc(c !== undefined)
+		{
+			name = this.pool(c.name + fullName);
+			if (name in this.mapFieldNameToId) {
+				fid = this.mapFieldNameToId[name] | 0;
+				if (c !== clazz) {
+					this.mapFieldNameToId[this.pool(clazz.name + fullName)] = fid;
+				}
+				return this.fields.get(fid);
 			}
-
 			c = c.superClass;
 		}
 
@@ -344,13 +346,16 @@ var FyClassDef;
 		 *            intf
 		 */
 		function(intf) {
-			var fid = this.mapFieldNameToId[intf.name + fullName];
-			if (fid !== undefined) {
+			var name = this.pool(intf.name + fullName);
+			var fid = 0 | 0;
+			if (name in this.mapFieldNameToId) {
+				fid = this.mapFieldNameToId[name] | 0;
 				this.mapFieldNameToId[this.pool(clazz.name + fullName)] = fid;
-				return this.fields[fid];
+				return this.fields.get(fid);
+			} else {
+				return undefined;
 			}
 		}, this);
-		return undefined;
 	};
 
 	/**
@@ -403,15 +408,16 @@ var FyClassDef;
 	 *            method
 	 */
 	FyContext.prototype.registerMethod = function(method) {
-		var mid = this.mapMethodNameToId[method.uniqueName];
-		if (mid === undefined) {
-			mid = this.methods.length;
-			method.methodId = mid;
-			this.methods.push(method);
-			this.mapMethodNameToId[method.uniqueName] = mid;
+		var mid;
+		if (method.uniqueName in this.mapMethodNameToId) {
+			// mid = this.mapMethodNameToId[] | 0;
+			mid = this.mapMethodNameToId[method.uniqueName] | 0;
 		} else {
-			this.methods[mid] = method;
+			mid = this.methods.size();
+			this.mapMethodNameToId[method.uniqueName] = mid;
 		}
+		method.setMethodId(mid);
+		this.methods.put(mid, method);
 	};
 	/**
 	 * get method by name
@@ -421,11 +427,11 @@ var FyClassDef;
 	 * @returns {FyMethod} method
 	 */
 	FyContext.prototype.getMethod = function(uniqueName) {
-		var mid = this.mapMethodNameToId[uniqueName];
-		if (mid === undefined) {
+		if (uniqueName in this.mapMethodNameToId) {
+			return this.methods.get(this.mapMethodNameToId[uniqueName] | 0);
+		} else {
 			return undefined;
 		}
-		return this.methods[mid];
 	};
 
 	/**
@@ -442,19 +448,19 @@ var FyClassDef;
 		/**
 		 * @returns {FyClass}
 		 */
-		var c;
+		var c = clazz;
 
-		var mid = this.mapMethodNameToId[this.pool(clazz.name + fullName)];
-		if (mid !== undefined) {
-			return this.methods[mid];
-		}
+		var name;
+		var mid;
 
-		c = clazz.superClass;
-		while (c) {
-			var mid = this.mapMethodNameToId[c.name + fullName];
-			if (mid !== undefined) {
-				this.mapMethodNameToId[this.pool(clazz.name + fullName)] = mid;
-				return this.methods[mid];
+		while (c !== undefined) {
+			name = c.name + fullName;
+			if (name in this.mapMethodNameToId) {
+				mid = this.mapMethodNameToId[name] | 0;
+				if (c !== clazz) {
+					this.mapMethodNameToId[this.pool(clazz.name + fullName)] = mid;
+				}
+				return this.methods.get(mid);
 			}
 
 			c = c.superClass;
@@ -466,10 +472,14 @@ var FyClassDef;
 		 *            intf
 		 */
 		function(intf) {
-			var mid = this.mapMethodNameToId[intf.name + fullName];
-			if (mid !== undefined) {
+			var name = this.pool(intf.name + fullName);
+			var mid;
+			if (name in this.mapMethodNameToId) {
+				mid = this.mapMethodNameToId[name] | 0;
 				this.mapMethodNameToId[this.pool(clazz.name + fullName)] = mid;
-				return this.methods[mid];
+				return this.methods.get(mid);
+			} else {
+				return undefined;
 			}
 		}, this);
 	};
@@ -502,44 +512,7 @@ var FyClassDef;
 			}
 			clazz.virtualTable.put(mid, ret = m.methodId);
 		}
-		return this.methods[ret];
-	};
-
-	/**
-	 * Lookup method from all interfaces the class implemented
-	 * 
-	 * @param {FyClass}
-	 *            clazz
-	 * @param {String}
-	 *            fullName
-	 * @returns {FyMethod} method
-	 */
-	FyContext.prototype.lookupMethodVirtualFromInterfaces = function(clazz,
-			fullName) {
-		/**
-		 * @returns {String}
-		 */
-		var uniqueName = clazz.name + fullName;
-		var first = true;
-		while (clazz) {
-			var interfaces = clazz.interfaces;
-			for (var i = 0, max = interfaces.length; i < max; i++) {
-				/**
-				 * @returns {FyClass}
-				 */
-				var intf = interfaces[i];
-				var mid = this.mapMethodNameToId[intf.name + fullName];
-				if (mid !== undefined) {
-					if (!first) {
-						this.mapMethodNameToId[this.pool(uniqueName)] = mid;
-					}
-					return this.methods[mid];
-				}
-			}
-			clazz = clazz.superClass;
-			first = false;
-		}
-		return undefined;
+		return this.methods.get(ret);
 	};
 
 	/**
@@ -555,7 +528,10 @@ var FyClassDef;
 			constant) {
 		var constants = global.constants;
 		var resolvedMethod;
-		if (!constants[constant + 2]) {
+		if (constant < 0 || constant + 2 >= constants.length) {
+			throw new Error("IOOB");
+		}
+		if (constants[constant + 2] === 0) {
 			var strings = global.strings;
 			/**
 			 * @returns {FyClass}
@@ -568,7 +544,7 @@ var FyClassDef;
 
 			resolvedMethod = this.lookupMethodVirtual(clazz,
 					strings[constants[constant + 1]]);
-			if (resolvedMethod) {
+			if (resolvedMethod !== undefined) {
 				constants[constant] = resolvedMethod.methodId;
 				constants[constant + 2] = 1;
 			} else {
@@ -580,7 +556,7 @@ var FyClassDef;
 			// delete constant.className;
 			// delete constant.nameAndType;
 		} else {
-			resolvedMethod = this.methods[constants[constant]];
+			resolvedMethod = this.methods.get(constants[constant]);
 		}
 		return resolvedMethod;
 	};
@@ -592,7 +568,7 @@ var FyClassDef;
 	 *            clazz
 	 */
 	FyContext.prototype.registerClass = function(clazz) {
-		var cid = 0 | 0;
+		var cid;
 		if (clazz.name in this.mapClassNameToId) {
 			cid = this.mapClassNameToId[clazz.name] | 0;
 			if (this.classes.contains(cid)) {
@@ -600,7 +576,7 @@ var FyClassDef;
 						+ clazz.name);
 			}
 		} else {
-			cid = (this.classes.size + 1) | 0;
+			cid = (this.classes.size() + 1) | 0;
 			this.mapClassNameToId[clazz.name] = cid | 0;
 		}
 		clazz.setClassId(cid);
@@ -635,8 +611,6 @@ var FyClassDef;
 		if (clazz === undefined) {
 			clazz = this.classLoader.loadClass(name);
 			if (clazz !== undefined) {
-				// TODO remove
-				forceOptimize(this.registerClass);
 				this.registerClass(clazz);
 			}
 		}
@@ -686,41 +660,26 @@ var FyClassDef;
 	 */
 	FyContext.prototype.lookupClassFromConstantPhase1 = function(global,
 			constant) {
-		var stage1 = "stage1";
 		var constants = global.constants;
-		var stage2 = "stage2";
 		var clazz = undefined;
-		var stage3, stage4, stage5, stage6, stage7, stage8;
-		if (constants[constant + 2] === 0) {
-			stage3 = "stage3a";
+		var c2 = constant + 2;
+		if (constant < 0 || c2 >= constants.length) {
+			throw new Error("IOOB");
+		}
+		if (constants[c2] === 0) {
 			var strings = global.strings;
-			stage4 = "stage4a";
 			// console.log(constant + ", " + constants[constant] + ", "
 			// + strings[constants[constant]]);
 			clazz = this.lookupClassPhase1(strings[constants[constant]]);
-			stage5 = "stage5a";
 			if (clazz === undefined) {
 				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 						constant.name);
 			}
-			stage6 = "stage6a";
 			constants[constant] = clazz.classId;
-			stage7 = "stage7a";
-			constants[constant + 2] = 1;
-			stage8 = "stage8a";
+			constants[c2] = 1;
 		} else {
-			stage3 = "stage3a";
 			clazz = this.classes.get(constants[constant] | 0);
-			stage4 = "stage4a";
-			stage5 = "";
-			stage6 = "";
-			stage7 = "";
-			stage8 = "";
 		}
-		persistStages(stage1 + clazz.name + stage2 + clazz.name + stage3
-				+ clazz.name + stage4 + clazz.name + stage5 + clazz.name
-				+ stage6 + clazz.name + stage7 + clazz.name + stage8
-				+ clazz.name);
 		return clazz;
 	};
 
@@ -734,15 +693,19 @@ var FyClassDef;
 	FyContext.prototype.lookupClassFromConstant = function(global, constant) {
 		var constants = global.constants;
 		var clazz = undefined;
-		if (!constants[constant + 2]) {
+		var c2 = constant + 2;
+		if (constant < 0 || c2 >= constants.length) {
+			throw new Error("IOOB");
+		}
+		if (constants[c2] === 0) {
 			var strings = global.strings;
 			clazz = this.lookupClass(strings[constants[constant]]);
-			if (!clazz) {
+			if (clazz === undefined) {
 				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 						constant);
 			}
 			constants[constant] = clazz.classId;
-			constants[constant + 2] = 1;
+			constants[c2] = 1;
 		} else {
 			clazz = this.classes.get(constants[constant] | 0);
 		}
@@ -755,13 +718,13 @@ var FyClassDef;
 	 * @returns {Number} handle of this class's class object handle
 	 */
 	FyContext.prototype.getClassObjectHandle = function(clazz) {
-		var handle = this.mapClassIdToHandle[clazz.classId];
-		if (handle === undefined) {
+		var handle = this.mapClassIdToHandle.get(clazz.classId);
+		if (handle === 0) {
 			var clcl = this.lookupClass(FyConst.FY_BASE_CLASS);
 			this.heap.beginProtect();
 			handle = this.heap.allocate(clcl);
 			this.heap.setObjectMultiUsageData(handle, clazz.classId | 0);
-			this.mapClassIdToHandle[clazz.classId] = handle;
+			this.mapClassIdToHandle.put(clazz.classId, handle);
 		}
 		return handle;
 	};
@@ -787,8 +750,8 @@ var FyClassDef;
 	 * @returns {Number}
 	 */
 	FyContext.prototype.getMethodObjectHandle = function(method) {
-		var handle = this.mapMethodIdToHandle[method.methodId];
-		if (handle === undefined) {
+		var handle = this.mapMethodIdToHandle.get(method.methodId);
+		if (handle === 0) {
 			this.heap.beginProtect();
 			if (method.accessFlags & FyConst.FY_ACC_CONSTRUCTOR) {
 				handle = this.heap.allocate(this
@@ -798,7 +761,7 @@ var FyClassDef;
 						.lookupClass(FyConst.FY_REFLECT_METHOD));
 			}
 			this.heap.setObjectMultiUsageData(handle, method.methodId | 0);
-			this.mapMethodIdToHandle[method.methodId] = handle;
+			this.mapMethodIdToHandle.put(method.methodId, handle);
 		}
 		return handle;
 	};
@@ -820,7 +783,7 @@ var FyClassDef;
 								+ ") is not a method or constructor object");
 			}
 		}
-		return this.methods[this.heap.getObjectMultiUsageData(handle)];
+		return this.methods.get(this.heap.getObjectMultiUsageData(handle));
 	};
 
 	/**
@@ -829,13 +792,13 @@ var FyClassDef;
 	 * @returns {Number}
 	 */
 	FyContext.prototype.getFieldObjectHandle = function(field) {
-		var handle = this.mapFieldIdToHandle[field.fieldId];
+		var handle = this.mapFieldIdToHandle.get(field.fieldId);
 		if (handle === undefined) {
 			this.heap.beginProtect();
 			handle = this.heap.allocate(this
 					.lookupClass(FyConst.FY_REFLECT_FIELD));
 			this.heap.setObjectMultiUsageData(handle, field.fieldId | 0);
-			this.mapFieldIdToHandle[field.fieldId] = handle;
+			this.mapFieldIdToHandle.put(field.fieldId, handle);
 		}
 		return handle;
 	};
@@ -969,7 +932,7 @@ var FyClassDef;
 							/**
 							 * @returns {FyMethod}
 							 */
-							var method = context.methods[methodId];
+							var method = context.methods.get(methodId);
 							var lineNumber = method.getLineNumber(lip);
 							data
 									.push("  frame #"
@@ -1067,5 +1030,4 @@ var FyClassDef;
 		var clazz = this.lookupClass(bootStrapClassName);
 		this.threadManager.bootFromMain(clazz);
 	};
-	Object.preventExtensions(FyContext);
 })();

@@ -108,7 +108,6 @@ var FyHeap;
 		this.oldReleasedSize = 0;
 		this.marks = new HashMapI(0, 12, 0.6);
 		this.from = [];
-		Object.preventExtensions(this);
 	};
 
 	/**
@@ -947,7 +946,7 @@ var FyHeap;
 					/**
 					 * @returns {FyField}
 					 */
-					var field = clazz.fieldAbs[i];
+					var field = clazz.fieldAbs.get(i);
 					if (field === undefined) {
 						// console.log("!!Discard #" + handle +
 						// "[undefined@" +

@@ -44,7 +44,6 @@ var FyThreadManager;
 		this.nextGCTime = 0;
 		this.nextForceGCTime = 0;
 		this.lastThreadId = 0;
-		Object.preventExtensions(this);
 	};
 
 	/**

@@ -1,17 +1,14 @@
 var fs = require('fs');
 var vm = require('vm');
-var files = require('./files.js'); 
+var files = require('./files.js');
 var includeInThisContext = function(path) {
 	var code = fs.readFileSync(path);
 	vm.runInThisContext(code, path);
 }.bind(this);
 console.log(files);
-for(var i=0;i<files.length;i++){
+for (var i = 0; i < files.length; i++) {
 	includeInThisContext(files[i]);
 }
-var context = new FyContext();
-context.addClassDef(JSON.parse(""
-		+ fs.readFileSync("../../../../target/json/rt-2.0.0-SNAPSHOT.json")));
 
 var arrBase = "BCSIFJDZ".split("");
 var arrGen = [];
@@ -1064,30 +1061,52 @@ var classes = objClasses;
 var mloop = 0;
 var i = 0;
 var max = classes.length;
+
+/**
+ * 
+ * @param {FyClass}
+ *            clazz
+ */
+function listClass(clazz) {
+	var key;
+	var name = clazz.name;
+	console.log(name);
+	for (key in clazz) {
+		persistStages(name);
+	}
+}
+
+var clazz;
+
 function fun() {
-	if (i >= max) {
-		console.log(context.classes.size);
-		return;
-		i = 0;
-		mloop++;
-		console.log(context.classes.size);
+	if (i == 0) {
 		context = new FyContext();
 		context
 				.addClassDef(JSON
 						.parse(""
 								+ fs
 										.readFileSync("../../../../target/json/rt-2.0.0-SNAPSHOT.json")));
+	}
+	if (i >= max) {
+		// console.log(context.classes.size);
+		// return;
+		i = 0;
+		mloop++;
+		console.log(context.classes.size);
+
 	} else {
 		var name = classes[i];
 		if (i % 50 === 0) {
 			console.log("Loading... " + i + " name=" + name);
 		}
-		context.lookupClass(name);
+		clazz = context.lookupClass(name);
+		// forceOptimize(listClass);
+		// listClass(clazz);
 		// console.log(max);
 		// console.log(name);
 		i++;
 	}
-	if (mloop < 1) {
+	if (mloop < 16) {
 		setTimeout(fun, 1);
 	}
 }

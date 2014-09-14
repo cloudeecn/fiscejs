@@ -17,43 +17,43 @@
 
 var FyField;
 (function() {
+	"use strict";
 	/**
-	 * @returns {FyClass}
+	 * @param {FyClass}
+	 *            owner
+	 * @param {Object}
+	 *            fieldDef
+	 * @param {Array}
+	 *            strings
 	 */
-	var dummyClass = undefined;
+	FyField = function(owner, fieldDef, strings) {
+		this.owner = owner;
 
-	FyField = function() {
-		this.name = "";
-		this.descriptor = "";
-		this.accessFlags = 0 | 0;
-		this.posRel = 0 | 0;
-		this.size = 0 | 0;
+		this.accessFlags = fieldDef.accessFlags | 0;
+		this.posRel = fieldDef.posRel | 0;
+		this.size = fieldDef.size | 0;
+		this.constantValueData = fieldDef.constantValueData | 0;
 
-		/** Filled in by class loader phase 1* */
-		this.fullName = "";
-		this.uniqueName = "";
-		/**
-		 * @returns {FyClass}
-		 */
-		this.owner = undefined;
+		this.name = strings[fieldDef.name | 0];
+		this.descriptor = strings[fieldDef.descriptor | 0];
+		this.fullName = "." + this.name + "." + this.descriptor;
+		this.uniqueName = "" + owner.name + this.fullName;
 
-		/** Filled in by class loader* */
+		this.posAbs = this.posRel;
 		this.fieldId = 0 | 0;
-
-		this.constantValueData = -1 | 0;
-		/**
-		 * @returns {FyClass}
-		 */
 		this.type = undefined;
-
-		this.posAbs = 0 | 0;
-
-		Object.preventExtensions(this);
 	};
+
+	FyField.prototype.setFieldId = function(fid) {
+		this.fieldId = fid | 0;
+	};
+
+	FyField.prototype.setConstantValueData = function(cvd) {
+		this.constantValueData = cvd | 0;
+	}
 
 	FyField.prototype.toString = function() {
 		return "{Field}" + this.uniqueName;
 	};
 
-	FyField.empty = new FyField();
 })();
