@@ -158,7 +158,7 @@ var FyClass;
 	}
 
 	FyClass.prototype.toString = function() {
-		return this.name;
+		return "{class}"+this.name;
 	};
 
 })();

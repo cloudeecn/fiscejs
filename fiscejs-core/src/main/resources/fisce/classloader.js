@@ -164,7 +164,7 @@ var FyClassLoader;
 				};
 			}
 		}
-		return undefined;
+		throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND, name);
 	};
 
 	FyClassLoader.prototype._locAddInterface = function(clazz, global, constant) {
@@ -234,7 +234,7 @@ var FyClassLoader;
 			constants) {
 		var field = new FyField(clazz, fieldDef, strings);
 		// init static fields for reflection
-		if (false && field.constantValueData !== 0) {
+		if (field.constantValueData !== 0) {
 			if ((field.accessFlags & FyConst.FY_ACC_STATIC)
 					&& (field.accessFlags & FyConst.FY_ACC_FINAL)) {
 				switch (field.descriptor.charAt(0)) {
@@ -484,6 +484,7 @@ var FyClassLoader;
 						if (field.descriptor.charAt(0) in FyContext.primitives) {
 							var typeClassName = FyContext.primitives[field.descriptor
 									.charAt(0)];
+							field.type = this.lookupAndPend(typeClassName);
 						} else {
 							throw new FyException(undefined,
 									"Illegal descriptor of field: "
@@ -515,7 +516,7 @@ var FyClassLoader;
 				// console.log("len=" + len);
 				for (i = 0; i < len; i++) {
 					// console.log(i + " " + field);
-					var field = clazz.superClass.fieldAbs;
+					var field = clazz.superClass.fieldAbs[i];
 					if (field === undefined) {
 						error = false;
 						if (i === 0) {
@@ -524,7 +525,7 @@ var FyClassLoader;
 							/**
 							 * @returns {FyField}
 							 */
-							lastField = clazz.fieldAbs.get(i - 1);
+							lastField = clazz.fieldAbs[i - 1];
 							if (lastField === undefined) {
 								error = true;
 							} else if (lastField.descriptor !== 'J'
@@ -560,11 +561,11 @@ var FyClassLoader;
 					} else {
 						clazz.fieldStatic[pos] = field;
 					}
-					// console.log(clazz.name + " FieldStatic #" + field.posAbs
-					// + " = " + field.name);
+//					console.log(clazz.name + " FieldStatic #" + field.posAbs
+//							+ " = " + field.name);
 				} else {
 					if (pos >= clazz.fieldAbs.length) {
-						maxj = pos - clazz.fieldStatic.length;
+						maxj = pos - clazz.fieldAbs.length;
 						for (j = 0; j < maxj; j++) {
 							clazz.fieldAbs.push(undefined);
 						}
@@ -573,8 +574,8 @@ var FyClassLoader;
 						clazz.fieldAbs[pos] = field;
 					}
 					// clazz.fieldAbs.put(field.posAbs, field);
-					// console.log(clazz.name + " FieldAbs #" + field.posAbs
-					// + " = " + field.name);
+//					console.log(clazz.name + " FieldAbs #" + field.posAbs
+//							+ " = " + field.name);
 				}
 			}
 		}

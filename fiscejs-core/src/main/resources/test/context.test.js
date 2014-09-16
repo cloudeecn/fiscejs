@@ -57,7 +57,7 @@
 					equal(methodHashMapGet, context
 							.lookupMethodVirtualByMethod(classHashMap,
 									methodMapGet));
-					equal(1, classHashMap.virtualTable.size);
+					equal(1, classHashMap.virtualTable.size());
 					equal(methodHashMapGet, context
 							.lookupMethodVirtualByMethod(classHashMap,
 									methodMapGet));
@@ -65,7 +65,7 @@
 					equal(methodHashMapGet, context
 							.lookupMethodVirtualByMethod(classHashMap,
 									methodAbstractMapGet));
-					equal(2, classHashMap.virtualTable.size);
+					equal(2, classHashMap.virtualTable.size());
 					equal(methodHashMapGet, context
 							.lookupMethodVirtualByMethod(classHashMap,
 									methodAbstractMapGet));
@@ -73,7 +73,7 @@
 					equal(methodIdentityHashMapGet, context
 							.lookupMethodVirtualByMethod(classIdentityHashMap,
 									methodMapGet));
-					equal(1, classIdentityHashMap.virtualTable.size);
+					equal(1, classIdentityHashMap.virtualTable.size());
 					equal(methodIdentityHashMapGet, context
 							.lookupMethodVirtualByMethod(classIdentityHashMap,
 									methodMapGet));
@@ -81,7 +81,7 @@
 					equal(methodIdentityHashMapGet, context
 							.lookupMethodVirtualByMethod(classIdentityHashMap,
 									methodAbstractMapGet));
-					equal(2, classIdentityHashMap.virtualTable.size);
+					equal(2, classIdentityHashMap.virtualTable.size());
 					equal(methodIdentityHashMapGet, context
 							.lookupMethodVirtualByMethod(classIdentityHashMap,
 									methodAbstractMapGet));

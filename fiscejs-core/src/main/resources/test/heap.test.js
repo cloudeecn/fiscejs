@@ -17,11 +17,11 @@
 						var handle2;
 						var handle3;
 						var arrayName = "[" + FyContext.mapPrimitivesRev[type];
-						var typeName = type.charAt(0).toUpperCase()
-								+ type.substring(1);
+						var typeName = type.substring(1).charAt(0).toUpperCase()
+								+ type.substring(2);
 						var setter = heap["putArray" + typeName];
 						var getter = heap["getArray" + typeName];
-
+						
 						handle = heap.allocateArray(context
 								.lookupClass(arrayName), length);
 						if (length = heap.arrayLength(handle)) {
@@ -85,18 +85,18 @@
 						}
 					}
 
-					test("boolean", "(i&1)?true:false");
-					test("byte", "((i&1)?1:-1)*(i&0x7f)");
+					test("<boolean", "(i&1)?true:false");
+					test("<byte", "((i&1)?1:-1)*(i&0x7f)");
 
-					test("short", "((i&1)?1:-1)*((i*0x101)&0x7fff)");
-					test("char", "((i*0x101)&0xffff)");
+					test("<short", "((i&1)?1:-1)*((i*0x101)&0x7fff)");
+					test("<char", "((i*0x101)&0xffff)");
 
-					test("int", "((i&1)?1:-1)*((i*0x1010101)&0x7fffffff)");
+					test("<int", "((i&1)?1:-1)*((i*0x1010101)&0x7fffffff)");
 					test(
-							"float",
+							"<float",
 							"FyPortable.ieee32ToFloat(FyPortable.floatToIeee32(((i&1)?1:-1)*i*1.234*1000000))");
 
-					test("double", "((i&1)?1:-1)*i*1.234*1000000");
+					test("<double", "((i&1)?1:-1)*i*1.234*1000000");
 
 					{// long
 						var handle;
@@ -380,6 +380,7 @@
 
 					for ( var idx in fields) {
 						var f = fields[idx];
+						console.log(f);
 						heap.getStaticRaw32To(f.owner, f.posAbs, pos);
 						console.log(f.owner.name + "(" + f.owner.staticPos
 								+ ")[" + f.posAbs + "]=" + heap.get32(pos)

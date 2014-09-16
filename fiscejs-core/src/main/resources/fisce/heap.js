@@ -18,33 +18,38 @@
 var FyHeap;
 (function() {
 	"use strict";
-	/**
-	 * 
-	 */
-	var BID_AUTO = 0 | 0;
-	var BID_EDEN = 1 | 0;
-	var BID_YOUNG = 2 | 0;
-	var BID_OLD = 3 | 0;
 
-	var OBJ_HANDLE = 0 | 0;
-	var OBJ_CLASS_ID = 1 | 0;
+	function HeapConstClass() {
+		/**
+		 * 
+		 */
+		this.BID_AUTO = 0 | 0;
+		this.BID_EDEN = 1 | 0;
+		this.BID_YOUNG = 2 | 0;
+		this.BID_OLD = 3 | 0;
 
-	var OBJ_BID = 3 | 0;
-	var OBJ_GEN = 4 | 0;
-	var OBJ_MULTI_USAGE = 5 | 0;
-	var OBJ_MONITOR_OWNER_ID = 6 | 0;
-	var OBJ_MONITOR_OWNER_TIME = 7 | 0;
+		this.OBJ_HANDLE = 0 | 0;
+		this.OBJ_CLASS_ID = 1 | 0;
 
-	var OBJ_META_SIZE = 8 | 0;
+		this.OBJ_BID = 3 | 0;
+		this.OBJ_GEN = 4 | 0;
+		this.OBJ_MULTI_USAGE = 5 | 0;
+		this.OBJ_MONITOR_OWNER_ID = 6 | 0;
+		this.OBJ_MONITOR_OWNER_TIME = 7 | 0;
 
-	var MAX_OBJECTS = FyConfig.maxObjects | 0;
-	var HEAP_SIZE = FyConfig.heapSize | 0;
-	var MAX_GEN = 6 | 0;
-	var EDEN_SIZE = FyConfig.edenSize | 0;
-	var COPY_SIZE = FyConfig.copySize | 0;
+		this.OBJ_META_SIZE = 8 | 0;
 
-	var EMPTY_BUFFER = new ArrayBuffer(65536);
-	var EMPTY_ARRAY_32 = new Int32Array(EMPTY_BUFFER);
+		this.MAX_OBJECTS = FyConfig.maxObjects | 0;
+		this.HEAP_SIZE = FyConfig.heapSize | 0;
+		this.MAX_GEN = 6 | 0;
+		this.EDEN_SIZE = FyConfig.edenSize | 0;
+		this.COPY_SIZE = FyConfig.copySize | 0;
+
+		this.EMPTY_BUFFER = new ArrayBuffer(65536);
+		this.EMPTY_ARRAY_32 = new Int32Array(this.EMPTY_BUFFER);
+	}
+
+	var HeapConst = new HeapConstClass();
 
 	/**
 	 * We use one ArrayBuffer for all data
@@ -54,14 +59,14 @@ var FyHeap;
 	 */
 	FyHeap = function(context) {
 		this.context = context;
-		this.OBJ_META_SIZE = OBJ_META_SIZE;
+		this.OBJ_META_SIZE = HeapConst.OBJ_META_SIZE;
 		/**
 		 * Heap layout:<code>
 		 * 
-		 * MAX_OBJECTS || Object pointer table 
-		 * EDEN_SIZE || Eden 
-		 * COPY_SIZE || Copy1
-		 * COPY_SIZE || Copy2 
+		 * HeapConst.MAX_OBJECTS || Object pointer table 
+		 * HeapConst.EDEN_SIZE || Eden 
+		 * HeapConst.COPY_SIZE || Copy1
+		 * HeapConst.COPY_SIZE || Copy2 
 		 * ??? || Old 
 		 * ??? || Perm(stacks, class static area)
 		 */
@@ -84,20 +89,20 @@ var FyHeap;
 		this.nextHandle = 1;
 		this.totalObjects = 0;
 
-		var _buffer = new ArrayBuffer(HEAP_SIZE << 2);
+		var _buffer = new ArrayBuffer(HeapConst.HEAP_SIZE << 2);
 		this._buffer = _buffer;
 		this.heap = new Int32Array(_buffer);
 		this.heap8 = new Int8Array(_buffer);
 		this.heap16 = new Int16Array(_buffer);
 		this.heapFloat = new Float32Array(_buffer);
-		this.edenBottom = MAX_OBJECTS | 0;
-		this.edenTop = (this.edenBottom + EDEN_SIZE) | 0;
+		this.edenBottom = HeapConst.MAX_OBJECTS | 0;
+		this.edenTop = (this.edenBottom + HeapConst.EDEN_SIZE) | 0;
 		this.copyBottom = this.edenTop;
-		this.copyTop = (this.copyBottom + COPY_SIZE) | 0;
+		this.copyTop = (this.copyBottom + HeapConst.COPY_SIZE) | 0;
 		this.copy2Bottom = this.copyTop;
-		this.copy2Top = (this.copy2Bottom + COPY_SIZE) | 0;
+		this.copy2Top = (this.copy2Bottom + HeapConst.COPY_SIZE) | 0;
 		this.oldBottom = this.copy2Top;
-		this.heapTop = HEAP_SIZE;
+		this.heapTop = HeapConst.HEAP_SIZE;
 
 		this.edenPos = this.edenBottom;
 		this.copyPos = this.copyBottom;
@@ -105,9 +110,9 @@ var FyHeap;
 		this.oldPos = this.oldBottom;
 
 		this.gcInProgress = false;
-		this.oldReleasedSize = 0;
 		this.marks = new HashMapI(0, 12, 0.6);
 		this.from = [];
+
 	};
 
 	/**
@@ -146,7 +151,7 @@ var FyHeap;
 				break;
 			}
 			handle++;
-			if (handle >= MAX_OBJECTS) {
+			if (handle >= HeapConst.MAX_OBJECTS) {
 				handle = 1;
 			}
 			if (handle === this.nextHandle) {
@@ -159,6 +164,9 @@ var FyHeap;
 			}
 		}
 		this.nextHandle = handle + 1;
+		if (this.nextHandle >= HeapConst.MAX_OBJECTS) {
+			this.nextHandle = 1;
+		}
 		return handle | 0;
 	};
 
@@ -180,9 +188,9 @@ var FyHeap;
 		// this.context.log(1, "memset " + chunks + " chunks, " + remaining
 		// + " ints");
 		for (var i = 0; i < chunks; i++) {
-			this.heap.set(EMPTY_ARRAY_32, pos + (i << 14));
+			this.heap.set(HeapConst.EMPTY_ARRAY_32, pos + (i << 14));
 		}
-		var arr = new Int32Array(EMPTY_BUFFER, 0, remaining);
+		var arr = new Int32Array(HeapConst.EMPTY_BUFFER, 0, remaining);
 		this.heap.set(arr, pos + (chunks << 14));
 	};
 
@@ -231,77 +239,67 @@ var FyHeap;
 	 */
 	FyHeap.prototype.getOjbectHandleIn = function(pos) {
 		pos = pos | 0;
-		return this.heap[pos + OBJ_HANDLE];
+		return this.heap[pos + HeapConst.OBJ_HANDLE];
 	};
 
 	FyHeap.prototype.createObject = function(handle, pos) {
 		this.heap[handle] = pos;
-		this.heap[pos + OBJ_HANDLE] = handle;
+		this.heap[pos + HeapConst.OBJ_HANDLE] = handle;
 	};
 
 	FyHeap.prototype.getObjectClassId = function(handle) {
-		return this.heap[this.heap[handle] + OBJ_CLASS_ID];
+		return this.heap[this.heap[handle] + HeapConst.OBJ_CLASS_ID];
 	};
 
 	FyHeap.prototype.setObjectClassId = function(handle, classId) {
-		this.heap[this.heap[handle] + OBJ_CLASS_ID] = classId;
+		this.heap[this.heap[handle] + HeapConst.OBJ_CLASS_ID] = classId;
 	};
 
 	/**
 	 * @returns {FyClass}
 	 */
 	FyHeap.prototype.getObjectClass = function(handle) {
-		return this.context.classes.get(this.getObjectClassId(handle) | 0);
-	};
-
-	/**
-	 * @param {Number}
-	 *            handle
-	 * @param {FyClass}
-	 *            clazz;
-	 */
-	FyHeap.prototype.setObjectClass = function(handle, clazz) {
-		this.setObjectClassId(handle, clazz.classId);
+		return this.context.classes.get(this.getObjectClassId(handle));
 	};
 
 	FyHeap.prototype.getObjectMultiUsageData = function(handle) {
-		return this.heap[this.heap[handle] + OBJ_MULTI_USAGE];
+		return this.heap[this.heap[handle] + HeapConst.OBJ_MULTI_USAGE];
 	};
 
 	FyHeap.prototype.setObjectMultiUsageData = function(handle, value) {
-		this.heap[this.heap[handle] + OBJ_MULTI_USAGE] = value;
+		this.heap[this.heap[handle] + HeapConst.OBJ_MULTI_USAGE] = value;
 	};
 
 	FyHeap.prototype.getObjectMonitorOwnerId = function(handle) {
-		return this.heap[this.heap[handle] + OBJ_MONITOR_OWNER_ID];
+		return this.heap[this.heap[handle] + HeapConst.OBJ_MONITOR_OWNER_ID];
 	};
 
 	FyHeap.prototype.setObjectMonitorOwnerId = function(handle, value) {
-		this.heap[this.heap[handle] + OBJ_MONITOR_OWNER_ID] = value;
+		this.heap[this.heap[handle] + HeapConst.OBJ_MONITOR_OWNER_ID] = value;
 	};
 
 	FyHeap.prototype.getObjectMonitorOwnerTimes = function(handle) {
-		return this.heap[this.heap[handle] + OBJ_MONITOR_OWNER_TIME];
+		return this.heap[this.heap[handle] + HeapConst.OBJ_MONITOR_OWNER_TIME];
 	};
 
 	FyHeap.prototype.setObjectMonitorOwnerTimes = function(handle, value) {
-		this.heap[this.heap[handle] + OBJ_MONITOR_OWNER_TIME] = value;
+		this.heap[this.heap[handle] + HeapConst.OBJ_MONITOR_OWNER_TIME] = value;
 	};
 
 	FyHeap.prototype.getObjectBId = function(handle) {
-		return this.heap[this.heap[handle] + OBJ_BID];
+		return this.heap[this.heap[handle] + HeapConst.OBJ_BID];
 	};
 
 	FyHeap.prototype.setObjectBId = function(handle, value) {
-		this.heap[this.heap[handle] + OBJ_BID] = value;
+		this.heap[this.heap[handle] + HeapConst.OBJ_BID] = value;
 	};
 
 	FyHeap.prototype.getObjectGen = function(handle) {
-		return this.heap[this.heap[handle] + OBJ_GEN];
+		return this.heap[this.heap[handle] + HeapConst.OBJ_GEN];
 	};
 
 	FyHeap.prototype.setObjectGen = function(handle, value) {
-		this.heap[this.heap[handle] + OBJ_GEN] = value;
+		this.heap[this.heap[handle] + HeapConst.OBJ_GEN] = value;
 	};
 
 	/**
@@ -475,77 +473,59 @@ var FyHeap;
 		if (handle === 0) {
 			handle = this.fetchNextHandle(false);
 		}
-		var a, b, c, d, e, f, g, h, i, j, k;
 
 		// if (handle === 2875) {
 		// new FyException();
 		// }
 
-		a = 1000;
 		if (this.objectExists(handle)) {
 			// TODO confirm
 			throw new FyException(undefined, "Object " + handle
 					+ " already exists");
 		}
-		b = 2000;
 
 		switch (bid) {
-		case 0/* BID_AUTO */:
-			c = 3000;
-			if (size > ((EDEN_SIZE))) {
+		case 0/* HeapConst.BID_AUTO */:
+			if (size >= ((HeapConst.EDEN_SIZE))) {
 				// allocate in old directly
-				d = 4000;
 				this.createObject(handle, this.allocateInOld(size
-						+ OBJ_META_SIZE, 0));
-				e = 5000;
-				this.memset32(this.heap[handle] + 1, size + OBJ_META_SIZE - 1,
-						0);
-				f = 6000;
-				this.setObjectBId(handle, BID_OLD);
-				g = 7000;
+						+ HeapConst.OBJ_META_SIZE, 0));
+				this.memset32(this.heap[handle] + 1, size
+						+ (HeapConst.OBJ_META_SIZE - 1), 0);
+				this.setObjectBId(handle, HeapConst.BID_OLD);
 			} else {
-				d = 4001
 				// allocate in eden;
 				this.createObject(handle, this.allocateInEden(size
-						+ OBJ_META_SIZE, 0));
-				e = 5001;
-				this.memset32(this.heap[handle] + 1, size + OBJ_META_SIZE - 1,
-						0);
-				f = 6001;
-				this.setObjectBId(handle, BID_EDEN);
-				g = 7001;
+						+ HeapConst.OBJ_META_SIZE, 0));
+				this.memset32(this.heap[handle] + 1, size
+						+ (HeapConst.OBJ_META_SIZE - 1), 0);
+				this.setObjectBId(handle, HeapConst.BID_EDEN);
 				this.edenAllocated.push(handle);
-				g = 7002;
 			}
 			break;
-		case 1/* BID_EDEN */:
+		case 1/* HeapConst.BID_EDEN */:
 			// TODO check if we need to set obj->object_data->position
-			this.createObject(handle, this.allocateInEden(size + OBJ_META_SIZE,
-					1));
+			this.createObject(handle, this.allocateInEden(size
+					+ HeapConst.OBJ_META_SIZE, 1));
 			this.edenAllocated.push(handle);
 			break;
-		case 2/* BID_YOUNG */:
-			this.createObject(handle, this.allocateInCopy(size + OBJ_META_SIZE,
-					1));
+		case 2/* HeapConst.BID_YOUNG */:
+			this.createObject(handle, this.allocateInCopy(size
+					+ HeapConst.OBJ_META_SIZE, 1));
 			this.youngAllocated.put(handle, 1);
 			break;
-		case 3/* BID_OLD */:
-			this.createObject(handle, this.allocateInOld(size + OBJ_META_SIZE,
-					1));
+		case 3/* HeapConst.BID_OLD */:
+			this.createObject(handle, this.allocateInOld(size
+					+ HeapConst.OBJ_META_SIZE, 1));
 			break;
 		default:
 			throw new FyException(undefined, "Illegal bid: " + bid);
 		}
-		h = 8000;
 		this.setObjectMultiUsageData(handle, multiUsageData | 0);
-		i = 9000;
 		this.setObjectClassId(handle, clazz.classId);
-		j = 10000;
 		if (clazz.accessFlags & FyConst.FY_ACC_NEED_FINALIZE) {
 			this.finalizeScanNeed.put(handle, 1);
 		}
-		k = 11000;
-		console.log(a + b + c + d + e + f + g + h + i + j + k);
 		if (this.protectMode) {
 			this.protectedObjects.push(handle);
 		}
@@ -589,47 +569,11 @@ var FyHeap;
 	 * @return {Number} object handle
 	 */
 	FyHeap.prototype.allocate = function(clazz) {
-		if (clazz.type != FyConst.TYPE_OBJECT) {
+		if (clazz.type !== FyConst.TYPE_OBJECT) {
 			throw new FyException(undefined,
-					"Please use allocateArray to allocate arrays");
+					"Please use allocateArray to array objects.");
 		}
-		// var ret = this.allocateInternal(clazz.sizeAbs, clazz, 0, 0,
-		// BID_AUTO);
-		var handle = this.fetchNextHandle(false);
-		var size = clazz.sizeAbs | 0;
-		// if (handle === 2875) {
-		// new FyException();
-		// }
-
-		if (this.objectExists(handle)) {
-			// TODO confirm
-			throw new FyException(undefined, "Object " + handle
-					+ " already exists");
-		}
-
-		if (size > ((EDEN_SIZE))) {
-			// allocate in old directly
-			this.createObject(handle, this.allocateInOld(size + OBJ_META_SIZE,
-					0));
-			this.memset32(this.heap[handle] + 1, size + OBJ_META_SIZE - 1, 0);
-			this.setObjectBId(handle, BID_OLD);
-		} else {
-			// allocate in eden;
-			this.createObject(handle, this.allocateInEden(size + OBJ_META_SIZE,
-					0));
-			this.memset32(this.heap[handle] + 1, size + OBJ_META_SIZE - 1, 0);
-			this.setObjectBId(handle, BID_EDEN);
-			this.edenAllocated.push(handle);
-		}
-		this.setObjectMultiUsageData(handle, 0);
-		this.setObjectClassId(handle, clazz.classId);
-		if (clazz.accessFlags & FyConst.FY_ACC_NEED_FINALIZE) {
-			this.finalizeScanNeed.put(handle, 1);
-		}
-		if (this.protectMode) {
-			this.protectedObjects.push(handle);
-		}
-		return handle;
+		return this.allocateInternal(clazz.sizeAbs, clazz, 0, 0, 0);
 	};
 
 	/**
@@ -646,40 +590,9 @@ var FyHeap;
 					"Please use allocate to allocate objects.");
 		}
 		// var ret = this.allocateInternal(FyHeap.getArraySizeFromLength(clazz,
-		// length), clazz, length, 0, BID_AUTO);
+		// length), clazz, length, 0, HeapConst.BID_AUTO);
 		var size = FyHeap.getArraySizeFromLength(clazz, length);
-		var handle = this.fetchNextHandle(false);
-
-		// if (handle === 2875) {
-		// new FyException();
-		// }
-
-		if (this.objectExists(handle)) {
-			// TODO confirm
-			throw new FyException(undefined, "Object " + handle
-					+ " already exists");
-		}
-
-		if (size > ((EDEN_SIZE))) {
-			// allocate in old directly
-			this.createObject(handle, this.allocateInOld(size + OBJ_META_SIZE,
-					0));
-			this.memset32(this.heap[handle] + 1, size + OBJ_META_SIZE - 1, 0);
-			this.setObjectBId(handle, BID_OLD);
-		} else {
-			// allocate in eden;
-			this.createObject(handle, this.allocateInEden(size + OBJ_META_SIZE,
-					0));
-			this.memset32(this.heap[handle] + 1, size + OBJ_META_SIZE - 1, 0);
-			this.setObjectBId(handle, BID_EDEN);
-			this.edenAllocated.push(handle);
-		}
-		this.setObjectMultiUsageData(handle, length | 0);
-		this.setObjectClassId(handle, clazz.classId);
-		if (this.protectMode) {
-			this.protectedObjects.push(handle);
-		}
-		return handle;
+		return this.allocateInternal(size, clazz, length, 0, 0);
 	};
 
 	/**
@@ -817,7 +730,7 @@ var FyHeap;
 		}
 		f2 = performance.now();
 		/* Class static area */
-		imax = this.context.classes.size;
+		imax = this.context.classes.size();
 		for (var i = 1; i < imax; i++) {
 			/**
 			 * @returns {FyClass}
@@ -858,6 +771,12 @@ var FyHeap;
 			var thread = this.context.threadManager.threads[i];
 			if (thread !== undefined) {
 				this.markObjectInitialUsing(thread.handle);
+				if (this.getObjectClass(thread.handle) === undefined) {
+					throw new FyException(undefined, "Thread object released");
+				}
+				console.log("#mark thread handle #" + thread.handle
+						+ " for thread #" + i + " pos="
+						+ this.getObjectBId(thread.handle));
 				if (thread.waitForLockId !== 0) {
 					this.markObjectInitialUsing(thread.waitForLockId);
 				}
@@ -915,7 +834,7 @@ var FyHeap;
 			var clazz = this.getObjectClass(handle);
 			if (clazz === undefined) {
 				throw new FyException(undefined, "Handle #" + handle
-						+ " is released while using");
+						+ " is released while using.");
 			}
 			switch (clazz.type) {
 			case 2/* FyConst.TYPE_ARRAY */:
@@ -942,11 +861,12 @@ var FyHeap;
 				}
 				break;
 			case 0/* FyConst.TYPE_OBJECT */:
+				// console.log(clazz.fieldAbs);
 				for (var i = clazz.sizeAbs - 1; i >= 0; i--) {
 					/**
 					 * @returns {FyField}
 					 */
-					var field = clazz.fieldAbs.get(i);
+					var field = clazz.fieldAbs[i];
 					if (field === undefined) {
 						// console.log("!!Discard #" + handle +
 						// "[undefined@" +
@@ -954,6 +874,7 @@ var FyHeap;
 						// + "]");
 						continue;
 					}
+					// console.log(field);
 					var fieldType = field.descriptor.charCodeAt(0);
 					if (fieldType === FyConst.L || fieldType === FyConst.ARR) {
 						var handle2 = this.getFieldInt(handle, field.posAbs);
@@ -1000,9 +921,9 @@ var FyHeap;
 		case 2/* FyConst.TYPE_ARRAY */:
 			return FyHeap.getArraySizeFromLength(clazz, this
 					.arrayLength(handle))
-					+ OBJ_META_SIZE;
+					+ HeapConst.OBJ_META_SIZE;
 		case 0/* FyConst.TYPE_OBJECT */:
-			return clazz.sizeAbs + OBJ_META_SIZE;
+			return clazz.sizeAbs + HeapConst.OBJ_META_SIZE;
 		default:
 			throw new FyException(undefined, "Illegal class type " + clazz.type
 					+ " for class " + clazz.name + " in GC");
@@ -1030,12 +951,17 @@ var FyHeap;
 	 *            marks
 	 */
 	FyHeap.prototype.compatOld = function(marks) {
+		var t1 = performance.now();
 		var newPos = this.oldBottom;
 		// TODO optimize
-		for (var i = newPos; i < this.oldPos; i++) {
-			var handle = this.heap[i];
-			if (handle > 0 && handle < MAX_OBJECTS && this.heap[handle] === i) {
+		for (var i = newPos; i < this.oldPos;) {
+			i = i | 0;
+			var handle = this.heap[i] | 0;
+			if (handle > 0 && handle < HeapConst.MAX_OBJECTS
+					&& this.heap[handle] === i) {
 				// It's a real object
+				var clazz = this.getObjectClass(handle);
+				// this.context.log(2, "old pos #" + i + " has class " + clazz);
 				var size = this.getSizeFromObject(handle);
 				if (marks !== undefined && !marks.contains(handle)) {
 					// this will be released
@@ -1053,18 +979,20 @@ var FyHeap;
 					newPos += size;
 				}
 				i += size - 1;
+			} else {
+				i++;
 			}
 		}
 		this.context.log(1, "#GC: Compat old"
-				+ (marks ? " with object release" : " for space") + ", "
-				+ (this.oldPos - this.oldBottom) + " => "
-				+ (newPos - this.oldBottom));
+				+ ((marks !== undefined) ? " with object release"
+						: " for space") + ", " + (this.oldPos - this.oldBottom)
+				+ " => " + (newPos - this.oldBottom) + " in "
+				+ (performance.now() - t1) + "ms");
 		this.oldPos = newPos;
-		this.oldReleasedSize = 0;
 	};
 
 	FyHeap.prototype.validateObjects = function() {
-		for (var handle = MAX_OBJECTS; --handle;) {
+		for (var handle = HeapConst.MAX_OBJECTS; --handle;) {
 			if (this.heap[handle] !== 0
 					&& this.heap[this.heap[handle]] !== handle) {
 				throw new FyException(undefined, "Illegal status for object #"
@@ -1121,7 +1049,7 @@ var FyHeap;
 		var moved = false;
 		var size = this.getSizeFromObject(handle);
 		if (this.oldPos + size >= this.heapTop) {
-			this.compatOld();
+			this.compatOld(undefined);
 			if (this.oldPos + size >= this.heapTop) {
 				throw new FyException(undefined, "Old area full");
 			}
@@ -1133,10 +1061,10 @@ var FyHeap;
 		// this.memset32(this.heap[handle], size, 0);
 		this.heap[handle] = pos;
 		this.heap[pos] = handle;
-		if (this.getObjectBId(handle) === BID_YOUNG) {
+		if (this.getObjectBId(handle) === HeapConst.BID_YOUNG) {
 			moved = true;
 		}
-		this.setObjectBId(handle, BID_OLD);
+		this.setObjectBId(handle, HeapConst.BID_OLD);
 		return moved;
 	};
 
@@ -1160,8 +1088,8 @@ var FyHeap;
 			// this.memset32(this.heap[handle], size, 0);
 			this.heap[handle] = pos;
 			this.heap[pos] = handle;
-			if (this.getObjectBId(handle) === BID_EDEN) {
-				this.setObjectBId(handle, BID_YOUNG);
+			if (this.getObjectBId(handle) === HeapConst.BID_EDEN) {
+				this.setObjectBId(handle, HeapConst.BID_YOUNG);
 				this.youngAllocated.put(handle, 1);
 				moved = true;
 			}
@@ -1187,7 +1115,7 @@ var FyHeap;
 	FyHeap.prototype.move = function(handle) {
 		var moved = false;
 		var gen = this.getObjectGen(handle);
-		if (gen > MAX_GEN) {
+		if (gen > HeapConst.MAX_GEN) {
 			// console.log("#GC move #" + handle + " to old");
 			moved = this.moveToOld(handle);
 		} else {
@@ -1223,7 +1151,7 @@ var FyHeap;
 		imax = this.youngAllocated.iterate(iteratorMove, this);
 		this.context.log(1, imax + " young object scanned in "
 				+ (performance.now() - t) + "ms (backend size="
-				+ this.youngAllocated.cap + ")");
+				+ this.youngAllocated.backend.length + ")");
 
 		t = performance.now();
 		imax = this.edenAllocated.length;
@@ -1239,25 +1167,6 @@ var FyHeap;
 		this.context.log(1, imax + " eden object scanned in "
 				+ (performance.now() - t) + "ms");
 
-		// for (var i = 1; i < MAX_OBJECTS; i++) {
-		// if (this.objectExists(i)) {
-		// if (this.marks.contains(i)) {
-		// switch (this.getObjectBId(i)) {
-		// case 1/* BID_EDEN */:
-		// case 2/* BID_YOUNG */:
-		// this.move(i);
-		// break;
-		// case 3/* BID_OLD */:
-		// break;
-		// default:
-		// throw new FyException(undefined, "Illegal bid "
-		// + this.getObjectBId(i) + " for object #" + i);
-		// }
-		// } else {
-		// this.release(i);
-		// }
-		// }
-		// }
 		this.edenPos = this.edenBottom;
 		this.swapCopy();
 	};
@@ -1273,19 +1182,36 @@ var FyHeap;
 				|| requiredSize + this.oldPos + this.copyPos - this.copyBottom
 						+ this.edenPos - this.edenBottom >= this.heapTop) {
 			memoryStressed = true;
+			this.context.log(1, "#stressed: requireSize=" + requiredSize
+					+ ", oldSizeLeft=" + (this.heapTop - this.oldPos)
+					+ ", copySize=" + (this.copyPos - this.copyBottom)
+					+ ", edenSize=" + (this.edenPos - this.edenBottom))
 		}
-		this.context.log(1, "#GC "
-				+ (memoryStressed ? "stressed" : "")
-				+ " BEFORE "
-				+ (this.edenPos - this.edenBottom)
-				+ "+"
-				+ (this.copyPos - this.copyBottom)
-				+ "+"
-				+ (this.oldPos - this.oldBottom)
-				+ " total "
-				+ (this.edenPos - this.edenBottom + this.copyPos
-						- this.copyBottom + this.oldPos - this.oldBottom)
-				+ " ints " + (HEAP_SIZE - this.heapTop) + " perm ints");
+		memoryStressed = true;
+		this.context
+				.log(
+						1,
+						"#GC "
+								+ (memoryStressed ? ("stressed: "
+										+ requiredSize
+										+ " + "
+										+ (this.copyPos - this.copyBottom
+												+ this.edenPos - this.edenBottom)
+										+ " / " + (this.heapTop - this.oldPos))
+										: "")
+								+ " BEFORE "
+								+ (this.edenPos - this.edenBottom)
+								+ "+"
+								+ (this.copyPos - this.copyBottom)
+								+ "+"
+								+ (this.oldPos - this.oldBottom)
+								+ " total "
+								+ (this.edenPos - this.edenBottom
+										+ this.copyPos - this.copyBottom
+										+ this.oldPos - this.oldBottom)
+								+ " ints "
+								+ (HeapConst.HEAP_SIZE - this.heapTop)
+								+ " perm ints");
 		if (FyConfig.debugMode) {
 			this.validateObjects();
 		}
@@ -1330,7 +1256,8 @@ var FyHeap;
 				+ " total "
 				+ (this.edenPos - this.edenBottom + this.copyPos
 						- this.copyBottom + this.oldPos - this.oldBottom)
-				+ " ints " + (HEAP_SIZE - this.heapTop) + " perm ints");
+				+ " ints " + (HeapConst.HEAP_SIZE - this.heapTop)
+				+ " perm ints");
 		this.context.log(1, "#GC time: " + ((t1 - timeStamp) | 0) + " "
 				+ ((t2 - t1) | 0) + " " + ((t3 - t2) | 0) + " "
 				+ ((t4 - t3) | 0) + " " + ((t5 - t4) | 0) + " "
@@ -1339,10 +1266,15 @@ var FyHeap;
 	};
 
 	FyHeap.prototype.getFinalizee = function() {
+		var len = 0;
 		if (this.toFinalize.length > 0) {
 			var clazz = this.context.lookupClass("[L" + FyConst.FY_BASE_OBJECT
 					+ ";");
-			var ret = this.allocateArray(clazz, this.toFinalize.length);
+			var ret = 0;
+			while (this.toFinalize.length !== len) {
+				len = this.toFinalize.length;
+				ret = this.allocateArray(clazz, len);
+			}
 			for (var i = 0; i < this.toFinalize.length; i++) {
 				this.putArrayInt(ret, i, this.toFinalize[i]);
 			}
@@ -1354,11 +1286,16 @@ var FyHeap;
 	};
 
 	FyHeap.prototype.getReferencesToEnqueue = function() {
+		var len = 0;
 		if (this.toEnqueue.length > 0) {
 			var clazz = this.context.lookupClass("[L" + FyConst.FY_BASE_OBJECT
 					+ ";");
-			var ret = this.allocateArray(clazz, this.toEnqueue.length);
-			for (var i = 0; i < this.toEnqueue.length; i++) {
+			var ret = 0;
+			while (this.toEnqueue.length !== len) {
+				len = this.toEnqueue.length;
+				ret = this.allocateArray(clazz, len);
+			}
+			for (var i = 0; i < len; i++) {
 				this.putArrayInt(ret, i, this.toEnqueue[i]);
 			}
 			// console.log("#GC Get " + _toEnqueue.length
@@ -1398,7 +1335,7 @@ var FyHeap;
 	};
 
 	FyHeap.prototype.arrayPos = function(handle) {
-		return this.heap[handle] + OBJ_META_SIZE;
+		return this.heap[handle] + HeapConst.OBJ_META_SIZE;
 	};
 
 	/**
@@ -1426,9 +1363,11 @@ var FyHeap;
 	FyHeap.prototype.getArrayRaw32ToHeap = function(handle, index, pos) {
 		this.checkLength(handle, index);
 		// console.log("#" + handle + "[" + index + "] = "
-		// + this.heap[this.heap[handle] + OBJ_META_SIZE + index] + " => " +
+		// + this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + index] + "
+		// => " +
 		// pos);
-		this.heap[pos] = this.heap[this.heap[handle] + OBJ_META_SIZE + index];
+		this.heap[pos] = this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE
+				+ index];
 	};
 
 	/**
@@ -1440,7 +1379,7 @@ var FyHeap;
 	 */
 	FyHeap.prototype.getArrayRaw16ToHeap = function(handle, index, pos) {
 		this.checkLength(handle, index);
-		this.heap[pos] = this.heap16[((this.heap[handle] + OBJ_META_SIZE) << 1)
+		this.heap[pos] = this.heap16[((this.heap[handle] + HeapConst.OBJ_META_SIZE) << 1)
 				+ index];
 	};
 
@@ -1453,7 +1392,7 @@ var FyHeap;
 	 */
 	FyHeap.prototype.getArrayRaw8ToHeap = function(handle, index, pos) {
 		this.checkLength(handle, index);
-		this.heap[pos] = this.heap8[((this.heap[handle] + OBJ_META_SIZE) << 2)
+		this.heap[pos] = this.heap8[((this.heap[handle] + HeapConst.OBJ_META_SIZE) << 2)
 				+ index];
 	};
 
@@ -1466,121 +1405,130 @@ var FyHeap;
 	 */
 	FyHeap.prototype.getArrayRaw64ToHeap = function(handle, index, pos) {
 		this.checkLength(handle, index);
-		this.heap[pos] = this.heap[this.heap[handle] + OBJ_META_SIZE
+		this.heap[pos] = this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE
 				+ (index << 1)];
-		this.heap[pos] = this.heap[this.heap[handle] + OBJ_META_SIZE
-				+ (index << 1) + 1];
+		this.heap[pos] = this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE
+				+ ((index << 1) + 1)];
 	};
 
 	FyHeap.prototype.getArrayBoolean = function(handle, index) {
 		this.checkLength(handle, index);
-		return this.heap8[((this.heap[handle] + OBJ_META_SIZE) << 2) + index] ? true
-				: false;
+		return this.heap8[((this.heap[handle] + HeapConst.OBJ_META_SIZE) << 2)
+				+ index] ? true : false;
 	};
 
 	FyHeap.prototype.getArrayByte = function(handle, index) {
 		this.checkLength(handle, index);
-		return this.heap8[((this.heap[handle] + OBJ_META_SIZE) << 2) + index];
+		return this.heap8[((this.heap[handle] + HeapConst.OBJ_META_SIZE) << 2)
+				+ index];
 	};
 
 	FyHeap.prototype.getArrayShort = function(handle, index) {
 		this.checkLength(handle, index);
-		return this.heap16[((this.heap[handle] + OBJ_META_SIZE) << 1) + index];
+		return this.heap16[((this.heap[handle] + HeapConst.OBJ_META_SIZE) << 1)
+				+ index];
 	};
 
 	FyHeap.prototype.getArrayChar = function(handle, index) {
 		this.checkLength(handle, index);
-		return this.heap16[((this.heap[handle] + OBJ_META_SIZE) << 1) + index] & 0xffff;
+		return this.heap16[((this.heap[handle] + HeapConst.OBJ_META_SIZE) << 1)
+				+ index] & 0xffff;
 	};
 
 	FyHeap.prototype.getArrayInt = function(handle, index) {
 		this.checkLength(handle, index);
-		return this.heap[this.heap[handle] + OBJ_META_SIZE + index];
+		return this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + index];
 	};
 
 	FyHeap.prototype.getArrayFloat = function(handle, index) {
 		this.checkLength(handle, index);
-		return this.heapFloat[this.heap[handle] + OBJ_META_SIZE + index];
+		return this.heapFloat[this.heap[handle] + HeapConst.OBJ_META_SIZE
+				+ index];
 	};
 
 	FyHeap.prototype.getArrayLongTo = function(handle, index, tarray, tindex) {
 		this.checkLength(handle, index);
-		tarray[tindex] = this.heap[this.heap[handle] + OBJ_META_SIZE
+		tarray[tindex] = this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE
 				+ (index << 1)];
-		tarray[tindex + 1] = this.heap[this.heap[handle] + OBJ_META_SIZE
-				+ (index << 1) + 1];
+		tarray[tindex + 1] = this.heap[this.heap[handle]
+				+ HeapConst.OBJ_META_SIZE + ((index << 1) + 1)];
 		return tarray;
 	};
 
 	FyHeap.prototype.getArrayDouble = function(handle, index) {
 		this.checkLength(handle, index);
 		return FyPortable.ieee64ToDouble(this.heap, this.heap[handle]
-				+ OBJ_META_SIZE + (index << 1));
+				+ HeapConst.OBJ_META_SIZE + (index << 1));
 	};
 
 	FyHeap.prototype.putArrayRaw32FromHeap = function(handle, index, pos) {
 		this.checkLength(handle, index);
 		// console.log("#" + handle + "[" + index + "] <= " + pos + " = "
 		// + this.heap[pos]);
-		this.heap[this.heap[handle] + OBJ_META_SIZE + index] = this.heap[pos];
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + index] = this.heap[pos];
 	};
 
 	FyHeap.prototype.putArrayRaw16FromHeap = function(handle, index, pos) {
 		this.checkLength(handle, index);
-		this.heap16[((this.heap[handle] + OBJ_META_SIZE) << 1) + index] = this.heap[pos];
+		this.heap16[((this.heap[handle] + HeapConst.OBJ_META_SIZE) << 1)
+				+ index] = this.heap[pos];
 	};
 
 	FyHeap.prototype.putArrayRaw8FromHeap = function(handle, index, pos) {
 		this.checkLength(handle, index);
-		this.heap8[((this.heap[handle] + OBJ_META_SIZE) << 2) + index] = this.heap[pos];
+		this.heap8[((this.heap[handle] + HeapConst.OBJ_META_SIZE) << 2) + index] = this.heap[pos];
 	};
 
 	FyHeap.prototype.putArrayRaw64FromHeap = function(handle, index, pos) {
 		this.checkLength(handle, index);
-		this.heap[this.heap[handle] + OBJ_META_SIZE + (index << 1)] = this.heap[pos];
-		this.heap[this.heap[handle] + OBJ_META_SIZE + (index << 1) + 1] = this.heap[pos];
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + (index << 1)] = this.heap[pos];
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE
+				+ ((index << 1) + 1)] = this.heap[pos];
 	};
 
 	FyHeap.prototype.putArrayBoolean = function(handle, index, value) {
 		this.checkLength(handle, index);
-		this.heap8[((this.heap[handle] + OBJ_META_SIZE) << 2) + index] = value | 0;
+		this.heap8[((this.heap[handle] + HeapConst.OBJ_META_SIZE) << 2) + index] = value | 0;
 	};
 
 	FyHeap.prototype.putArrayByte = function(handle, index, value) {
 		this.checkLength(handle, index);
-		this.heap8[((this.heap[handle] + OBJ_META_SIZE) << 2) + index] = value | 0;
+		this.heap8[((this.heap[handle] + HeapConst.OBJ_META_SIZE) << 2) + index] = value | 0;
 	};
 
 	FyHeap.prototype.putArrayShort = function(handle, index, value) {
 		this.checkLength(handle, index);
-		this.heap16[((this.heap[handle] + OBJ_META_SIZE) << 1) + index] = value;
+		this.heap16[((this.heap[handle] + HeapConst.OBJ_META_SIZE) << 1)
+				+ index] = value;
 	};
 
 	FyHeap.prototype.putArrayChar = function(handle, index, value) {
 		this.checkLength(handle, index);
-		this.heap16[((this.heap[handle] + OBJ_META_SIZE) << 1) + index] = value & 0xffff;
+		this.heap16[((this.heap[handle] + HeapConst.OBJ_META_SIZE) << 1)
+				+ index] = value & 0xffff;
 	};
 
 	FyHeap.prototype.putArrayInt = function(handle, index, value) {
 		this.checkLength(handle, index);
-		this.heap[this.heap[handle] + OBJ_META_SIZE + index] = value;
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + index] = value;
 	};
 
 	FyHeap.prototype.putArrayFloat = function(handle, index, value) {
 		this.checkLength(handle, index);
-		this.heapFloat[this.heap[handle] + OBJ_META_SIZE + index] = value;
+		this.heapFloat[this.heap[handle] + HeapConst.OBJ_META_SIZE + index] = value;
 	};
 
 	FyHeap.prototype.putArrayLongFrom = function(handle, index, varray, vindex) {
 		this.checkLength(handle, index);
-		this.heap[this.heap[handle] + OBJ_META_SIZE + (index << 1)] = varray[vindex];
-		this.heap[this.heap[handle] + OBJ_META_SIZE + (index << 1) + 1] = varray[vindex + 1];
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + (index << 1)] = varray[vindex];
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE
+				+ ((index << 1) + 1)] = varray[vindex + 1];
 	};
 
 	FyHeap.prototype.putArrayDouble = function(handle, index, value) {
 		this.checkLength(handle, index);
 		FyPortable.doubleToIeee64(value, this.heap, this.heap[handle]
-				+ OBJ_META_SIZE + (index << 1));
+				+ HeapConst.OBJ_META_SIZE + (index << 1));
 	};
 
 	/**
@@ -1600,23 +1548,25 @@ var FyHeap;
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		this.heap[pos] = this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs];
+		this.heap[pos] = this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE
+				+ posAbs];
 	};
 
 	FyHeap.prototype.getFieldRaw64To = function(handle, posAbs, pos) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		this.heap[pos] = this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs];
-		this.heap[pos + 1] = this.heap[this.heap[handle] + OBJ_META_SIZE
-				+ posAbs + 1];
+		this.heap[pos] = this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE
+				+ posAbs];
+		this.heap[pos + 1] = this.heap[this.heap[handle]
+				+ HeapConst.OBJ_META_SIZE + (posAbs + 1)];
 	};
 
 	FyHeap.prototype.getFieldBoolean = function(handle, posAbs) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		return this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs] ? true
+		return this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + posAbs] ? true
 				: false;
 	};
 
@@ -1624,7 +1574,8 @@ var FyHeap;
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		var ret = this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs] & 0xff;
+		var ret = this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE
+				+ posAbs] & 0xff;
 		return (ret >>> 7) ? ((ret - 256) | 0) : ret;
 	};
 
@@ -1632,7 +1583,8 @@ var FyHeap;
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		var ret = this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs] & 0xffff;
+		var ret = this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE
+				+ posAbs] & 0xffff;
 		return (ret >>> 15) ? ((ret - 65536) | 0) : ret;
 	};
 
@@ -1640,30 +1592,32 @@ var FyHeap;
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		return this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs] & 0xffff;
+		return this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + posAbs] & 0xffff;
 	};
 
 	FyHeap.prototype.getFieldInt = function(handle, posAbs) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		return this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs];
+		return this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + posAbs];
 	};
 
 	FyHeap.prototype.getFieldFloat = function(handle, posAbs) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		return this.heapFloat[this.heap[handle] + OBJ_META_SIZE + posAbs];
+		return this.heapFloat[this.heap[handle] + HeapConst.OBJ_META_SIZE
+				+ posAbs];
 	};
 
 	FyHeap.prototype.getFieldLongTo = function(handle, posAbs, tarray, tindex) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		tarray[tindex] = this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs];
-		tarray[tindex + 1] = this.heap[this.heap[handle] + OBJ_META_SIZE
-				+ posAbs + 1];
+		tarray[tindex] = this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE
+				+ posAbs];
+		tarray[tindex + 1] = this.heap[this.heap[handle]
+				+ HeapConst.OBJ_META_SIZE + (posAbs + 1)];
 		return tarray;
 	};
 
@@ -1672,72 +1626,72 @@ var FyHeap;
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
 		return FyPortable.ieee64ToDouble(this.heap, this.heap[handle]
-				+ OBJ_META_SIZE + posAbs);
+				+ HeapConst.OBJ_META_SIZE + posAbs);
 	};
 
 	FyHeap.prototype.putFieldRaw32From = function(handle, posAbs, pos) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs] = this.heap[pos];
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + posAbs] = this.heap[pos];
 	};
 
 	FyHeap.prototype.putFieldRaw64From = function(handle, posAbs, pos) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs] = this.heap[pos];
-		this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs + 1] = this.heap[pos + 1];
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + posAbs] = this.heap[pos];
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + (posAbs + 1)] = this.heap[pos + 1];
 	};
 
 	FyHeap.prototype.putFieldBoolean = function(handle, posAbs, value) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs] = value | 0;
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + posAbs] = value | 0;
 	};
 
 	FyHeap.prototype.putFieldByte = function(handle, posAbs, value) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs] = value & 0xff;
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + posAbs] = value & 0xff;
 	};
 
 	FyHeap.prototype.putFieldShort = function(handle, posAbs, value) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs] = value & 0xffff;
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + posAbs] = value & 0xffff;
 	};
 
 	FyHeap.prototype.putFieldChar = function(handle, posAbs, value) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs] = value & 0xffff;
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + posAbs] = value & 0xffff;
 	};
 
 	FyHeap.prototype.putFieldInt = function(handle, posAbs, value) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs] = value;
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + posAbs] = value;
 	};
 
 	FyHeap.prototype.putFieldFloat = function(handle, posAbs, value) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		this.heapFloat[this.heap[handle] + OBJ_META_SIZE + posAbs] = value;
+		this.heapFloat[this.heap[handle] + HeapConst.OBJ_META_SIZE + posAbs] = value;
 	};
 
 	FyHeap.prototype.putFieldLongFrom = function(handle, posAbs, tarray, tindex) {
 		if (handle === 0) {
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
-		this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs] = tarray[tindex];
-		this.heap[this.heap[handle] + OBJ_META_SIZE + posAbs + 1] = tarray[tindex + 1];
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + posAbs] = tarray[tindex];
+		this.heap[this.heap[handle] + HeapConst.OBJ_META_SIZE + (posAbs + 1)] = tarray[tindex + 1];
 	};
 
 	FyHeap.prototype.putFieldDouble = function(handle, posAbs, value) {
@@ -1745,7 +1699,7 @@ var FyHeap;
 			throw new FyException(FyConst.FY_EXCEPTION_NPT, "");
 		}
 		FyPortable.doubleToIeee64(value, this.heap, this.heap[handle]
-				+ OBJ_META_SIZE + posAbs);
+				+ HeapConst.OBJ_META_SIZE + posAbs);
 	};
 
 	/**
@@ -1764,7 +1718,7 @@ var FyHeap;
 
 	FyHeap.prototype.getStaticRaw64To = function(clazz, posAbs, pos) {
 		this.heap[pos] = this.heap[clazz.staticPos + posAbs];
-		this.heap[pos + 1] = this.heap[clazz.staticPos + posAbs + 1];
+		this.heap[pos + 1] = this.heap[clazz.staticPos + (posAbs + 1)];
 	};
 
 	FyHeap.prototype.getStaticBoolean = function(clazz, posAbs) {
@@ -1795,7 +1749,7 @@ var FyHeap;
 
 	FyHeap.prototype.getStaticLongTo = function(clazz, posAbs, tarray, tindex) {
 		tarray[tindex] = this.heap[clazz.staticPos + posAbs];
-		tarray[tindex + 1] = this.heap[clazz.staticPos + posAbs + 1];
+		tarray[tindex + 1] = this.heap[clazz.staticPos + (posAbs + 1)];
 		return tarray;
 	};
 
@@ -1811,7 +1765,7 @@ var FyHeap;
 
 	FyHeap.prototype.putStaticRaw64From = function(clazz, posAbs, pos) {
 		this.heap[clazz.staticPos + posAbs] = this.heap[pos];
-		this.heap[clazz.staticPos + posAbs + 1] = this.heap[pos + 1];
+		this.heap[clazz.staticPos + (posAbs + 1)] = this.heap[pos + 1];
 	};
 
 	FyHeap.prototype.putStaticBoolean = function(clazz, posAbs, value) {
@@ -1846,7 +1800,7 @@ var FyHeap;
 
 	FyHeap.prototype.putStaticLongFrom = function(clazz, posAbs, varray, vindex) {
 		this.heap[clazz.staticPos + posAbs] = varray[vindex];
-		this.heap[clazz.staticPos + posAbs + 1] = varray[vindex + 1];
+		this.heap[clazz.staticPos + (posAbs + 1)] = varray[vindex + 1];
 	};
 
 	FyHeap.prototype.putStaticDouble = function(clazz, posAbs, value) {
@@ -2068,28 +2022,33 @@ var FyHeap;
 		// 8bit
 		case 90/* FyConst.Z */:
 		case 66/* FyConst.B */:
-			this.memcpy8(((this.heap[sHandle] + OBJ_META_SIZE) << 2) + sPos,
-					((this.heap[dHandle] + OBJ_META_SIZE) << 2) + dPos, len);
+			this.memcpy8(((this.heap[sHandle] + HeapConst.OBJ_META_SIZE) << 2)
+					+ sPos,
+					((this.heap[dHandle] + HeapConst.OBJ_META_SIZE) << 2)
+							+ dPos, len);
 			break;
 		// 16bit
 		case 83/* FyConst.S */:
 		case 67/* FyConst.C */:
-			this.memcpy16(((this.heap[sHandle] + OBJ_META_SIZE) << 1) + sPos,
-					((this.heap[dHandle] + OBJ_META_SIZE) << 1) + dPos, len);
+			this.memcpy16(((this.heap[sHandle] + HeapConst.OBJ_META_SIZE) << 1)
+					+ sPos,
+					((this.heap[dHandle] + HeapConst.OBJ_META_SIZE) << 1)
+							+ dPos, len);
 			break;
 		// 32bit
 		case 73/* FyConst.I */:
 		case 70/* FyConst.F */:
 		case 76/* FyConst.L */:
 		case 91/* FyConst.ARR */:
-			this.memcpy32(this.heap[sHandle] + OBJ_META_SIZE + sPos,
-					this.heap[dHandle] + OBJ_META_SIZE + dPos, len);
+			this.memcpy32(this.heap[sHandle] + HeapConst.OBJ_META_SIZE + sPos,
+					this.heap[dHandle] + HeapConst.OBJ_META_SIZE + dPos, len);
 			break;
 		// 64bit
 		case 68/* FyConst.D */:
 		case 74/* FyConst.J */:
-			this.memcpy32(this.heap[sHandle] + OBJ_META_SIZE + (sPos << 1),
-					this.heap[dHandle] + OBJ_META_SIZE + (dPos << 1), len << 1);
+			this.memcpy32(this.heap[sHandle] + HeapConst.OBJ_META_SIZE
+					+ (sPos << 1), this.heap[dHandle] + HeapConst.OBJ_META_SIZE
+					+ (dPos << 1), len << 1);
 			break;
 		}
 	};
@@ -2110,8 +2069,8 @@ var FyHeap;
 			ret = this.allocate(clazz);
 			max = clazz.sizeAbs;
 			for (i = 0; i < max; i++) {
-				this.heap[this.heap[ret] + OBJ_META_SIZE + i] = this.heap[this.heap[src]
-						+ OBJ_META_SIZE + i];
+				this.heap[this.heap[ret] + HeapConst.OBJ_META_SIZE + i] = this.heap[this.heap[src]
+						+ HeapConst.OBJ_META_SIZE + i];
 			}
 		} else if (clazz.type === FyConst.TYPE_ARRAY) {
 			len = this.arrayLength(src);

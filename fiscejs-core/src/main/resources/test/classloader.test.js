@@ -10,8 +10,8 @@
 			var context = fisceTests.context();
 
 			var names = [ FyConst.FY_BASE_STRING,
-					"[[[L" + FyConst.FY_BASE_STRING + ";", "[[[I", "int",
-					"double", FyConst.FY_BASE_DOUBLE,
+					"[[[L" + FyConst.FY_BASE_STRING + ";", "[[[I", "<int",
+					"<double", FyConst.FY_BASE_DOUBLE,
 					FyConst.FY_BASE_MATH ];
 
 			var classes = [];
@@ -42,8 +42,8 @@
 			assertCanCast(context, "[[[Ljava/lang/Integer;",
 					"[[[[Ljava/lang/Number;", false);
 
-			assertCanCast(context, "int", "java/lang/Object", true);
-			assertCanCast(context, "int", "java/lang/Integer", false);
+			assertCanCast(context, "<int", "java/lang/Object", true);
+			assertCanCast(context, "<int", "java/lang/Integer", false);
 
 			assertCanCast(context, "java/util/LinkedHashMap", "java/util/Map",
 					true);

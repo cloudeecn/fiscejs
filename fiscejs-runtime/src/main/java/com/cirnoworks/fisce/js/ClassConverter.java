@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,6 +28,22 @@ import com.cirnoworks.fisce.vm.data.attributes.LineNumber;
 import com.jcraft.jzlib.GZIPOutputStream;
 
 public class ClassConverter {
+	private static final HashSet<String> primNames = new HashSet<String>();
+	static {
+		primNames.add("void");
+
+		primNames.add("boolean");
+		primNames.add("byte");
+
+		primNames.add("char");
+		primNames.add("short");
+
+		primNames.add("int");
+		primNames.add("float");
+
+		primNames.add("long");
+		primNames.add("double");
+	}
 	private StringBuilder sb;
 
 	private final LinkedHashMap<JSONExportableConstantData, Integer> constantTable = new LinkedHashMap<JSONExportableConstantData, Integer>();
@@ -385,7 +402,7 @@ public class ClassConverter {
 							sb.append(target.getKeys()[k]);
 							sb.append(", ");
 							sb.append(target.getTargets()[k]);
-							if(k<maxk-1){
+							if (k < maxk - 1) {
 								sb.append(", ");
 							}
 						}
@@ -415,6 +432,9 @@ public class ClassConverter {
 					String[] pcns = method.getParameterTypeClassNames();
 					for (int j = 0, maxj = pcns.length; j < maxj; j++) {
 						String pcn = pcns[j];
+						if (primNames.contains(pcn)) {
+							pcn = "<" + pcn;
+						}
 						SimpleJSONUtil.add(sb, 4,
 								String.valueOf(stringPool.poolString(pcn)),
 								j < maxj - 1);

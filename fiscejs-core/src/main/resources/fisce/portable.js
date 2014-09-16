@@ -22,13 +22,13 @@ var FyPortable;
 
 var FyConfig = {
 	littleEndian : undefined,
-	maxObjects : 524288,
+	maxObjects : 131072,
 	maxThreads : 16,
-	gcIdv : 10000,
+	gcIdv : 60000,
 	gcForceIdv : 120000,
-	heapSize : 16000000,
-	edenSize : 4194304,
-	copySize : 2094152,
+	heapSize : 8400000,
+	edenSize : 2600000,
+	copySize : 300000,
 	stackSize : 16384,
 	debugMode : false,
 	verboseMode : false,
@@ -40,26 +40,8 @@ function persistStages() {
 	eval("//" + arguments);
 }
 
-var hasNative = false;
-var forceOptimize=function(param){};
-
-// now
 (function(window) {
 	"use strict";
-
-	(function() {
-		try {
-			var str = "function test(){};";
-			str += "%OptimizeFunctionOnNextCall(test);";
-			str += "test();";
-			eval(str);
-			hasNative = true;
-			forceOptimize=new Function("return (function forceOptimize(fun){if(%GetOptimizationStatus(fun)==4){throw new Error(fun+' cant be optimized');}if(%GetOptimizationStatus(fun)!=0) %OptimizeFunctionOnNextCall(fun);});")();
-			console.log("Supported native syn")
-		} catch (e) {
-//			throw e;
-		}
-	})();
 
 	if (!Date.now) {
 		Date.now = function now() {

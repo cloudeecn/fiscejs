@@ -78,7 +78,7 @@ var FyThread;
 	 * @returns {FyMethod}
 	 */
 	FyThread.prototype.getCurrentMethod = function() {
-		return this.context.methods[this.stack[this.framePos]];
+		return this.context.methods.get(this.stack[this.framePos]);
 	};
 
 	/**
@@ -127,7 +127,7 @@ var FyThread;
 	 * @returns {FyMethod}
 	 */
 	FyThread.prototype.getFrameMethod = function(frameId) {
-		return this.context.methods[this.stack[this.top - ((frameId + 1) << 2)]];
+		return this.context.methods.get(this.stack[this.top - ((frameId + 1) << 2)]);
 	};
 
 	/**
@@ -439,7 +439,7 @@ var FyThread;
 					/**
 					 * @returns {FyMethod}
 					 */
-					var method = context.methods[methodId];
+					var method = context.methods.get(methodId);
 					var steHandle = heap.allocate(steClass);
 					heap.putArrayInt(steArrayHandle, topFrameId - frameId,
 							steHandle);
@@ -727,7 +727,7 @@ var FyThread;
 					/**
 					 * @returns {FyMethod}
 					 */
-					var method = context.methods[methodId];
+					var method = context.methods.get(methodId);
 					/**
 					 * @return {String}
 					 */

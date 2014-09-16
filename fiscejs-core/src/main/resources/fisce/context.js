@@ -327,8 +327,7 @@ var FyClassDef;
 		var name;
 		var fid = 0 | 0;
 
-		whilc(c !== undefined)
-		{
+		while (c !== undefined) {
 			name = this.pool(c.name + fullName);
 			if (name in this.mapFieldNameToId) {
 				fid = this.mapFieldNameToId[name] | 0;
@@ -371,32 +370,34 @@ var FyClassDef;
 			constant) {
 		var constants = global.constants;
 		var resolvedField;
-		if (!constants[constant + 2]) {
+		var c1 = constant + 1;
+		var c2 = constant + 2;
+		if (constants[c2] === 0) {
 			var strings = global.strings;
 			/**
 			 * @returns {FyClass}
 			 */
 			var clazz = this.lookupClass(strings[constants[constant]]);
+			// console.log("###"+clazz.name+"."+constant);
 			if (clazz === undefined) {
 				throw new FyException(FyConst.FY_EXCEPTION_CLASSNOTFOUND,
 						strings[constants[constant]]);
 			}
 
 			resolvedField = this.lookupFieldVirtual(clazz,
-					strings[constants[constant + 1]]);
+					strings[constants[c1]]);
 			if (resolvedField) {
 				constants[constant] = resolvedField.fieldId;
-				constants[constant + 2] = 1;
+				constants[c2] = 1;
 			} else {
 				throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
 						strings[constants[constant]] + "."
-								+ strings[constants[constant + 1]]
-								+ " not found");
+								+ strings[constants[c1]] + " not found");
 			}
 			// delete constant.className;
 			// delete constant.nameAndType;
 		} else {
-			resolvedField = this.fields[constants[constant]];
+			resolvedField = this.fields.get(constants[constant]);
 		}
 		return resolvedField;
 	};
@@ -793,7 +794,7 @@ var FyClassDef;
 	 */
 	FyContext.prototype.getFieldObjectHandle = function(field) {
 		var handle = this.mapFieldIdToHandle.get(field.fieldId);
-		if (handle === undefined) {
+		if (handle === 0) {
 			this.heap.beginProtect();
 			handle = this.heap.allocate(this
 					.lookupClass(FyConst.FY_REFLECT_FIELD));
@@ -814,7 +815,7 @@ var FyClassDef;
 							+ this.heap.getObjectClass(handle).name
 							+ ") is not a field object");
 		}
-		return this.fields[this.heap.getObjectMultiUsageData(handle)];
+		return this.fields.get(this.heap.getObjectMultiUsageData(handle));
 	};
 
 	FyContext.prototype.dumpStackTrace = function(throwable) {

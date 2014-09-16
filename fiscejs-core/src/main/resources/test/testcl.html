@@ -56,7 +56,7 @@
 			var arrClasses = [];
 			var i, j, k;
 			for (i = 0; i < arrBase.length; i++) {
-				for (j = 1; j < 1000; j++) {
+				for (j = 1; j < 100; j++) {
 					for (k = 0; k < j; k++) {
 						arrGen.push("[")
 					}
@@ -1125,9 +1125,9 @@
 					"com/jcraft/jzlib/ZStream",
 					"com/jcraft/jzlib/ZStreamException" ];
 			var classes = objClasses
-			//for (i = 0; i < arrClasses.length; i++) {
-			//	classes.push(arrClasses[i]);
-			//}
+			for (i = 0; i < arrClasses.length; i++) {
+				classes.push(arrClasses[i]);
+			}
 
 			document.getElementById("console").innerHTML = "Classloading..."
 					+ classes.length;
