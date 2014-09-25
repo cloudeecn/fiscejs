@@ -1,0 +1,578 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"st",
+				"style	Tag"
+			],
+			[
+				"if",
+				"ife	if … else"
+			],
+			[
+				"scr",
+				"script	Tag"
+			],
+			[
+				"in",
+				"inline-block"
+			],
+			[
+				"cl",
+				"clear"
+			],
+			[
+				"back",
+				"background-color"
+			],
+			[
+				"t",
+				"type	Attr"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "fiscejs-core/src/main/resources/fisce/method.js",
+			"settings":
+			{
+				"buffer_size": 4277,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "fiscejs-core/src/main/resources/host/datastorage.js",
+			"settings":
+			{
+				"buffer_size": 1512,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "fiscejs-core/src/main/resources/host/index.html",
+			"settings":
+			{
+				"buffer_size": 303,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/opt/local/home/cloudee/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+			"settings":
+			{
+				"buffer_size": 383,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "fiscejs-core/src/main/resources/.tern-project",
+			"settings":
+			{
+				"buffer_size": 33,
+				"line_ending": "Unix",
+				"name": ".tern-project"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 47.0,
+		"selected_items":
+		[
+			[
+				"remove",
+				"Package Control: Remove Package"
+			],
+			[
+				"jek",
+				"Jekyll: Promote draft to post..."
+			],
+			[
+				"pack",
+				"Package Control: Install Package"
+			],
+			[
+				"pa",
+				"Package Control: Install Package"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"je",
+				"Jekyll: New post"
+			],
+			[
+				"isnt",
+				"Package Control: Install Package"
+			],
+			[
+				"",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 467.0
+	},
+	"console":
+	{
+		"height": 293.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '7183a2d3e96f11eeadd761d777e62404' + 'e330c659d4bb41d3bdf022e94cab3cd0'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)",
+			"help",
+			"this"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/opt/local/home/cloudee/Develop/fisce/fiscejs/fiscejs-core/src/main/resources",
+		"/opt/local/home/cloudee/Develop/fisce/fiscejs/fiscejs-core/src/main/resources/fisce",
+		"/opt/local/home/cloudee/Develop/fisce/fiscejs/fiscejs-core/src/main/resources/host"
+	],
+	"file_history":
+	[
+		"/opt/local/home/cloudee/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/opt/local/home/cloudee/Develop/blog/js/third-party.js",
+		"/opt/local/home/cloudee/Develop/blog/_includes/head.html",
+		"/opt/local/home/cloudee/Develop/blog/_includes/footer.html",
+		"/opt/local/home/cloudee/Develop/blog/_layouts/default.html",
+		"/opt/local/home/cloudee/Develop/blog/_layouts/daily.html",
+		"/opt/local/home/cloudee/Develop/blog/_layouts/archive.html",
+		"/opt/local/home/cloudee/Develop/blog/_layouts/home.html",
+		"/opt/local/home/cloudee/Develop/blog/_layouts/post.html",
+		"/opt/local/home/cloudee/Develop/blog/js/site.js",
+		"/opt/local/home/cloudee/Develop/blog/_includes/widget-dec.html",
+		"/opt/local/home/cloudee/Develop/blog/_drafts/2014-09-11-hello-markdown.markdown",
+		"/opt/local/home/cloudee/Develop/blog/index.html",
+		"/opt/local/home/cloudee/Develop/blog/css/bootstrap-theme.css",
+		"/opt/local/home/cloudee/Develop/blog/_plugins/archivepage.rb",
+		"/opt/local/home/cloudee/Develop/blog/_plugins/archivepage-day.rb",
+		"/opt/local/home/cloudee/Develop/blog/_includes/posts.html",
+		"/opt/local/home/cloudee/Develop/blog/_config.yml",
+		"/opt/local/home/cloudee/Develop/blog/p/index.html",
+		"/opt/local/home/cloudee/Develop/blog/_plugins/image_tag.rb",
+		"/opt/local/home/cloudee/Develop/blog/_layouts/page.html",
+		"/opt/local/home/cloudee/Develop/blog/_includes/widget-related.html",
+		"/opt/local/home/cloudee/Develop/blog/_includes/widgen-calendar.html",
+		"/opt/local/home/cloudee/Develop/blog/index.markdown",
+		"/opt/local/home/cloudee/Develop/blog/css/bootstrap.min.css",
+		"/opt/local/home/cloudee/Develop/blog/css/third-party.css",
+		"/opt/local/home/cloudee/Develop/blog/css/responsive-calendar.css",
+		"/opt/local/home/cloudee/Develop/blog/_includes/sidebar.html",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2013-10-20-how-to-use-nginx-to-build-a-ssl-reverse-proxy-for-svn-on-apache.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_plugins/archivegenerator.rb",
+		"/opt/local/home/cloudee/Develop/blog/_plugins/archivegenerator-day.rb",
+		"/opt/local/home/cloudee/Develop/blog/json/posts.json",
+		"/opt/local/home/cloudee/Develop/blog/posts.json",
+		"/opt/local/home/cloudee/Develop/blog/blog.sublime-project",
+		"/opt/local/home/cloudee/Develop/blog/calendar.json",
+		"/opt/local/home/cloudee/Develop/blog/_layouts/index.html",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2012-01-24-fiscevm-c-complete.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2011-10-25-2-screenshots.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2010-09-02-fiscevm-preview-version.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2011-02-06-self-make-game-alice-and-engine-fisce.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_drafts/hello-markdown.markdown",
+		"/opt/local/home/cloudee/Develop/blog/css/style.css",
+		"/opt/local/home/cloudee/Develop/blog/assets/css/style.css",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2012-05-02-libfisce0-9-completed-x-fiscegame2-0-onboard.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_site/404.html",
+		"/opt/local/home/cloudee/Develop/blog/_plugins/pagination.rb",
+		"/opt/local/home/cloudee/Develop/blog/_plugins/ext.rb",
+		"/opt/local/home/cloudee/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
+		"/opt/local/home/cloudee/Develop/blog/_drafts/2014-09-09-111aaa.md",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2013-08-07-install-jdk1-5-on-osx10-8.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2013-05-22-moxa-uport-1110-driver-linux-3-9.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2013-01-23-report-on-libfisce2-0-and-fiscegame2-0.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2012-02-03-fiscegame-v2-start.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_site/css/style.css",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2014-08-28-hello-markdown.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_drafts/2014-08-28-hello-markdown.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2013-05-14-screenrc.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2009-10-10-maven-book.markdown",
+		"/opt/local/home/cloudee/Develop/blog/_drafts/%e6%b8%a3%e6%b8%a3%e4%bc%a0%e8%af%b4-%e6%96%87%e6%a1%88-ep0ch0fr2145539169.md",
+		"/opt/local/home/cloudee/Develop/blog/_posts/2014-08-31-test.md",
+		"/opt/local/home/cloudee/chrome.log",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2013-10-20-how-to-use-nginx-to-build-a-ssl-reverse-proxy-for-svn-on-apache.markdown",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2009-10-10-maven-book.markdown",
+		"/opt/local/home/cloudee/Develop/poole/_site/index.html",
+		"/opt/local/home/cloudee/Develop/poole/_includes/head.html",
+		"/opt/local/home/cloudee/Develop/poole/_includes/footer.html",
+		"/opt/local/home/cloudee/Develop/poole/_layouts/default.html",
+		"/opt/local/home/cloudee/Develop/poole/index.html",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2013-08-07-install-jdk1-5-on-osx10-8.markdown",
+		"/opt/local/home/cloudee/Develop/poole/css/style.css",
+		"/opt/local/home/cloudee/Develop/poole/_config.yml",
+		"/opt/local/home/cloudee/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/opt/local/home/cloudee/Develop/poole/atom.xml",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2010-09-02-fiscevm-preview-version.markdown",
+		"/opt/local/home/cloudee/Develop/poole/public/css/syntax.css",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2013-05-22-moxa-uport-1110-driver-linux-3-9.markdown",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2012-02-03-fiscegame-v2-start.markdown",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2012-05-02-libfisce0-9-completed-x-fiscegame2-0-onboard.markdown",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2013-05-14-screenrc.markdown",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2013-01-23-report-on-libfisce2-0-and-fiscegame2-0.markdown",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2011-10-25-2-screenshots.markdown",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2011-02-06-self-make-game-alice-and-engine-fisce.markdown",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2012-01-24-fiscevm-c-complete.markdown",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2009-10-30-如何从分贝网无限制下载mp3.markdown",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2009-10-18-PC平台Java游戏，开发可能？开发不可能？（一）.markdown",
+		"/opt/local/home/cloudee/Develop/poole/_posts/2009-10-30-%e6%8d%a2%e4%ba%86%e4%b8%aa%e6%92%ad%e6%94%be%e5%99%a8.markdown",
+		"/opt/local/home/cloudee/Develop/poole/%e7%95%99%e8%a8%80%e6%9d%bf/index.markdown"
+	],
+	"find":
+	{
+		"height": 25.0
+	},
+	"find_in_files":
+	{
+		"height": 93.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"createObject",
+			"disabled",
+			"\\[disabled optimization for 0x[0-9a-z]* <SharedFunctionInfo>, reason: eval\\]",
+			"failed to",
+			".map",
+			"1",
+			"![",
+			"registerC",
+			"Nan",
+			"expand",
+			"Switch",
+			"www",
+			">\n",
+			"<br\\s*?/?>",
+			"</?strong>",
+			"</?p>",
+			"<br\\s*?/?>",
+			"</?p>",
+			"</p>",
+			"<p>",
+			";\n",
+			"_locAdd",
+			"_locAddMethod",
+			"_locAdd",
+			"_locAddMethods",
+			"_locAdd",
+			"FyMethod",
+			"too many",
+			"HashMapI",
+			"FyMethod",
+			"DEOPT:",
+			"_locInitMe",
+			"setClinitMethod",
+			"_locInitMe",
+			"_loc",
+			"setClinitMethod",
+			"_locInitM",
+			"FyClass[^a-zA-z]",
+			"FyClass",
+			"setClinitMethod",
+			"_locInitMethod",
+			"_locInit",
+			"too many",
+			"\\.allocate",
+			"too many",
+			"allocateInternal",
+			"too many times",
+			"disable",
+			"\\[disabled optimization for 0x[0-9a-f]+? <SharedFunctionInfo>, reason: eval\\]",
+			"\\.move",
+			"move",
+			"gcMove",
+			"gc",
+			"disable",
+			"\\[disabled optimization for 0x[0-9a-f]+? <SharedFunctionInfo>, reason: eval\\]",
+			"&amp;",
+			"&gt;",
+			"gt",
+			"&lt;",
+			"    </div>\n    <div class=\"col-xs-12 col-sm-4\">\n      ssss\n    </div>",
+			"h1",
+			"content",
+			"span",
+			"div",
+			"女儿们"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": true,
+		"replace_history":
+		[
+			"",
+			"**",
+			"",
+			"&",
+			">",
+			"<"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 4,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "fiscejs-core/src/main/resources/fisce/method.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4277,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								4271,
+								4271
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 1668.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "fiscejs-core/src/main/resources/host/datastorage.js",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1512,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								321,
+								321
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JavaScript.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "fiscejs-core/src/main/resources/host/index.html",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 303,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Jekyll/Syntaxes/HTML (Jekyll).tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "/opt/local/home/cloudee/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 383,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								341,
+								341
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/JavaScript/JSON.tmLanguage"
+						},
+						"translation.x": 146.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "fiscejs-core/src/main/resources/.tern-project",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 33,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								31,
+								31
+							]
+						],
+						"settings":
+						{
+							"auto_name": ".tern-project",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 25.0
+	},
+	"input":
+	{
+		"height": 33.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"project": "fiscejs-core.sublime-project",
+	"replace":
+	{
+		"height": 46.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"th",
+				"js/third-party.js"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 392.0,
+		"selected_items":
+		[
+			[
+				"",
+				"well"
+			]
+		],
+		"width": 392.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 234.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

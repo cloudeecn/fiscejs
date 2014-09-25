@@ -3,8 +3,7 @@
 			"EXCLUDE.fisce.test.SwitchTest2" ];
 	fisceTests
 			.extend({
-				"$analyze" : function() {
-					var context = fisceTests.context();
+				"$analyze" : function(assert, context) {
 					context.lookupClass(FyConst.FY_BASE_OBJECT);
 					context.lookupClass(FyConst.FY_BASE_THROWABLE);
 					context.lookupClass("[Z");
@@ -27,7 +26,7 @@
 						}
 						console.log(clazz);
 					}
-					ok(true, "Please check console for classes");
+					assert.ok(true, "Please check console for classes");
 				}
 			});
 })();

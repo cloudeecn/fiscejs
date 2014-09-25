@@ -1,9 +1,29 @@
 var FyTests;
 (function() {
 	FyTests = function() {
+		this.prerequisiteTests = {};
 		this.tests = {};
 		this.classDefData = {};
 		this.vfsData = {};
+	};
+
+	FyTests.prototype.extendPrerequisite = function(obj) {
+		for ( var key in obj) {
+			var value = obj[key];
+			if (typeof value === "function") {
+				if (this.prerequisiteTests[key]) {
+					var num = 0;
+					var fixedKey;
+					do {
+						num++;
+						fixedKey = key + "_" + num;
+					} while (this[fixedKey]);
+					this.prerequisiteTests[fixedKey] = value;
+				} else {
+					this.prerequisiteTests[key] = value;
+				}
+			}
+		}
 	};
 
 	FyTests.prototype.extend = function(obj) {
@@ -25,38 +45,43 @@ var FyTests;
 		}
 	};
 
-	FyTests.prototype.iterate = function(fun) {
-		var keys = [];
-		for ( var key in this.tests) {
-			keys.push(key);
-		}
+	FyTests.prototype.iterate = function(obj, fun) {
+		var keys = Object.keys(obj);
 		keys.sort();
 		for (var i = 0; i < keys.length; i++) {
-			var value = this.tests[keys[i]];
+			var value = obj[keys[i]];
 			if (typeof value === "function") {
-				fun(keys[i], value);
+				fun.call(this, keys[i], value);
 			}
 		}
 	};
+	FyTests.prototype.start = function() {
+		this.iterate(this.prerequisiteTests, function(name, fun) {
+			QUnit.asyncTest(name, function(assert) {
+				fun(assert);
+				QUnit.start();
+			});
+		});
 
-	/**
-	 * initialize a context from classDefData
-	 * 
-	 * @returns {FyContext} context
-	 */
-	FyTests.prototype.context = function() {
-		var context = new FyContext("test");
-		for ( var idx in this.classDefData) {
-			var data = JSON.parse(this.classDefData[idx]);
-			context.addClassDef(data);
-		}
+		this.iterate(this.tests, function(name, fun) {
+			QUnit.asyncTest(name, function(assert) {
+				FyContext
+				context = new FyContext();
 
-		for ( var idx in this.vfsData) {
-			var data = JSON.parse(this.vfsData[idx]);
-			context.vfs.add(data);
-		}
-		return context;
-	};
+				context.loadClassDefines(
+						[ "http://2.0.0.fisce.cirnoworks.com" ], {
+							success : function() {
+								fun(assert, context);
+								QUnit.start();
+							},
+							error : function(message) {
+								assert.ok(false, message);
+								QUnit.start();
+							}
+						})
+			});
+		});
+	}
 })();
 
 var fisceTests = new FyTests();

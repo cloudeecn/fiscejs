@@ -34,11 +34,12 @@ var FyThread;
 	 */
 	FyThread = function(context, threadId) {
 		this.context = context;
+		this.config = context.config;
 		this.threadId = threadId;
 		this.stack = context.heap.heap;
 		this.floatStack = context.heap.heapFloat;
 		this.bottom = context.heap.allocateStack(threadId) + 16;
-		this.top = (this.bottom + FyConfig.stackSize - 16) | 0;
+		this.top = (this.bottom + this.config.stackSize - 16) | 0;
 
 		this.framePos = this.top;
 		this.yield = false;
@@ -82,7 +83,7 @@ var FyThread;
 	};
 
 	/**
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyThread.prototype.getCurrentStackBase = function() {
 		return this.stack[this.framePos + 1];
@@ -90,7 +91,7 @@ var FyThread;
 
 	/**
 	 * 
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyThread.prototype.getCurrentIp = function() {
 		return this.stack[this.framePos + 2];
@@ -98,7 +99,7 @@ var FyThread;
 
 	/**
 	 * 
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyThread.prototype.getCurrentLastIp = function() {
 		return this.stack[this.framePos + 3];
@@ -113,9 +114,9 @@ var FyThread;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            frameId
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyThread.prototype.getStackBase = function(frameId) {
 		return this.stack[this.top - ((frameId + 1) << 2) + 1];
@@ -127,18 +128,19 @@ var FyThread;
 	 * @returns {FyMethod}
 	 */
 	FyThread.prototype.getFrameMethod = function(frameId) {
-		return this.context.methods.get(this.stack[this.top - ((frameId + 1) << 2)]);
+		return this.context.methods.get(this.stack[this.top
+				- ((frameId + 1) << 2)]);
 	};
 
 	/**
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyThread.prototype.getLastIp = function(frameId) {
 		return this.stack[this.top - ((frameId + 1) << 2) + 3];
 	};
 
 	/**
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyThread.prototype.getFramesCount = function() {
 		return (this.top - this.framePos) >> 2;
@@ -146,9 +148,9 @@ var FyThread;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            lip
-	 * @param {Number}
+	 * @param {number}
 	 *            ip
 	 */
 	FyThread.prototype.localToFrame = function(lip, ip) {
@@ -162,7 +164,7 @@ var FyThread;
 	 * 
 	 * @param {FyMethod}
 	 *            method
-	 * @returns {Number} the frame pos now
+	 * @returns {number} the frame pos now
 	 */
 	FyThread.prototype.pushFrame = function(method, sp) {
 		// if(method.name=="<clinit>"){
@@ -187,7 +189,7 @@ var FyThread;
 	 * 
 	 * @param {FyMethod}
 	 *            method
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyThread.prototype.pushMethod = function(method, sp, ops) {
 		if (ops !== ops) {
@@ -206,9 +208,9 @@ var FyThread;
 	/**
 	 * @param {FyMethod}
 	 *            method
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
-	 * @return {Number} ops left
+	 * @return {number} ops left
 	 */
 	FyThread.prototype.invokeStatic = function(method, sp, ops) {
 		if (!(method.accessFlags & FyConst.FY_ACC_STATIC)) {
@@ -492,7 +494,7 @@ var FyThread;
 	/**
 	 * Initialize a thread with main method
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            threadHandle thread handle
 	 * @param {FyMethod}
 	 *            method method
@@ -514,7 +516,7 @@ var FyThread;
 	/**
 	 * Initialize a thread with a Thread.run.()V method
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            threadHandle
 	 * @param {FyMethod}
 	 *            method
@@ -547,7 +549,7 @@ var FyThread;
 		this.nextWakeTime = 0;
 		this.pendingLockCount = 0;
 		this.destroyPending = false;
-		for (var handle = 1; handle < FyConfig.maxObjects; handle++) {
+		for (var handle = 1; handle < this.config.maxObjects; handle++) {
 			if (heap.objectExists(this.handle)
 					&& heap.getObjectMonitorOwnerId(this.handle) === this.threadId) {
 				heap.setObjectMonitorOwnerId(0);
@@ -620,21 +622,11 @@ var FyThread;
 							for (var idx = 0, maxIdx = data.length; idx < maxIdx; idx++) {
 								this.context.log(2, data[idx]);
 							}
-							message.type = FyMessage.message_thread_dead;
+							// message.type = FyMessage.message_thread_dead;
+							this.context
+									.panic("Uncaught exception occored: \n\t"
+											+ data.join("\n\t"));
 							return;
-							// this.context.panic("Uncaught exception occored",
-							// undefined);
-							/*
-							 * throw new FyException( undefined, "Uncatched
-							 * exception: " + this.context.heap
-							 * .getObjectClass(this.currentThrowable));
-							 * 
-							 * method = this.context
-							 * .getMethod(FyConst.FY_BASE_THROWABLE +
-							 * ".printStackTrace.()V"); this.pushFrame(method);
-							 * this.stack[this.getCurrentStackBase()] =
-							 * this.currentThrowable; this.currentThrowable = 0;
-							 */
 						}
 					}
 				}
@@ -661,7 +653,7 @@ var FyThread;
 	 * 
 	 * @param {FyMessage}
 	 *            message
-	 * @param {Number}
+	 * @param {number}
 	 *            ops instructions to run
 	 */
 	FyThread.prototype.run = function(message, ops) {
@@ -701,7 +693,7 @@ var FyThread;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
 	 */
 	FyThread.prototype.monitorEnter = function(handle) {
@@ -729,7 +721,7 @@ var FyThread;
 					 */
 					var method = context.methods.get(methodId);
 					/**
-					 * @return {String}
+					 * @return {string}
 					 */
 					var frame = method.frames.get(lip);
 
@@ -751,7 +743,7 @@ var FyThread;
 								+ " will try to resolve all vars as handle");
 						for (var i = 0; i < imax; i++) {
 							var value = stack[i + sb];
-							if (value > 0 && value < FyConfig.maxObjects
+							if (value > 0 && value < this.config.maxObjects
 									&& heap.getObjectClass(value) !== undefined) {
 								// Maybe a valid handle
 								console.log("#VALID " + value);
@@ -765,8 +757,8 @@ var FyThread;
 							var value = stack[i + sb];
 							if (frame.charCodeAt(i) === 49/* '1' */
 									&& value !== 0) {
-								if (FyConfig.debugMode
-										&& ((value < 0 || value > FyConfig.maxObjects) || (heap
+								if (context.config.debugMode
+										&& ((value < 0 || value > context.config.maxObjects) || (heap
 												.getObjectClass(value) === undefined))) {
 									throw new FyException(undefined,
 											"Illegal handle #" + value + " @"

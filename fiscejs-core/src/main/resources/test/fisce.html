@@ -2,7 +2,8 @@
 <head>
 <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
 
-<script type="text/javascript" src="../fisce/gunzip.minjs"></script>
+<script type="text/javascript" src="../fisce/polyfill.js"></script>
+<script type="text/javascript" src="../fisce/lzstring.js"></script>
 <script type="text/javascript" src="../fisce/aot.js"></script>
 <script type="text/javascript" src="../fisce/portable.js"></script>
 <script type="text/javascript" src="../fisce/long.asm.js"></script>
@@ -28,8 +29,8 @@
 
 <script type="text/javascript" src="../jquery.minjs"></script>
 
-<link rel="stylesheet" href="qunit-1.12.0.css">
-<script type="text/javascript" src="qunit-1.12.0.js"></script>
+<link rel="stylesheet" href="qunit-1.15.0.css">
+<script type="text/javascript" src="qunit-1.15.0.js"></script>
 
 <script type="text/javascript" src="test.js"></script>
 
@@ -50,102 +51,11 @@
 <script type="text/javascript" src="analyze.js"></script>
 <script type="text/javascript" src="hl.test.js"></script>
 
-<script type="text/javascript">
-	if (window.console) {
-		window.oldConsole = window.console;
-	} else {
-		window = oldConsole = {
-			log : function() {
-			}
-		}
-	}
-	window.console = {
-		log : function(param) {
-			//$("#console").append(param);
-			//$("#console").append("\n");
-			window.oldConsole.log.apply(window.oldConsole, arguments);
-		}
-	}
-
-	var tests = [];
-
-	$(document).ready(
-			function($) {
-				var targets = {
-					"../rt.json" : 1,
-					"../rt-vfs.json" : 2
-				};
-
-				var datas = {};
-				var vfs = {};
-
-				function checkTargets() {
-					var done = true;
-					for ( var target in targets) {
-						console.log("##Checking " + target);
-						if (targets[target]) {
-							console.log("##Checking " + target + "... wait");
-							done = false;
-							break;
-						} else {
-							console.log("##Checking " + target + "... done");
-						}
-					}
-					if (done) {
-						fisceTests.classDefData = datas;
-						fisceTests.vfsData = vfs;
-						fisceTests.iterate(function(message, fun) {
-							tests.push({
-								message : message,
-								fun : fun
-							});
-						});
-						setTimeout(doTest, 1);
-					}
-				}
-
-				for ( var target in targets) {
-					(function(t) {
-						$.ajax({
-							url : target,
-							dataType : "text",
-							success : function(data) {
-								switch (targets[t]) {
-								case 1:
-									console.log("Add "+t+" to datas");
-									datas[t] = data;
-									break;
-								case 2:
-									console.log("Add "+t+" to vfs");
-									vfs[t] = data;
-									break;
-								default:
-									throw "Illegal target type: " + targets[t]
-											+ " for target " + t;
-								}
-								targets[t] = 0;
-								checkTargets();
-							},
-							fail : function() {
-								targets[t] = -1;
-								ok(false, t + " not found!");
-							}
-						});
-					})(target);
-				}
-
-			});
-
-	function doTest() {
-		if (tests.length > 0) {
-			var obj = tests.splice(0, 1)[0];
-			test(obj.message, obj.fun);
-			setTimeout(doTest, 1);
-		}
-	}
-</script>
 </head>
 <body>
+<script type="text/javascript">
+	fisceTests.start();
+</script>
 	<div id="qunit"></div>
 	<div id="qunit-fixture"></div>
 	<pre id="console"></pre>

@@ -21,23 +21,10 @@ var FyClassDef;
 (function() {
 	"use strict";
 
-	FyGlobal = function(context, strings, constants) {
-		var i, im;
-		im = strings.length;
-		this.strings = new Array(im);
-		for (i = 0; i < im; i++) {
-			this.strings[i] = context.pool(strings[i]);
-		}
-		im = constants.length;
-		this.constants = new Int32Array(im);
-		for (i = 0; i < im; i++) {
-			this.constants[i] = constants[i] | 0;
-		}
-	};
-
-	FyClassDef = function(context, data) {
-		this.classes = data.classes;
-		this.global = new FyGlobal(context, data.strings, data.constants);
+	FyClassDef = function(context) {
+		this.classes = {};
+		this.strings = [];
+		this.constants = undefined;
 	};
 
 	/**
@@ -47,7 +34,7 @@ var FyClassDef;
 	 *            constant pool
 	 * @param obj
 	 *            object
-	 * @param {String}
+	 * @param {string}
 	 *            field field
 	 * 
 	 * @returns constant object
@@ -115,8 +102,13 @@ var FyClassDef;
 		return undefined;
 	}
 
-	FyContext = function(namespace) {
+	FyContext = function(namespace, config) {
 		var levels = [ "D", "I", "W", "E" ];
+		if (config === undefined) {
+			this.config = new FyConfig();
+		} else {
+			this.config = config;
+		}
 		this.settings = {};
 		this.classDefs = [];
 		this.dynamicClassDef = {};
@@ -148,7 +140,7 @@ var FyClassDef;
 		this.vfs = new FyVFS(namespace);
 
 		this.log = function(level, content) {
-			if (FyConfig.debugMode || level > 0) {
+			if (this.config.debugMode || level > 0) {
 				console.log(levels[level] + ": " + content);
 			}
 		};
@@ -200,6 +192,13 @@ var FyClassDef;
 		 * @returns {FyClass}
 		 */
 		this.TOP_CONSTRUCTOR = undefined;
+
+		// classdef loader
+		/**
+		 * @type {Object}
+		 */
+		this.loadingClassDefs = {};
+		this.classDefSeq = [];
 	};
 
 	FyContext.primitives = {
@@ -247,9 +246,9 @@ var FyClassDef;
 	/**
 	 * Pool a string to string pool
 	 * 
-	 * @param {String}
+	 * @param {string}
 	 *            string
-	 * @returns {String} result
+	 * @returns {string} result
 	 */
 	FyContext.prototype.pool = function(string) {
 		if ((string in FyContext.stringPool)
@@ -315,7 +314,7 @@ var FyClassDef;
 	 * 
 	 * @param {FyClass}
 	 *            clazz
-	 * @param {String}
+	 * @param {string}
 	 *            fullName
 	 * @returns {FyField}
 	 */
@@ -362,7 +361,7 @@ var FyClassDef;
 	 * 
 	 * @param {FyGlobal}
 	 *            global
-	 * @param {Number}
+	 * @param {number}
 	 *            constant : field constant
 	 * @returns {FyField} field
 	 */
@@ -441,7 +440,7 @@ var FyClassDef;
 	 * 
 	 * @param {FyClass}
 	 *            clazz
-	 * @param {String}
+	 * @param {string}
 	 *            fullName
 	 * @returns {FyMethod} method
 	 */
@@ -497,7 +496,7 @@ var FyClassDef;
 	FyContext.prototype.lookupMethodVirtualByMethod = function(clazz, method) {
 		var mid = method.methodId;
 		/**
-		 * @returns {Number}
+		 * @returns {number}
 		 */
 		var ret = clazz.virtualTable.get(mid);
 		if (ret === -1) {
@@ -521,7 +520,7 @@ var FyClassDef;
 	 * 
 	 * @param {FyGlobal}
 	 *            global
-	 * @param {Number}
+	 * @param {number}
 	 *            constant : method constant
 	 * @returns {FyMethod} method
 	 */
@@ -601,7 +600,7 @@ var FyClassDef;
 
 	/**
 	 * @param name
-	 *            {String}
+	 *            {string}
 	 * @returns {FyClass}
 	 */
 	FyContext.prototype.lookupClassPhase1 = function(name) {
@@ -655,7 +654,7 @@ var FyClassDef;
 	 * 
 	 * @param {FyGlobal}
 	 *            global
-	 * @param {Number}
+	 * @param {number}
 	 *            constant the constant pos
 	 * @returns {FyClass}
 	 */
@@ -716,7 +715,7 @@ var FyClassDef;
 	/**
 	 * @param {FyClass}
 	 *            clazz
-	 * @returns {Number} handle of this class's class object handle
+	 * @returns {number} handle of this class's class object handle
 	 */
 	FyContext.prototype.getClassObjectHandle = function(clazz) {
 		var handle = this.mapClassIdToHandle.get(clazz.classId);
@@ -748,7 +747,7 @@ var FyClassDef;
 	/**
 	 * @param {FyMethod}
 	 *            method
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyContext.prototype.getMethodObjectHandle = function(method) {
 		var handle = this.mapMethodIdToHandle.get(method.methodId);
@@ -790,7 +789,7 @@ var FyClassDef;
 	/**
 	 * @param {FyField}
 	 *            field
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyContext.prototype.getFieldObjectHandle = function(field) {
 		var handle = this.mapFieldIdToHandle.get(field.fieldId);
@@ -915,12 +914,16 @@ var FyClassDef;
 		var context = this;
 		try {
 			data.push("###PANIC: " + message);
-			data.push("" + e);
+			if (e.stack) {
+				data.push("" + e.stack);
+			} else {
+				data.push("" + e);
+			}
 			data.push("#PANIC context:");
 			data.push(this);
 			data.push("#PANIC Thread dump:");
 
-			for (var i = 0; i < FyConfig.maxThreads; i++) {
+			for (var i = 0; i < this.config.maxThreads; i++) {
 				/**
 				 * @returns {FyThread}
 				 */
@@ -963,17 +966,19 @@ var FyClassDef;
 				}
 			}
 		} catch (ee) {
-			console.log("Exception occored while processing panic data:");
-			console.log(ee.toString());
+			data.push("Exception occored while processing panic data:");
+			data.push(ee.toString());
+			if (ee.stack) {
+				data.push(ee.stack);
+			}
 		}
 		for ( var idx in data) {
 			console.log(data[idx]);
 		}
-		// console.log(this);
 		if (e) {
-			throw e;
+			throw new FyPanicException(data, e);
 		} else {
-			return data;
+			throw new FyPanicException(data);
 		}
 	};
 
@@ -1031,4 +1036,194 @@ var FyClassDef;
 		var clazz = this.lookupClass(bootStrapClassName);
 		this.threadManager.bootFromMain(clazz);
 	};
+
+	FyContext.prototype.loadClassDefines = function(urls, callbacks) {
+		if (typeof urls == "string") {
+			urls = [ urls ];
+		}
+		var urlMap = {};
+		var defPosBegin = this.classDefs.length;
+		for (var i = 0; i < urls.length; i++) {
+			this.classDefs.push(undefined);
+			urlMap[urls[i]] = i + defPosBegin;
+		}
+
+		if (window.document) {
+			// browser
+			var iframe;
+			var i;
+			var failed = false;
+			var count = urls.length;
+			for (i = 0; i < urls.length; i++) {
+				(function(context, url) {
+					var lowerUrl = url.toLowerCase();
+					var hash = "#"
+							+ Math.floor(Math.random() * (2147483647))
+									.toString(16)
+							+ "-"
+							+ Math.floor(Math.random() * (2147483647))
+									.toString(16);
+					var def = new FyClassDef(context);
+					function onmessage(event) {
+						// console.log(event.origin + ": " + event.data.op + " "
+						// + event.data.name + " // " + url + " "
+						// + event.data.hash);
+						if (event.origin.toLowerCase() === lowerUrl && !failed
+								&& event.data.hash === hash) {
+							var data = event.data;
+							var name, value;
+							if (data.op === "class") {
+								value = data.value;
+								name = data.name;
+								def.classes[name] = String(value);
+							} else if (data.op === "constants") {
+								value = data.value;
+								(function() {
+									var t0 = performance.now();
+									var constantsStr = LZString
+											.decompressFromUTF16(value);
+									def.constants = new Int32Array(
+											constantsStr.length);
+									for (var i = 0, max = constantsStr.length; i < max; i++) {
+										def.constants[i >> 1] |= constantsStr
+												.charCodeAt(i) << ((i & 1) << 4);
+
+									}
+									constantsStr = null;
+									console.log("Constants decode "
+											+ (performance.now() - t0) + "ms");
+								})();
+							} else if (data.op === "strings") {
+								value = data.value;
+								(function() {
+									var t0 = performance.now();
+									var decompressed = LZString
+											.decompressFromUTF16(value);
+									var pos = 0;
+									var idx;
+									var len = decompressed.length;
+									while (pos < len) {
+										idx = decompressed.indexOf('\0', pos);
+										if (idx < 0) {
+											idx = len;
+										}
+										// console.log(pos + " - " + idx);
+										def.strings.push(LZString
+												.decodeUTF16(decompressed
+														.substring(pos, idx)));
+										pos = idx + 1;
+									}
+									console.log("String decode "
+											+ (performance.now() - t0) + "ms");
+								})();
+							} else if (data.op === "file") {
+								value = data.value;
+								name = data.name;
+								context.vfs.add(name, String(value));
+							} else if (data.op === "begin") {
+								if (callbacks.begin) {
+									callbacks.begin(url, count);
+								}
+							} else if (data.op === "done") {
+								count--;
+								iframe.parentNode.removeChild(iframe);
+								context.classDefs[urlMap[url]] = def;
+								if (callbacks.done) {
+									callbacks.done(url, count);
+								}
+								if (count === 0) {
+									if (callbacks.success) {
+										callbacks.success();
+									}
+								}
+							} else if (data.op === "error") {
+								failed = true;
+								if (callbacks.error) {
+									callbacks.error("Can't read data from "
+											+ url);
+								}
+							}
+							return false;
+						} else {
+							return true;
+						}
+					}
+					window.addEventListener("message", onmessage);
+					iframe = document.createElement("iframe");
+					iframe.setAttribute("src", url + hash);
+					iframe.setAttribute("class", "fisce-data-iframe");
+					iframe.addEventListener("error", function() {
+						failed = true;
+						if (callbacks.error) {
+							error("Can't read data from " + url);
+						}
+					});
+					document.getElementsByTagName("body")[0]
+							.appendChild(iframe);
+				})(this, urls[i]);
+			}
+		} else {
+			// node
+		}
+	};
+	FyContext.prototype.run = function(messageHandler) {
+		var message = new FyMessage();
+		var fun;
+		var mainLoop = function(message) {
+			var delay = 0.1;
+			var target = 0.1;
+			while (true) {
+				this.threadManager.run(message);
+				switch (message.type) {
+				case 6: // FyMessage.message_vm_dead:
+					if (messageHandler.end) {
+						messageHandler.end();
+					}
+					return;
+				case 5: // FyMessage.message_sleep:
+					target = performance.now() + Number(message.sleepTime);
+					if (target !== target) {
+						// Nan
+						this.panic("Illegal sleep time: " + sleepTime);
+					}
+					delay = target - performance.now();
+					if (delay < 0) {
+						delay = 0;
+					}
+					if (delay > 0) {
+						setTimeout(fun, delay);
+						return;
+					}
+					break;
+				case 3/* FyMessage.message_invoke_native */:
+					if (messageHandler.handle
+							&& messageHandler.handle(nativeMethod, thread, sp)) {
+					} else {
+						this
+								.panic("Undefined native() in messageHandler, we need process: "
+										+ nativeMethod);
+					}
+					break;
+				default:
+					this.panic("Unknown message type: " + message.type);
+				}
+			}
+		}.bind(this);
+		fun = function(message) {
+			try {
+				mainLoop(message);
+			} catch (e) {
+				if (e instanceof FyPanicException) {
+					messageHandler.panic(e);
+				} else {
+					try {
+						this.panic("Unhandled exception: " + e, e);
+					} catch (ex) {
+						messageHandler.panic(ex);
+					}
+				}
+			}
+		}.bind(this, message);
+		setTimeout(fun, 0);
+	}
 })();

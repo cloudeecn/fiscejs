@@ -1,26 +1,14 @@
 (function() {
-	/**
-	 * I hate warnings...
-	 */
-	function drop(obj) {
-	}
 	function sizeOf(obj) {
-		var i = 0;
-		for ( var key in obj) {
-			drop(key);
-			i++;
-		}
-		return i;
+		return Object.keys(obj).length;
 	}
 
 	fisceTests
 			.extend({
-				"    ClassDef" : function() {
-					var context = fisceTests.context();
-					ok(context);
+				"    ClassDef" : function(assert, context) {
+					assert.ok(context);
 				},
-				"    Hierarchy.methods" : function() {
-					var context = fisceTests.context();
+				"    Hierarchy.methods" : function(assert, context) {
 					var classAbstractMap = context
 							.lookupClass("java/util/AbstractMap");
 					var classMap = context.lookupClass("java/util/Map");
@@ -30,69 +18,65 @@
 
 					var methodMapGet = context.lookupMethodVirtual(classMap,
 							".get.(Ljava/lang/Object;)Ljava/lang/Object;");
-					ok(methodMapGet);
+					assert.ok(methodMapGet);
 
 					var methodAbstractMapGet = context.lookupMethodVirtual(
 							classAbstractMap,
 							".get.(Ljava/lang/Object;)Ljava/lang/Object;");
-					ok(methodAbstractMapGet);
+					assert.ok(methodAbstractMapGet);
 
 					var methodHashMapGet = context.lookupMethodVirtual(
 							classHashMap,
 							".get.(Ljava/lang/Object;)Ljava/lang/Object;");
-					ok(methodHashMapGet);
+					assert.ok(methodHashMapGet);
 
 					var methodIdentityHashMapGet = context.lookupMethodVirtual(
 							classIdentityHashMap,
 							".get.(Ljava/lang/Object;)Ljava/lang/Object;");
-					ok(methodIdentityHashMapGet);
+					assert.ok(methodIdentityHashMapGet);
 
-					notEqual(methodMapGet, methodHashMapGet);
-					notEqual(methodMapGet, methodAbstractMapGet);
-					notEqual(methodMapGet, methodIdentityHashMapGet);
-					notEqual(methodHashMapGet, methodAbstractMapGet);
-					notEqual(methodHashMapGet, methodIdentityHashMapGet);
-					notEqual(methodAbstractMapGet, methodIdentityHashMapGet);
+					assert.notEqual(methodMapGet, methodHashMapGet);
+					assert.notEqual(methodMapGet, methodAbstractMapGet);
+					assert.notEqual(methodMapGet, methodIdentityHashMapGet);
+					assert.notEqual(methodHashMapGet, methodAbstractMapGet);
+					assert.notEqual(methodHashMapGet, methodIdentityHashMapGet);
+					assert.notEqual(methodAbstractMapGet, methodIdentityHashMapGet);
 
-					equal(methodHashMapGet, context
+					assert.equal(methodHashMapGet, context
 							.lookupMethodVirtualByMethod(classHashMap,
 									methodMapGet));
-					equal(1, classHashMap.virtualTable.size());
-					equal(methodHashMapGet, context
+					assert.equal(1, classHashMap.virtualTable.size());
+					assert.equal(methodHashMapGet, context
 							.lookupMethodVirtualByMethod(classHashMap,
 									methodMapGet));
 
-					equal(methodHashMapGet, context
-							.lookupMethodVirtualByMethod(classHashMap,
-									methodAbstractMapGet));
-					equal(2, classHashMap.virtualTable.size());
-					equal(methodHashMapGet, context
+					assert.equal(methodHashMapGet, context
 							.lookupMethodVirtualByMethod(classHashMap,
 									methodAbstractMapGet));
+					assert.equal(2, classHashMap.virtualTable.size());
+					assert.equal(methodHashMapGet, context
+							.lookupMethodVirtualByMethod(classHashMap,
+									methodAbstractMapGet));
 
-					equal(methodIdentityHashMapGet, context
+					assert.equal(methodIdentityHashMapGet, context
 							.lookupMethodVirtualByMethod(classIdentityHashMap,
 									methodMapGet));
-					equal(1, classIdentityHashMap.virtualTable.size());
-					equal(methodIdentityHashMapGet, context
+					assert.equal(1, classIdentityHashMap.virtualTable.size());
+					assert.equal(methodIdentityHashMapGet, context
 							.lookupMethodVirtualByMethod(classIdentityHashMap,
 									methodMapGet));
 
-					equal(methodIdentityHashMapGet, context
+					assert.equal(methodIdentityHashMapGet, context
 							.lookupMethodVirtualByMethod(classIdentityHashMap,
 									methodAbstractMapGet));
-					equal(2, classIdentityHashMap.virtualTable.size());
-					equal(methodIdentityHashMapGet, context
+					assert.equal(2, classIdentityHashMap.virtualTable.size());
+					assert.equal(methodIdentityHashMapGet, context
 							.lookupMethodVirtualByMethod(classIdentityHashMap,
 									methodAbstractMapGet));
 
 				},
-				"    Hierarchy.fields" : function() {
-					/**
-					 * @returns {FyContext}
-					 */
-					var context = fisceTests.context();
-					
+				"    Hierarchy.fields" : function(context) {
+					//TODO
 				}
 			});
 })();

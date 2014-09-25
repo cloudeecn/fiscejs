@@ -15,97 +15,29 @@
  * fiscejs. If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @returns {__FyPortable}
- */
-var FyPortable;
-
-var FyConfig = {
-	littleEndian : undefined,
-	maxObjects : 131072,
-	maxThreads : 16,
-	gcIdv : 60000,
-	gcForceIdv : 120000,
-	heapSize : 8400000,
-	edenSize : 2600000,
-	copySize : 300000,
-	stackSize : 16384,
-	debugMode : false,
-	verboseMode : false,
-	aggresiveGC : false,
-	_ : undefined
-};
-
 function persistStages() {
 	eval("//" + arguments);
 }
 
-(function(window) {
+function benchmark(fun) {
+	var i = 0;
+	var time = 0.1;
+	time -= 0.1;
+	var begin = performance.now();
+	for (i = 0; i < 12; i++) {
+		begin = performance.now();
+		fun();
+		if (i > 3) {
+			time += (performance.now() - begin);
+		}
+	}
+	return time / 8.0;
+}
+
+(function() {
 	"use strict";
 
-	if (!Date.now) {
-		Date.now = function now() {
-			return Number(new Date());
-		};
-	}
-
-	if (!window.performance) {
-		window.performance = {};
-	}
-	if (!performance.now) {
-		console.log("Polyfill performance.now");
-		performance.now = (function() {
-			return performance.now || performance.mozNow || performance.msNow
-					|| performance.oNow || performance.webkitNow || Date.now
-					|| function() {
-						// Doh! Crap browser!
-						return new Date().getTime();
-					};
-		})();
-	}
-
-	if (!window.Math.imul) {
-		console.log("Polyfill Math.imul");
-		// @see
-		// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/imul
-		window.Math.imul = function(a, b) {
-			var ah = (a >>> 16) & 0xffff;
-			var al = a & 0xffff;
-			var bh = (b >>> 16) & 0xffff;
-			var bl = b & 0xffff;
-			// the shift by 0 fixes the sign on the high part
-			// the final |0 converts the unsigned value into a signed value
-			return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
-		};
-	}
-
-	if (typeof String.prototype.startsWith != 'function') {
-		console.log("Polyfill String.startsWith");
-		String.prototype.startsWith = function(str) {
-			return this.slice(0, str.length) == str;
-		};
-	}
-
-	if (typeof String.prototype.endsWith != 'function') {
-		console.log("Polyfill String.endsWith");
-		String.prototype.endsWith = function(str) {
-			return this.slice(-str.length) == str;
-		};
-	}
-
-	var darr = new Float64Array(1);
-	var iarr = new Int32Array(darr.buffer);
-
-	darr[0] = 1;
-	if (iarr[0]) {
-		// Big Endian
-		console.log("Big endian");
-		FyConfig.littleEndian = false;
-	} else {
-		// Little Endian
-		console.log("Little endian");
-		FyConfig.littleEndian = true;
-	}
+	var littleEndian;
 
 	// We use ArrayBuffer for converting floats from/to ieee754 integers by
 	// default
@@ -115,15 +47,34 @@ function persistStages() {
 	var floatView = new Float32Array(buffer);
 	var doubleView = new Float64Array(buffer);
 
+	(function() {
+		var darr = new Float64Array(1);
+		var iarr = new Int32Array(darr.buffer);
+
+		darr[0] = 1;
+		if (iarr[0]) {
+			// Big Endian
+			console.log("Big endian");
+			littleEndian = false;
+		} else {
+			// Little Endian
+			console.log("Little endian");
+			littleEndian = true;
+		}
+	})();
+
+	/**
+	 * @constructor
+	 */
 	var __FyPortable = function() {
 	};
 
 	/**
 	 * convert float to ieee754 int
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            floatValue
-	 * @returns {Number} ieee754 int
+	 * @returns {number} ieee754 int
 	 */
 	__FyPortable.prototype.floatToIeee32 = function(floatValue) {
 		floatView[0] = floatValue;
@@ -133,20 +84,20 @@ function persistStages() {
 	/**
 	 * convert ieee754 int to float
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            intValue
-	 * @returns {Number} floatValue
+	 * @returns {number} floatValue
 	 */
 	__FyPortable.prototype.ieee32ToFloat = function(intValue) {
 		intView[0] = intValue;
 		return floatView[0];
 	};
 
-	if (FyConfig.littleEndian) {
+	if (littleEndian) {
 		/**
 		 * convert double to ieee754 int pair
 		 * 
-		 * @param {Number}
+		 * @param {number}
 		 *            doubleValue
 		 * @param {Int32Array}
 		 *            container int pair container, if null/undefined,will
@@ -166,7 +117,7 @@ function persistStages() {
 		 * 
 		 * @param {Int32Array}
 		 *            container int pair container
-		 * @returns {Number} doubleValue
+		 * @returns {number} doubleValue
 		 */
 		__FyPortable.prototype.ieee64ToDouble = function(container, ofs) {
 			intView[1] = container[ofs];
@@ -212,8 +163,5 @@ function persistStages() {
 		return FyCreateLongOps(this, 0, stack, tmpBegin);
 	};
 
-	FyPortable = new __FyPortable();
-
-})((function() {
-	return this;
-}.call()));
+	window.FyPortable = new __FyPortable();
+})();

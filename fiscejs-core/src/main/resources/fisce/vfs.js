@@ -2,13 +2,13 @@ var FyVFS;
 (function() {
 
 	/**
-	 * @param {String}
+	 * @param {string}
 	 *            filename
-	 * @param {String}
+	 * @param {string}
 	 *            string
-	 * @param {Number}
+	 * @param {number}
 	 *            pos
-	 * @param {Number}
+	 * @param {number}
 	 *            len
 	 */
 	function VFSEntry(filename, string, pos) {
@@ -67,7 +67,9 @@ var FyVFS;
 		return "vfs_" + namespace + "_" + name;
 	}
 
-	FyVFS.prototype.add = function(json) {
+	FyVFS.prototype.add = function(name, content) {
+		// TODO
+		return;
 		for ( var name in json) {
 			var key = createKey(this.namespace, name);
 			localStorage.setItem(key, json[name]);
@@ -82,7 +84,7 @@ var FyVFS;
 		var key = createKey(this.namespace, name);
 
 		/**
-		 * @returns {String}
+		 * @returns {string}
 		 */
 		var str = localStorage.getItem(key);
 

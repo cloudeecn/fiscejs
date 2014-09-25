@@ -19,7 +19,7 @@
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
-			<source>target/jsonp/rt-${fiscevm.version}.js</source>
+			<source>target/rt-${fiscevm.version}.txt</source>
 			<destName>rt.js</destName>
 			<outputDirectory>/</outputDirectory>
 		</file>

@@ -299,7 +299,7 @@ var __FyAOTUtil;
 		var global = clazz.global;
 		var nextNeedCase = false;
 		/**
-		 * @returns {String}
+		 * @returns {string}
 		 */
 		var opsCheckCode = macros["OPS"].toString();
 
@@ -332,7 +332,7 @@ var __FyAOTUtil;
 				oprand2 = oprand2 | 0xffff0000;
 			}
 			/**
-			 * @returns {String}
+			 * @returns {string}
 			 */
 			var opName = $$ACMD[op];
 			stackOfs[ip] = stackSize;

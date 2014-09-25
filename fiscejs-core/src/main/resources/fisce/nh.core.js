@@ -23,7 +23,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function vmLogOut(context, thread, sp, ops) {
@@ -42,7 +42,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function vmThrowOut(context, thread, sp, ops) {
@@ -58,7 +58,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function vmExit(context, thread, sp, ops) {
@@ -75,7 +75,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function vmDecode(context, thread, sp, ops) {
@@ -113,7 +113,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function vmEncode(context, thread, sp, ops) {
@@ -146,7 +146,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function vmStringToDouble(context, thread, sp, ops) {
@@ -163,7 +163,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function vmDoubleToString(context, thread, sp, ops) {
@@ -183,7 +183,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function vmStringToFloat(context, thread, sp, ops) {
@@ -200,7 +200,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function vmFloatToString(context, thread, sp, ops) {
@@ -220,7 +220,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function vmBreakpoint(context, thread, sp, ops) {
@@ -237,7 +237,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function finalizerGetFinalizee(context, thread, sp, ops) {
@@ -251,7 +251,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function finalizerGetReferencesToEnqueue(context, thread, sp, ops) {
@@ -301,7 +301,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function throwableFillInStackTrace(context, thread, sp, ops) {
@@ -317,7 +317,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function systemInputStreamRead0(context, thread, sp, ops) {
@@ -333,7 +333,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function systemOutStreamWrite(context, thread, sp, ops) {
@@ -361,7 +361,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function systemSetIn(context, thread, sp, ops) {
@@ -375,7 +375,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function systemSetOut(context, thread, sp, ops) {
@@ -389,7 +389,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function systemSetErr(context, thread, sp, ops) {
@@ -403,7 +403,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function systemGetProperty(context, thread, sp, ops) {
@@ -417,7 +417,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function systemSetProperty(context, thread, sp, ops) {
@@ -430,7 +430,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function systemGC(context, thread, sp, ops) {
@@ -443,7 +443,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function systemExit(context, thread, sp, ops) {
@@ -457,7 +457,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function systemArrayCopy(context, thread, sp, ops) {
@@ -473,7 +473,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function systemTimeMS(context, thread, sp, ops) {
@@ -487,7 +487,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function systemTimeNS(context, thread, sp, ops) {
@@ -501,7 +501,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function systemIdentityHashCode(context, thread, sp, ops) {
@@ -513,7 +513,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function runtimeFreeMemory(context, thread, sp, ops) {
@@ -527,7 +527,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function runtimeTotalMemory(context, thread, sp, ops) {
@@ -541,7 +541,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function runtimeMaxMemory(context, thread, sp, ops) {
@@ -555,7 +555,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function stringIntern(context, thread, sp, ops) {
@@ -571,7 +571,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function doubleLongBitsToDouble(context, thread, sp, ops) {
@@ -583,7 +583,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function floatIntBitsToFloat(context, thread, sp, ops) {
@@ -595,7 +595,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function objectGetClass(context, thread, sp, ops) {
@@ -611,7 +611,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function objectClone(context, thread, sp, ops) {
@@ -626,7 +626,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function objectWait(context, thread, sp, ops) {
@@ -642,7 +642,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function objectNotify(context, thread, sp, ops) {
@@ -657,7 +657,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function objectNorifyAll(context, thread, sp, ops) {
@@ -672,7 +672,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function threadCurrentThread(context, thread, sp, ops) {
@@ -685,7 +685,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function threadSetPriority(context, thread, sp, ops) {
@@ -703,7 +703,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function threadIsAlive(context, thread, sp, ops) {
@@ -719,7 +719,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function threadInterrupt(context, thread, sp, ops) {
@@ -738,7 +738,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function threadInterrupted(context, thread, sp, ops) {
@@ -754,7 +754,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function threadStart(context, thread, sp, ops) {
@@ -769,7 +769,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function threadSleep(context, thread, sp, ops) {
@@ -783,7 +783,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function refRegister(context, thread, sp, ops) {
@@ -798,7 +798,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function refClear(context, thread, sp, ops) {
@@ -813,7 +813,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function refGet(context, thread, sp, ops) {
@@ -827,7 +827,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function threadYield(context, thread, sp, ops) {
@@ -840,7 +840,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function proxyDefineClass(context, thread, sp, ops) {
@@ -857,7 +857,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function risBind(context, thread, sp, ops) {
@@ -880,7 +880,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function risRead(context, thread, sp, ops) {
@@ -895,7 +895,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function risReadTo(context, thread, sp, ops) {
@@ -924,7 +924,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function risClose(context, thread, sp, ops) {
@@ -940,7 +940,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function proxyHelperDefineClass(context, thread, sp, ops) {

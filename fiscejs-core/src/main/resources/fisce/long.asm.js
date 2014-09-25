@@ -4,7 +4,7 @@ var __FyLongOpsAsmString;
  * 
  * @param global
  *            Global var
- * @param {Number}
+ * @param {number}
  *            mode implementation:
  *            <ul>
  *            <li>0 - implements with javascript native numbers </li>

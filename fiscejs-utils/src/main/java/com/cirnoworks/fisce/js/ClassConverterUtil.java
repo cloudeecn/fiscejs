@@ -1,6 +1,5 @@
 package com.cirnoworks.fisce.js;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -9,15 +8,13 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.apache.commons.codec.binary.Base64OutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.cirnoworks.fisce.classloader.utils.SimpleJSONUtil;
+import com.diogoduailibe.lzstring4j.LZString;
 
 public class ClassConverterUtil {
 
@@ -25,14 +22,12 @@ public class ClassConverterUtil {
 			.getLogger(ClassConverterUtil.class);
 
 	public static void convertJars(Iterable<? extends InputStream> in,
-			String prefix, String postfix, Writer out, String vfsPrefix,
-			String vfsPostfix, Writer vfsOut) throws IOException {
+			Writer out) throws IOException {
 		ClassConverter converter = new ClassConverter();
 		converter.multiBegin();
 		StringBuilder vfsBuilder = new StringBuilder(16384);
-		SimpleJSONUtil.add(vfsBuilder, 0, "{", false);
+		StringBuilder valueBuilder = new StringBuilder(16384);
 		byte[] buf = new byte[65536];
-		boolean vfsUsed = false;
 
 		for (InputStream is : in) {
 			final ZipInputStream jar = new ZipInputStream(is);
@@ -41,25 +36,32 @@ public class ClassConverterUtil {
 				while ((entry = jar.getNextEntry()) != null) {
 					if (entry.getName().endsWith(".class")) {
 						converter.multiPush(jar);
-					} else if (!entry.isDirectory() && vfsOut != null) {
-						vfsUsed = true;
-						ByteArrayOutputStream baos = new ByteArrayOutputStream(
-								(int) entry.getSize());
-						Base64OutputStream bos = new Base64OutputStream(baos,
-								true, -1, null);
-						try {
-							int read = 0;
-							while ((read = jar.read(buf)) >= 0) {
-								bos.write(buf, 0, read);
+					} else if (!entry.isDirectory()) {
+						int size = (int) entry.getSize();
+						vfsBuilder.append(entry.getName());
+						vfsBuilder.append('\0');
+
+						valueBuilder.setLength(0);
+						valueBuilder.append((char) size);
+						valueBuilder.append((char) (size >> 16));
+						int read;
+						int pos = 0;
+						char value = 0;
+						while ((read = jar.read()) >= 0) {
+							if (pos == 0) {
+								value = (char) (read & 0xff);
+								pos = 1;
+							} else if (pos == 1) {
+								value |= (char) (read << 8);
+								valueBuilder.append(value);
+								pos = 0;
 							}
-							bos.flush();
-							SimpleJSONUtil.add(vfsBuilder, 1, SimpleJSONUtil
-									.escapeString(entry.getName()),
-									SimpleJSONUtil.escapeString(new String(baos
-											.toByteArray(), "utf-8")), true);
-						} finally {
-							bos.close();
 						}
+						if (pos == 1) {
+							valueBuilder.append(value);
+						}
+						LZString.compressToUTF16(valueBuilder, vfsBuilder);
+						vfsBuilder.append('\n');
 					}
 					jar.closeEntry();
 				}
@@ -75,36 +77,12 @@ public class ClassConverterUtil {
 				}
 			}
 		}
-		if (vfsUsed) {
-			vfsBuilder.setLength(vfsBuilder.length() - 2);
-		}
-		SimpleJSONUtil.add(vfsBuilder, 0, "}", false);
 
-		String o = converter.multiFinish();
-		if (prefix != null) {
-			out.write(prefix);
-		}
-		out.write(o);
-		if (postfix != null) {
-			out.write(postfix);
-		}
+		StringBuilder o = converter.multiFinish();
+		o.append(vfsBuilder);
+		o.append("\n\n");
+		out.write(o.toString());
 		out.flush();
-
-		if (vfsOut != null) {
-			if (vfsPrefix != null) {
-				vfsOut.write(vfsPrefix);
-			}
-			vfsOut.write(vfsBuilder.toString());
-			if (vfsPostfix != null) {
-				vfsOut.write(vfsPostfix);
-			}
-			vfsOut.flush();
-		}
-	}
-
-	public static void convertJar(String prefix, InputStream is,
-			String postfix, Writer os, Writer vfsOut) throws IOException {
-
 	}
 
 	private static void walkDirectory(File directory, ClassConverter cc)
@@ -143,7 +121,7 @@ public class ClassConverterUtil {
 		ClassConverter cc = new ClassConverter();
 		cc.multiBegin();
 		walkDirectory(directory, cc);
-		return cc.multiFinish();
+		return cc.multiFinish().toString();
 	}
 
 	public static void convertDirectory(File directory, Writer wr)
@@ -165,33 +143,18 @@ public class ClassConverterUtil {
 
 	public static void main(String[] args) throws Exception {
 		ClassConverterUtil.convertDirectory(// "(function(context){context.addClassDef(",
-				new File("../fiscevm/fiscevm-runtime/target/classes"),
+				new File("../../fiscevm/fiscevm-runtime/target/classes"),
 				// ");})(fisceContext);",
-				new OutputStreamWriter(new FileOutputStream(
-						"src/main/webapp/js/test/rt.json"), "ISO8859-1"));
+				new OutputStreamWriter(new FileOutputStream("rt.txt"),
+						"ISO8859-1"));
 
 		System.out.println("done");
 	}
 
-	public static void convert(Iterable<String> jarPaths, String jsonPath,
-			String vfsPath, boolean jsonp, boolean gz) throws IOException {
-		if (gz && jsonp) {
-			jsonPath += ".js.gz";
-			vfsPath += ".js.gz";
-		} else if (gz && !jsonp) {
-			jsonPath += ".json.gz";
-			vfsPath += ".json.gz";
-		} else if (!gz && jsonp) {
-			jsonPath += ".js";
-			vfsPath += ".js";
-		} else {
-			// !gz && !jsonp
-			jsonPath += ".json";
-			vfsPath += ".json";
-		}
+	public static void convert(Iterable<String> jarPaths, String jsonPath)
+			throws IOException {
+		jsonPath += ".txt";
 		File runtimeJsFile = new File(jsonPath);
-
-		File vfsJsFile = new File(vfsPath);
 
 		ArrayList<File> runtimeJarFiles = new ArrayList<File>();
 
@@ -214,46 +177,16 @@ public class ClassConverterUtil {
 					+ runtimeJsFile);
 			ArrayList<FileInputStream> iss = new ArrayList<FileInputStream>();
 			FileOutputStream osr = null;
-			FileOutputStream osv = null;
 			try {
 				for (File in : runtimeJarFiles) {
 					iss.add(new FileInputStream(in));
 				}
 				osr = new FileOutputStream(runtimeJsFile);
-				GZIPOutputStream gosr = null;
 				OutputStreamWriter writerr;
-				if (gz) {
-					gosr = new GZIPOutputStream(osr);
-					writerr = new OutputStreamWriter(gosr, "utf-8");
-				} else {
-					writerr = new OutputStreamWriter(osr, "utf-8");
-				}
+				writerr = new OutputStreamWriter(osr, "utf-8");
 
-				osv = new FileOutputStream(vfsJsFile);
-				GZIPOutputStream gosv = null;
-				OutputStreamWriter writerv;
-				if (gz) {
-					gosv = new GZIPOutputStream(osv);
-					writerv = new OutputStreamWriter(gosv, "utf-8");
-				} else {
-					writerv = new OutputStreamWriter(osv, "utf-8");
-				}
-
-				if (jsonp) {
-					ClassConverterUtil.convertJars(iss, "context.addClassDef(",
-							");", writerr, "context.vfs.add(", ");", writerv);
-				} else {
-					ClassConverterUtil.convertJars(iss, null, null, writerr,
-							null, null, writerv);
-				}
+				ClassConverterUtil.convertJars(iss, writerr);
 				writerr.close();
-				writerv.close();
-				if (gosr != null) {
-					gosr.close();
-				}
-				if (gosv != null) {
-					gosv.close();
-				}
 			} finally {
 				for (FileInputStream is : iss) {
 					try {
@@ -270,13 +203,6 @@ public class ClassConverterUtil {
 					}
 				} catch (IOException e) {
 					log.warn("Can't close output file: " + runtimeJsFile, e);
-				}
-				try {
-					if (osv != null) {
-						osv.close();
-					}
-				} catch (IOException e) {
-					log.warn("Can't close output file: " + vfsJsFile, e);
 				}
 			}
 		}

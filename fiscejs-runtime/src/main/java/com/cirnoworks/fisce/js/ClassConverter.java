@@ -1,6 +1,5 @@
 package com.cirnoworks.fisce.js;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -25,7 +24,7 @@ import com.cirnoworks.fisce.data.constants.ConstantData;
 import com.cirnoworks.fisce.data.constants.JSONExportableConstantData;
 import com.cirnoworks.fisce.vm.data.attributes.ExceptionHandler;
 import com.cirnoworks.fisce.vm.data.attributes.LineNumber;
-import com.jcraft.jzlib.GZIPOutputStream;
+import com.diogoduailibe.lzstring4j.LZString;
 
 public class ClassConverter {
 	private static final HashSet<String> primNames = new HashSet<String>();
@@ -455,14 +454,14 @@ public class ClassConverter {
 				(int) clazz.getSizeInStatic(), true);
 		SimpleJSONUtil.add(sb, 1, "\"phase\"", 0, true);
 		SimpleJSONUtil.add(sb, 1, "\"converted\"", "true", false);
-		sb.append("}\n");
+		sb.append("}");
 		return name;
 	}
 
 	public String singleConvert(InputStream is) throws IOException {
 		multiBegin();
 		multiPush(is);
-		return multiFinish();
+		return multiFinish().toString();
 	}
 
 	public void multiBegin() {
@@ -471,69 +470,70 @@ public class ClassConverter {
 					"You should only run mulitBegin once!");
 		}
 		sb = new StringBuilder(16384);
-		SimpleJSONUtil.add(sb, 0, "{", false);
-		SimpleJSONUtil.add(sb, 0, "\"classes\"", "{", false);
+		// SimpleJSONUtil.add(sb, 0, "{", false);
+		// SimpleJSONUtil.add(sb, 0, "\"classes\"", "{", false);
 	}
 
 	public void multiPush(InputStream is) throws IOException {
 		StringBuilder tmp = new StringBuilder();
-		String name = convert(is, tmp);
-		byte[] bytes = tmp.toString().getBytes("utf-8");
-		tmp = null;
-		ByteArrayOutputStream baos = new ByteArrayOutputStream(bytes.length / 2);
-		GZIPOutputStream gos = new GZIPOutputStream(baos);
-		gos.write(bytes);
-		gos.close();
-		bytes = null;
-		bytes = baos.toByteArray();
-		String result = Base64.encode(bytes);
-		SimpleJSONUtil.add(sb, 1, SimpleJSONUtil.escapeString(name),
-				SimpleJSONUtil.escapeString(result), true);
+		sb.append(convert(is, tmp)).append('\0');
+		LZString.compressToUTF16(tmp, sb);// tmp.toString();
+		sb.append('\n');
 	}
 
-	public String multiFinish() {
-		if (sb.charAt(sb.length() - 2) == ',') {
-			sb.setLength(sb.length() - 2);
-		}
-		SimpleJSONUtil.add(sb, 0, "}", true);
+	public StringBuilder multiFinish() {
+		sb.append('\n');
+		int len = sb.length();
+		System.out.println("classes: " + len + "chars");
+
+		StringBuilder tmp = new StringBuilder((constantTable.size() + 1) * 6);
 
 		int[] output = new int[2];
 
-		SimpleJSONUtil.add(sb, 0, "\"constants\"", "[", false);
 		{
 			Iterator<JSONExportableConstantData> i = constantTable.keySet()
 					.iterator();
 			while (i.hasNext()) {
 				JSONExportableConstantData constant = i.next();
 				if (constant == null) {
-					SimpleJSONUtil.add(sb, 1, "0, 0, 0", i.hasNext());
+					tmp.append((char) 0);
+					tmp.append((char) 0);
+					tmp.append((char) 0);
+					tmp.append((char) 0);
 				} else {
 					constant.export(stringPool, output, 0);
-					SimpleJSONUtil.add(sb, 1, output[0] + ", " + output[1]
-							+ ", 0", i.hasNext());
+					tmp.append((char) (output[0]));
+					tmp.append((char) (output[0] >>> 16));
+					tmp.append((char) (output[1]));
+					tmp.append((char) (output[1] >>> 16));
 				}
+				tmp.append((char) 0);
+				tmp.append((char) 0);
 			}
 		}
-		SimpleJSONUtil.add(sb, 0, "]", true);
-
-		SimpleJSONUtil.add(sb, 0, "\"strings\"", "[", false);
+		LZString.compressToUTF16(tmp, sb);
+		sb.append("\n\n");
+		System.out.println("constants: " + tmp.length() + " => "
+				+ (sb.length() - len) + "chars");
+		len = sb.length();
+		tmp.setLength(0);
 		{
 			Iterator<String> i = stringTable.keySet().iterator();
 			while (i.hasNext()) {
 				String str = i.next();
 				if (str == null) {
-					SimpleJSONUtil.add(sb, 1, SimpleJSONUtil.escapeString(""),
-							i.hasNext());
+					tmp.append('\0');
 				} else {
-					SimpleJSONUtil.add(sb, 1, SimpleJSONUtil.escapeString(str),
-							i.hasNext());
+					LZString.encodeUTF16(str, tmp);
+					tmp.append('\0');
 				}
 			}
 		}
-		SimpleJSONUtil.add(sb, 0, "]", false);
-
-		SimpleJSONUtil.add(sb, 0, "}", false);
-		String ret = sb.toString();
+		LZString.compressToUTF16(tmp, sb);
+		sb.append("\n\n");
+		System.out.println("strings: " + tmp.length() + " => "
+				+ (sb.length() - len) + "chars");
+		StringBuilder ret = sb;
 		sb = null;
 		return ret;
 	}

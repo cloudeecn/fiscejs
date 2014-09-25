@@ -10,7 +10,11 @@
 	<includeBaseDirectory>false</includeBaseDirectory>
 	<files>
 		<file>
-			<source>src/main/resources/fisce/gunzip.minjs</source>
+			<source>src/main/resources/fisce/polyfill.js</source>
+			<outputDirectory>/</outputDirectory>
+		</file>
+		<file>
+			<source>src/main/resources/fisce/lzstring.js</source>
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>

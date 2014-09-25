@@ -26,6 +26,7 @@ var FyUtils;
 var FyConst;
 var FyClass;
 var FyException;
+var FyPanicException;
 var FyGlobal;
 var FyMessage;
 var FyTableSwitchTarget;
@@ -41,6 +42,60 @@ var FyLookupSwitchTarget;
 			code.put(str.charCodeAt(i), i);
 		}
 	})("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=");
+
+	/**
+	 * Config class
+	 * 
+	 * @constructor
+	 * @export
+	 * @struct
+	 */
+	window.FyConfig = function() {
+		/**
+		 * @type {number}
+		 */
+		this["maxObjects"] = 131072;
+		/**
+		 * @type {number}
+		 */
+		this["maxThreads"] = 16;
+		/**
+		 * @type {number}
+		 */
+		this["gcIdv"] = 60000;
+		/**
+		 * @type {number}
+		 */
+		this["gcForceIdv"] = 120000;
+		/**
+		 * @type {number}
+		 */
+		this["heapSize"] = 4000000;
+		/**
+		 * @type {number}
+		 */
+		this["edenSize"] = 1000000;
+		/**
+		 * @type {number}
+		 */
+		this["copySize"] = 400000;
+		/**
+		 * @type {number}
+		 */
+		this["stackSize"] = 16384;
+		/**
+		 * @type {boolean}
+		 */
+		this["debugMode"] = false;
+		/**
+		 * @type {boolean}
+		 */
+		this["verboseMode"] = false;
+		/**
+		 * @type {boolean}
+		 */
+		this["aggresiveGC"] = false;
+	};
 
 	var __FyUtils = function() {
 	};
@@ -531,67 +586,189 @@ var FyLookupSwitchTarget;
 		}
 	};
 
-	if (FyConfig.debugMode) {
+	/**
+	 * FyException
+	 * 
+	 * @param {string}
+	 *            clazz Class name for inner class
+	 * @param {string}
+	 *            msg message
+	 * @constructor
+	 * @export
+	 * @struct
+	 */
+	FyException = function(clazz, message) {
+		Error.call(this, (clazz ? (clazz + ": ") : "") + message);
 		/**
-		 * FyException
-		 * 
-		 * @param {String}
-		 *            clazz Class name for inner class
-		 * @param {String}
-		 *            msg message
+		 * @override
 		 */
-		FyException = function(clazz, message) {
-			Error.call(this, (clazz ? (clazz + ": ") : "") + message);
-			this.name = "FyException";
-			this.clazz = clazz;
-			this.message = message;
-			this.stack = new Error((clazz ? (clazz + ": ") : "") + message).stack;
-			if (clazz === undefined) {
-				clazz = undefined;
-			}
-		};
-	} else {
+		this.name = "FyException";
 		/**
-		 * FyException
-		 * 
-		 * @param {String}
-		 *            clazz Class name for inner class
-		 * @param {String}
-		 *            msg message
+		 * @type {string}
 		 */
-		FyException = function(clazz, message) {
-			Error.call(this, (clazz ? (clazz + ": ") : "") + message);
-			this.name = "FyException";
-			this.clazz = clazz;
-			this.message = message;
-			this.stack = new Error((clazz ? (clazz + ": ") : "") + message).stack;
-		};
-	}
+		this.clazz = clazz;
+		/**
+		 * @type {string}
+		 */
+		this.message = message;
+		/**
+		 * @override
+		 */
+		this.stack = new Error((clazz ? (clazz + ": ") : "") + message).stack;
+		if (clazz === undefined) {
+			clazz = undefined;
+		}
+	};
 
-	// FyException.prototype = new Error();
-	FyException.prototype.constructor = FyException;
+	FyException.prototype = new Error("FyException");
+
+	/**
+	 * @override
+	 * @return {string}
+	 * @nosideeffects
+	 */
 	FyException.prototype.toString = function() {
 		return "" + (this.clazz ? this.clazz : "FatalError") + ": "
 				+ this.message + (this.stack ? ("\n" + this.stack) : "");
 	};
 
+	FyPanicException = function(data, cause) {
+		if (Object.prototype.toString.call([]) === "[object Array]") {
+			/**
+			 * @type {string}
+			 */
+			this.message = data.join("\n");
+		} else {
+			this.message = String(data);
+		}
+		/**
+		 * @type {Error}
+		 */
+		this.cause = cause;
+		/**
+		 * @type {string}
+		 */
+		this.name = "FyPanicException";
+		/**
+		 * @type {string}
+		 */
+		this.stack = new Error("panic").stack;
+	};
+
+	FyPanicException.prototype = new Error("FyPanicException");
+
 	/**
 	 * Message method <-> thread <-> threadManager <-> outer
+	 * 
+	 * @constructor
+	 * @struct
+	 * @export
 	 */
 	FyMessage = function() {
+		/**
+		 * @type {number}
+		 */
 		this.type = 0;
+		/**
+		 * @type {FyThread}
+		 */
 		this.thread = undefined;
+		/**
+		 * @type {number}
+		 */
 		this.sleepTime = 0;
+		/**
+		 * @type {string}
+		 */
 		this.nativeMethod = undefined;
+		/**
+		 * @type {number}
+		 */
 		this.sp = 0;
 	};
 
-	FyMessage.message_continue = 0; // In thread
-	FyMessage.message_none = 1; // Thread Only
-	FyMessage.message_thread_dead = 2; // Thread Only
-	FyMessage.message_invoke_native = 3;// Thread And TM pass thread
-	FyMessage.message_exception = 4;// Thread And TM pass thread
-	FyMessage.message_sleep = 5;// TM Only
-	FyMessage.message_vm_dead = 6;
+	/**
+	 * @export
+	 * @nosideeffects
+	 * @returns {number}
+	 */
+	FyMessage.prototype.getType = function() {
+		return this.type;
+	}
 
+	/**
+	 * @export
+	 * @nosideeffects
+	 * @returns {FyThread}
+	 */
+	FyMessage.prototype.getThread = function() {
+		return this.thread;
+	}
+
+	/**
+	 * @export
+	 * @nosideeffects
+	 * @returns {number}
+	 */
+	FyMessage.prototype.getSleepTime = function() {
+		return this.sleepTime;
+	}
+
+	/**
+	 * @export
+	 * @nosideeffects
+	 * @returns {string}
+	 */
+	FyMessage.prototype.getNativeMethod = function() {
+		return this.nativeMethod;
+	}
+
+	/**
+	 * @export
+	 * @nosideeffects
+	 * @returns {number}
+	 */
+	FyMessage.prototype.getsp = function() {
+		return this.sp;
+	}
+
+	/**
+	 * @const
+	 * @type {number}
+	 */
+	FyMessage.message_continue = 0; // In thread
+	/**
+	 * @const
+	 * @type {number}
+	 */
+	FyMessage.message_none = 1; // Thread Only
+	/**
+	 * @const
+	 * @type {number}
+	 */
+	FyMessage.message_thread_dead = 2; // Thread Only
+	/**
+	 * @const
+	 * @export
+	 * @type {number}
+	 */
+	FyMessage.message_invoke_native = 3;// Thread And TM pass thread
+	/**
+	 * @const
+	 * @export
+	 * @type {number}
+	 */
+	FyMessage.message_exception = 4;// Thread And TM pass thread
+	/**
+	 * @const
+	 * @export
+	 * @type {number}
+	 */
+	FyMessage.message_sleep = 5;// TM Only
+	/**
+	 * @const
+	 * @export
+	 * @type {number}
+	 */
+	FyMessage.message_vm_dead = 6;
 })();

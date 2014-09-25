@@ -24,9 +24,9 @@ var HashMapI;
 	}
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            capShift
-	 * @param {Number}
+	 * @param {number}
 	 *            factor
 	 */
 	HashMapI = function(nullNumber, capShift, factor) {
@@ -107,11 +107,11 @@ var HashMapI;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            key
-	 * @param {Number}
+	 * @param {number}
 	 *            value
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	HashMapI.prototype.put = function(key, value) {
 		// forceOptimize(this.put);

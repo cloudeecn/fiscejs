@@ -29,7 +29,7 @@
 	 *            context vm context
 	 * @param {FyThread}
 	 *            thread current thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops instructions left to run
 	 */
 	function(context, thread, sb, ops) {

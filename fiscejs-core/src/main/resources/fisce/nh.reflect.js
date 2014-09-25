@@ -32,7 +32,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function methodIsBridge(context, thread, sp, ops) {
@@ -53,7 +53,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function methodIsVarArgs(context, thread, sp, ops) {
@@ -74,7 +74,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function methodIsSynthetic(context, thread, sp, ops) {
@@ -95,7 +95,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function methodGetDeclaringClass(context, thread, sp, ops) {
@@ -115,7 +115,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function methodExceptionTypes(context, thread, sp, ops) {
@@ -145,7 +145,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function methodGetModifiers(context, thread, sp, ops) {
@@ -165,7 +165,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function methodGetName(context, thread, sp, ops) {
@@ -185,7 +185,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function methodGetParameterTypes(context, thread, sp, ops) {
@@ -215,7 +215,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function methodGetReturnType(context, thread, sp, ops) {
@@ -236,9 +236,9 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            sp
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function methodInvoke(context, thread, sp, ops) {
@@ -333,7 +333,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function methodGetUniqueName(context, thread, sp, ops) {
@@ -411,7 +411,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function constructorNewInstance(context, thread, sp, ops) {
@@ -536,7 +536,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function fieldIsSynthetic(context, thread, sp, ops) {
@@ -557,7 +557,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function fieldIsEnumConstant(context, thread, sp, ops) {
@@ -578,7 +578,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function fieldGetObject(context, thread, sp, ops) {
@@ -618,15 +618,15 @@
 	}
 
 	/**
-	 * @param {String}
+	 * @param {string}
 	 *            name
-	 * @param {Number}
+	 * @param {number}
 	 *            type
 	 * @param {FyContext}
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function getter(name, type, context, thread, sp, ops) {
@@ -659,15 +659,15 @@
 	}
 	/**
 	 * 
-	 * @param {String}
+	 * @param {string}
 	 *            name
-	 * @param {Number}
+	 * @param {number}
 	 *            type
 	 * @param {FyContext}
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function getterW(name, type, context, thread, sp, ops) {
@@ -714,7 +714,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function fieldGetModifiers(context, thread, sp, ops) {
@@ -734,7 +734,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function fieldGetName(context, thread, sp, ops) {
@@ -755,7 +755,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function fieldGetType(context, thread, sp, ops) {
@@ -775,7 +775,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function fieldGetDeclaringClass(context, thread, sp, ops) {
@@ -795,7 +795,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function fieldSetObject(context, thread, sp, ops) {
@@ -824,7 +824,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function fieldSetPrim(context, thread, sp, ops) {
@@ -853,7 +853,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function fieldSetWidePrim(context, thread, sp, ops) {
@@ -883,7 +883,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function fieldGetUniqueName(context, thread, sp, ops) {
@@ -958,7 +958,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classPrivateGetDeclaredMethods(context, thread, sp, ops) {
@@ -983,7 +983,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classPrivateGetDeclaredFields(context, thread, sp, ops) {
@@ -1008,7 +1008,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classGetComponentType(context, thread, sp, ops) {
@@ -1029,7 +1029,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classForName(context, thread, sp, ops) {
@@ -1046,7 +1046,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classNewInstanceA(context, thread, sp, ops) {
@@ -1063,7 +1063,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classNewInstanceO(context, thread, sp, ops) {
@@ -1084,7 +1084,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classIsInstance(context, thread, sp, ops) {
@@ -1102,7 +1102,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classIsAssignableFrom(context, thread, sp, ops) {
@@ -1120,7 +1120,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classIsArray(context, thread, sp, ops) {
@@ -1136,7 +1136,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classIsPrimitive(context, thread, sp, ops) {
@@ -1153,7 +1153,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classIsInterface(context, thread, sp, ops) {
@@ -1170,7 +1170,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classGetSuperclass(context, thread, sp, ops) {
@@ -1187,7 +1187,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classGetInterfaces(context, thread, sp, ops) {
@@ -1211,7 +1211,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classGetNativeName(context, thread, sp, ops) {
@@ -1230,7 +1230,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classGetModifiers(context, thread, sp, ops) {
@@ -1246,7 +1246,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function classIsEnum(context, thread, sp, ops) {
@@ -1263,7 +1263,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function arrayNewInstance(context, thread, sp, ops) {

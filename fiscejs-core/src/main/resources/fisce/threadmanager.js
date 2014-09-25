@@ -26,9 +26,10 @@ var FyThreadManager;
 	 */
 	FyThreadManager = function(context) {
 		this.context = context;
+		this.config = context.config;
 		this.pricmds = [ 0, 1000, 2500, 5000, 10000, 20000, 40000, 80000,
 				160000, 320000, 640000 ];
-		this.threads = new Array(FyConfig.maxThreads);
+		this.threads = new Array(this.config.maxThreads);
 		this.currentThread = undefined;
 		this.runningThreads = [];
 		this.runningThreadPos = 0;
@@ -47,7 +48,7 @@ var FyThreadManager;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
 	 * @returns {FyThread}
 	 */
@@ -62,9 +63,9 @@ var FyThreadManager;
 	/**
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            monitorId
-	 * @param {Number}
+	 * @param {number}
 	 *            times
 	 */
 	FyThreadManager.prototype._monitorEnter = function(thread, monitorId, times) {
@@ -100,9 +101,9 @@ var FyThreadManager;
 	/**
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            monitorId
-	 * @param {Number}
+	 * @param {number}
 	 *            times
 	 */
 	FyThreadManager.prototype._monitorExit = function(thread, monitorId, times) {
@@ -139,7 +140,7 @@ var FyThreadManager;
 	/**
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            monitorId
 	 */
 	FyThreadManager.prototype._releaseMonitor = function(thread, monitorId) {
@@ -159,14 +160,14 @@ var FyThreadManager;
 		var h = this.nextThreadId;
 		while (this.threads[h] !== undefined) {
 			h++;
-			if (h === FyConfig.maxThreads) {
+			if (h === this.config.maxThreads) {
 				h = 1;
 			}
 			if (h === this.nextThreadId) {
 				throw new FyException(undefined, "Threads used up!");
 			}
 		}
-		this.nextThreadId = (h % (FyConfig.maxThreads - 1) + 1);
+		this.nextThreadId = (h % (this.config.maxThreads - 1) + 1);
 		return h;
 	};
 
@@ -208,7 +209,7 @@ var FyThreadManager;
 	/**
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            monitorId
 	 */
 	FyThreadManager.prototype.monitorEnter = function(thread, monitorId) {
@@ -218,7 +219,7 @@ var FyThreadManager;
 	/**
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            monitorId
 	 */
 	FyThreadManager.prototype.monitorExit = function(thread, monitorId) {
@@ -228,7 +229,7 @@ var FyThreadManager;
 	 * 
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            time
 	 */
 	FyThreadManager.prototype.sleep = function(thread, time) {
@@ -240,7 +241,7 @@ var FyThreadManager;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            targetHandle
 	 */
 	FyThreadManager.prototype.interrupt = function(targetHandle) {
@@ -259,7 +260,7 @@ var FyThreadManager;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            targetHandle
 	 * @param {Boolean}
 	 *            clear
@@ -282,9 +283,9 @@ var FyThreadManager;
 	 * 
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            monitorId
-	 * @param {Number}
+	 * @param {number}
 	 *            time
 	 */
 	FyThreadManager.prototype.wait = function(thread, monitorId, time) {
@@ -308,7 +309,7 @@ var FyThreadManager;
 	 * 
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            monitorId
 	 * @param {Boolean}
 	 *            all
@@ -339,7 +340,7 @@ var FyThreadManager;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            threadHandle
 	 * @returns {Boolean}
 	 */
@@ -415,13 +416,13 @@ var FyThreadManager;
 		thread.initWithMethod(threadHandle, mainMethod);
 		this.runningThreads.push(thread);
 		this.state = FyConst.FY_TM_STATE_RUN_PENDING;
-		this.nextGCTime = Date.now() + FyConfig.gcIdv;
-		this.nextForceGCTime = Date.now() + FyConfig.gcForceIdv;
+		this.nextGCTime = Date.now() + this.config.gcIdv;
+		this.nextForceGCTime = Date.now() + this.config.gcForceIdv;
 	};
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            threadHandle
 	 */
 	FyThreadManager.prototype.pushThread = function(threadHandle) {
@@ -549,12 +550,12 @@ var FyThreadManager;
 						case 5/* FyMessage.message_sleep */:
 							// Illegal!
 							this.context.panic("Illegal message type "
-									+ message.type, new Error());
+									+ message.type);
 						case 1/* FyMessage.message_none */:
 							break;
 						case 4/* FyMessage.message_exception */:
 							this.context.panic("Illegal message type "
-									+ message.type, new Error());
+									+ message.type);
 						case 2/* FyMessage.message_thread_dead */:
 							thread.destroyPending = true;
 							break;
@@ -562,7 +563,7 @@ var FyThreadManager;
 							return;
 						default:
 							this.context.panic("Illegal message type "
-									+ message.type, new Error());
+									+ message.type);
 						}
 					} else {
 						if (!this.nonDaemonRunned) {
@@ -572,9 +573,9 @@ var FyThreadManager;
 							sleepTime = this.nextWakeUpTimeTotal - now;
 							if ((sleepTime > 10 && now > this.nextGCTime)
 									|| now > this.nextForceGCTime) {
-								this.nextGCTime = now + FyConfig.gcIdv;
+								this.nextGCTime = now + this.config.gcIdv;
 								this.nextForceGCTime = this.nextGCTime
-										+ FyConfig.gcForceIdv;
+										+ this.config.gcForceIdv;
 								this.context.log(0, "Call GC due to timeout");
 								heap.gc(0);
 								now = Date.now();
@@ -607,8 +608,7 @@ var FyThreadManager;
 				message.type = FyMessage.message_vm_dead;
 				return;
 			default:
-				this.context.panic("Illegal vm state " + stateLocal,
-						new Error());
+				this.context.panic("Illegal vm state " + stateLocal);
 			}
 		}
 	};

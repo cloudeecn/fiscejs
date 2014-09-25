@@ -15,58 +15,120 @@
  * fiscejs. If not, see <http://www.gnu.org/licenses/>.
  */
 
-var FyHeap;
 (function() {
 	"use strict";
 
+	/**
+	 * @constructor
+	 */
 	function HeapConstClass() {
 		/**
-		 * 
+		 * @const
+		 * @type {number}
 		 */
 		this.BID_AUTO = 0 | 0;
+		/**
+		 * @const
+		 * @type {number}
+		 */
 		this.BID_EDEN = 1 | 0;
+		/**
+		 * @const
+		 * @type {number}
+		 */
 		this.BID_YOUNG = 2 | 0;
+		/**
+		 * @const
+		 * @type {number}
+		 */
 		this.BID_OLD = 3 | 0;
 
+		/**
+		 * @const
+		 * @type {number}
+		 */
 		this.OBJ_HANDLE = 0 | 0;
+		/**
+		 * @const
+		 * @type {number}
+		 */
 		this.OBJ_CLASS_ID = 1 | 0;
 
+		/**
+		 * @const
+		 * @type {number}
+		 */
 		this.OBJ_BID = 3 | 0;
+		/**
+		 * @const
+		 * @type {number}
+		 */
 		this.OBJ_GEN = 4 | 0;
+		/**
+		 * @const
+		 * @type {number}
+		 */
 		this.OBJ_MULTI_USAGE = 5 | 0;
+		/**
+		 * @const
+		 * @type {number}
+		 */
 		this.OBJ_MONITOR_OWNER_ID = 6 | 0;
+		/**
+		 * @const
+		 * @type {number}
+		 */
 		this.OBJ_MONITOR_OWNER_TIME = 7 | 0;
 
+		/**
+		 * @const
+		 * @type {number}
+		 */
 		this.OBJ_META_SIZE = 8 | 0;
 
-		this.MAX_OBJECTS = FyConfig.maxObjects | 0;
-		this.HEAP_SIZE = FyConfig.heapSize | 0;
+		/**
+		 * @const
+		 * @type {number}
+		 */
 		this.MAX_GEN = 6 | 0;
-		this.EDEN_SIZE = FyConfig.edenSize | 0;
-		this.COPY_SIZE = FyConfig.copySize | 0;
 
 		this.EMPTY_BUFFER = new ArrayBuffer(65536);
 		this.EMPTY_ARRAY_32 = new Int32Array(this.EMPTY_BUFFER);
+
 	}
 
+	/**
+	 * @const
+	 */
 	var HeapConst = new HeapConstClass();
 
 	/**
 	 * We use one ArrayBuffer for all data
 	 * 
+	 * @constructor
 	 * @param {FyContext}
 	 *            context
+	 * @export
+	 * @struct
 	 */
-	FyHeap = function(context) {
+	window.FyHeap = function(context) {
+		/**
+		 * @type {FyContext}
+		 */
 		this.context = context;
+		/**
+		 * @type {FyConfig}
+		 */
+		this.config = this.context.config;
+
 		this.OBJ_META_SIZE = HeapConst.OBJ_META_SIZE;
 		/**
 		 * Heap layout:<code>
 		 * 
-		 * HeapConst.MAX_OBJECTS || Object pointer table 
-		 * HeapConst.EDEN_SIZE || Eden 
-		 * HeapConst.COPY_SIZE || Copy1
-		 * HeapConst.COPY_SIZE || Copy2 
+		 * this.config.maxObjects || Object pointer table 
+		 * this.config.edenSize || Eden 
+		 * this.config.copySize || Copy1
+		 * this.config.copySize || Copy2 
 		 * ??? || Old 
 		 * ??? || Perm(stacks, class static area)
 		 */
@@ -89,20 +151,20 @@ var FyHeap;
 		this.nextHandle = 1;
 		this.totalObjects = 0;
 
-		var _buffer = new ArrayBuffer(HeapConst.HEAP_SIZE << 2);
+		var _buffer = new ArrayBuffer(this.config.heapSize << 2);
 		this._buffer = _buffer;
 		this.heap = new Int32Array(_buffer);
 		this.heap8 = new Int8Array(_buffer);
 		this.heap16 = new Int16Array(_buffer);
 		this.heapFloat = new Float32Array(_buffer);
-		this.edenBottom = HeapConst.MAX_OBJECTS | 0;
-		this.edenTop = (this.edenBottom + HeapConst.EDEN_SIZE) | 0;
+		this.edenBottom = this.config.maxObjects | 0;
+		this.edenTop = (this.edenBottom + this.config.edenSize) | 0;
 		this.copyBottom = this.edenTop;
-		this.copyTop = (this.copyBottom + HeapConst.COPY_SIZE) | 0;
+		this.copyTop = (this.copyBottom + this.config.copySize) | 0;
 		this.copy2Bottom = this.copyTop;
-		this.copy2Top = (this.copy2Bottom + HeapConst.COPY_SIZE) | 0;
+		this.copy2Top = (this.copy2Bottom + this.config.copySize) | 0;
 		this.oldBottom = this.copy2Top;
-		this.heapTop = HeapConst.HEAP_SIZE;
+		this.heapTop = this.config.heapSize;
 
 		this.edenPos = this.edenBottom;
 		this.copyPos = this.copyBottom;
@@ -116,13 +178,21 @@ var FyHeap;
 	};
 
 	/**
+	 * @type {number}
+	 * @export
+	 */
+	FyHeap.OBJ_META_SIZE = HeapConst.OBJ_META_SIZE;
+	
+
+	/**
 	 * Get array size in int32 from array's length (byte arrays put 4 bytes to
 	 * one int32 and short arrays put 2 bytes to one int32 etc.)
 	 * 
 	 * @param {FyClass}
 	 *            clazz class of the array
-	 * @param {Number}
+	 * @param {number}
 	 *            length length of the array
+	 * @export
 	 */
 	FyHeap.getArraySizeFromLength = function(clazz, length) {
 		switch (clazz.arrayType) {
@@ -142,7 +212,7 @@ var FyHeap;
 
 	/**
 	 * @param gced
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.fetchNextHandle = function(gced) {
 		var handle = this.nextHandle;
@@ -151,7 +221,7 @@ var FyHeap;
 				break;
 			}
 			handle++;
-			if (handle >= HeapConst.MAX_OBJECTS) {
+			if (handle >= this.config.maxObjects) {
 				handle = 1;
 			}
 			if (handle === this.nextHandle) {
@@ -164,18 +234,18 @@ var FyHeap;
 			}
 		}
 		this.nextHandle = handle + 1;
-		if (this.nextHandle >= HeapConst.MAX_OBJECTS) {
+		if (this.nextHandle >= this.config.maxObjects) {
 			this.nextHandle = 1;
 		}
 		return handle | 0;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            pos
-	 * @param {Number}
+	 * @param {number}
 	 *            size
-	 * @param {Number}
+	 * @param {number}
 	 *            value
 	 */
 	FyHeap.prototype.memset32 = function(pos, size, value) {
@@ -226,7 +296,7 @@ var FyHeap;
 	 */
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
 	 */
 	FyHeap.prototype.objectExists = function(handle) {
@@ -234,7 +304,7 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            pos
 	 */
 	FyHeap.prototype.getOjbectHandleIn = function(pos) {
@@ -316,11 +386,11 @@ var FyHeap;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            size
-	 * @param {Number}
+	 * @param {number}
 	 *            gced
-	 * @returns {Number} the address in heap allocated
+	 * @returns {number} the address in heap allocated
 	 */
 	FyHeap.prototype.allocatePerm = function(size, gced) {
 		this.heapTop -= size;
@@ -338,11 +408,11 @@ var FyHeap;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            size
-	 * @param {Number}
+	 * @param {number}
 	 *            gced
-	 * @returns {Number} the address in heap allocated
+	 * @returns {number} the address in heap allocated
 	 */
 	FyHeap.prototype.allocateStatic = function(size, gced) {
 		this.heapTop -= size;
@@ -362,21 +432,21 @@ var FyHeap;
 		var pos = this.stackPool[threadId];
 		if (!pos) {
 			// allocate new
-			pos = this.allocatePerm(FyConfig.stackSize, 0);
+			pos = this.allocatePerm(this.config.stackSize, 0);
 			this.stackPool[threadId] = pos;
 		}
 		return pos;
 	};
 
 	FyHeap.prototype.releaseStack = function(threadId) {
-		this.memset32(this.stackPool[threadId], FyConfig.stackSize, 0);
+		this.memset32(this.stackPool[threadId], this.config.stackSize, 0);
 	};
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            size
-	 * @param {Number}
+	 * @param {number}
 	 *            gced
 	 * 
 	 */
@@ -401,9 +471,9 @@ var FyHeap;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            size
-	 * @param {Number}
+	 * @param {number}
 	 *            gced
 	 * 
 	 */
@@ -428,9 +498,9 @@ var FyHeap;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            size
-	 * @param {Number}
+	 * @param {number}
 	 *            gced
 	 */
 	FyHeap.prototype.allocateInOld = function(size, gced) {
@@ -455,17 +525,17 @@ var FyHeap;
 	/**
 	 * The underlying allocate logic
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            size
 	 * @param {FyClass}
 	 *            clazz
-	 * @param {Number}
+	 * @param {number}
 	 *            multiUsageData
-	 * @param {Number}
+	 * @param {number}
 	 *            toHandle
-	 * @param {Number}
+	 * @param {number}
 	 *            bid
-	 * @returns {Number} object handle
+	 * @returns {number} object handle
 	 */
 	FyHeap.prototype.allocateInternal = function(size, clazz, multiUsageData,
 			toHandle, bid) {
@@ -486,7 +556,7 @@ var FyHeap;
 
 		switch (bid) {
 		case 0/* HeapConst.BID_AUTO */:
-			if (size >= ((HeapConst.EDEN_SIZE))) {
+			if (size >= ((this.config.edenSize))) {
 				// allocate in old directly
 				this.createObject(handle, this.allocateInOld(size
 						+ HeapConst.OBJ_META_SIZE, 0));
@@ -535,17 +605,17 @@ var FyHeap;
 	/**
 	 * Allocate for state-load
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            size
 	 * @param {FyClass}
 	 *            clazz
-	 * @param {Number}
+	 * @param {number}
 	 *            multiUsageData
-	 * @param {Number}
+	 * @param {number}
 	 *            toHandle
-	 * @param {Number}
+	 * @param {number}
 	 *            pos position
-	 * @returns {Number} object handle
+	 * @returns {number} object handle
 	 */
 	FyHeap.prototype.allocateDirect = function(size, clazz, multiUsageData,
 			toHandle, pos) {
@@ -566,7 +636,7 @@ var FyHeap;
 	 * 
 	 * @param {FyClass}
 	 *            clazz
-	 * @return {Number} object handle
+	 * @return {number} object handle
 	 */
 	FyHeap.prototype.allocate = function(clazz) {
 		if (clazz.type !== FyConst.TYPE_OBJECT) {
@@ -581,7 +651,7 @@ var FyHeap;
 	 * 
 	 * @param {FyClass}
 	 *            clazz
-	 * @param {Number}
+	 * @param {number}
 	 *            length
 	 */
 	FyHeap.prototype.allocateArray = function(clazz, length) {
@@ -600,11 +670,11 @@ var FyHeap;
 	 * 
 	 * @param {FyClass}
 	 *            clazz class which this method creates for
-	 * @param {Number}
+	 * @param {number}
 	 *            layers total layers
 	 * @param {Array}
 	 *            counts arrays layers counts
-	 * @param {Number}
+	 * @param {number}
 	 *            pos
 	 */
 	FyHeap.prototype.multiNewArray = function(clazz, layers, counts, pos) {
@@ -658,7 +728,7 @@ var FyHeap;
 	/**
 	 * @param {GcData}
 	 *            gcData
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
 	 */
 	FyHeap.prototype.markObjectInitialUsing = function(handle) {
@@ -677,9 +747,9 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            reference
-	 * @param {Number}
+	 * @param {number}
 	 *            referent
 	 * @param {FyHeap}
 	 *            heap
@@ -718,7 +788,7 @@ var FyHeap;
 		var f1, f2, f3, f4, f5, f6, f7;
 		f1 = performance.now();
 		/* Reflection objects */
-		imax = FyConfig.maxObjects;
+		imax = this.config.maxObjects;
 		for (var i = 1; i < imax; i++) {
 			if (this.objectExists(i)) {
 				var clazz = this.getObjectClass(i);
@@ -763,7 +833,7 @@ var FyHeap;
 		}
 		f4 = performance.now();
 		/* Thread objects */
-		imax = FyConfig.maxThreads;
+		imax = this.config.maxThreads;
 		for (var i = 1; i < imax; i++) {
 			/**
 			 * @returns {FyThread}
@@ -848,8 +918,8 @@ var FyHeap;
 							// console.log("!!Add #" + handle + "[" + i +
 							// "]="
 							// + handle2);
-							if (FyConfig.debugMode
-									&& (handle2 < 0 || handle2 > FyConfig.maxObjects)) {
+							if (this.config.debugMode
+									&& (handle2 < 0 || handle2 > this.config.maxObjects)) {
 								throw new FyException("Illegal handle #"
 										+ handle2 + " in "
 										+ this.getObjectClass(handle).name
@@ -887,8 +957,8 @@ var FyHeap;
 							// console.log("!!Add #" + handle + "[" +
 							// field.name
 							// + "]=" + handle2);
-							if (FyConfig.debugMode
-									&& (handle2 < 0 || handle2 > FyConfig.maxObjects)) {
+							if (this.config.debugMode
+									&& (handle2 < 0 || handle2 > this.config.maxObjects)) {
 								throw new FyException("Illegal handle #"
 										+ handle2 + " in "
 										+ this.getObjectClass(handle).name
@@ -912,7 +982,7 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
 	 */
 	FyHeap.prototype.getSizeFromObject = function(handle) {
@@ -957,7 +1027,7 @@ var FyHeap;
 		for (var i = newPos; i < this.oldPos;) {
 			i = i | 0;
 			var handle = this.heap[i] | 0;
-			if (handle > 0 && handle < HeapConst.MAX_OBJECTS
+			if (handle > 0 && handle < this.config.maxObjects
 					&& this.heap[handle] === i) {
 				// It's a real object
 				var clazz = this.getObjectClass(handle);
@@ -992,7 +1062,7 @@ var FyHeap;
 	};
 
 	FyHeap.prototype.validateObjects = function() {
-		for (var handle = HeapConst.MAX_OBJECTS; --handle;) {
+		for (var handle = this.config.maxObjects; --handle;) {
 			if (this.heap[handle] !== 0
 					&& this.heap[this.heap[handle]] !== handle) {
 				throw new FyException(undefined, "Illegal status for object #"
@@ -1042,7 +1112,7 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
 	 */
 	FyHeap.prototype.moveToOld = function(handle) {
@@ -1069,7 +1139,7 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
 	 */
 	FyHeap.prototype.moveToYoung = function(handle) {
@@ -1187,7 +1257,6 @@ var FyHeap;
 					+ ", copySize=" + (this.copyPos - this.copyBottom)
 					+ ", edenSize=" + (this.edenPos - this.edenBottom))
 		}
-		memoryStressed = true;
 		this.context
 				.log(
 						1,
@@ -1210,9 +1279,9 @@ var FyHeap;
 										+ this.copyPos - this.copyBottom
 										+ this.oldPos - this.oldBottom)
 								+ " ints "
-								+ (HeapConst.HEAP_SIZE - this.heapTop)
+								+ (this.config.heapSize - this.heapTop)
 								+ " perm ints");
-		if (FyConfig.debugMode) {
+		if (this.config.debugMode) {
 			this.validateObjects();
 		}
 
@@ -1244,7 +1313,7 @@ var FyHeap;
 
 		this.marks.clear();
 		this.gcInProgress = false;
-		if (FyConfig.debugMode) {
+		if (this.config.debugMode) {
 			this.validateObjects();
 		}
 		this.context.log(1, "#GC AFTER "
@@ -1256,7 +1325,7 @@ var FyHeap;
 				+ " total "
 				+ (this.edenPos - this.edenBottom + this.copyPos
 						- this.copyBottom + this.oldPos - this.oldBottom)
-				+ " ints " + (HeapConst.HEAP_SIZE - this.heapTop)
+				+ " ints " + (this.config.heapSize - this.heapTop)
 				+ " perm ints");
 		this.context.log(1, "#GC time: " + ((t1 - timeStamp) | 0) + " "
 				+ ((t2 - t1) | 0) + " " + ((t3 - t2) | 0) + " "
@@ -1341,9 +1410,9 @@ var FyHeap;
 	/**
 	 * Check whether a index is legal in an array
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
-	 * @param {Number}
+	 * @param {number}
 	 *            idx index
 	 */
 	FyHeap.prototype.checkLength = function(handle, idx) {
@@ -1354,11 +1423,11 @@ var FyHeap;
 	};
 	// TODO AUTO BELOW!
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
-	 * @param {Number}
+	 * @param {number}
 	 *            index
-	 * @param {Number}pos
+	 * @param {number}pos
 	 */
 	FyHeap.prototype.getArrayRaw32ToHeap = function(handle, index, pos) {
 		this.checkLength(handle, index);
@@ -1371,11 +1440,11 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
-	 * @param {Number}
+	 * @param {number}
 	 *            index
-	 * @param {Number}pos
+	 * @param {number}pos
 	 */
 	FyHeap.prototype.getArrayRaw16ToHeap = function(handle, index, pos) {
 		this.checkLength(handle, index);
@@ -1384,11 +1453,11 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
-	 * @param {Number}
+	 * @param {number}
 	 *            index
-	 * @param {Number}pos
+	 * @param {number}pos
 	 */
 	FyHeap.prototype.getArrayRaw8ToHeap = function(handle, index, pos) {
 		this.checkLength(handle, index);
@@ -1397,11 +1466,11 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
-	 * @param {Number}
+	 * @param {number}
 	 *            index
-	 * @param {Number}pos
+	 * @param {number}pos
 	 */
 	FyHeap.prototype.getArrayRaw64ToHeap = function(handle, index, pos) {
 		this.checkLength(handle, index);
@@ -1818,9 +1887,9 @@ var FyHeap;
 	/**
 	 * Get a javascript String from java String
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            handle object handle
-	 * @returns {String}
+	 * @returns {string}
 	 */
 	FyHeap.prototype.getString = function(handle) {
 		/**
@@ -1872,11 +1941,11 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            stringHandle
-	 * @param {String}
+	 * @param {string}
 	 *            str
-	 * @returns {Number} handle
+	 * @returns {number} handle
 	 */
 	FyHeap.prototype.fillString = function(stringHandle, str) {
 		/**
@@ -1916,9 +1985,9 @@ var FyHeap;
 
 	/**
 	 * 
-	 * @param {String}
+	 * @param {string}
 	 *            str
-	 * @returns {Number} handle
+	 * @returns {number} handle
 	 */
 	FyHeap.prototype.literal = function(str) {
 		var handle;
@@ -2059,7 +2128,7 @@ var FyHeap;
 		 */
 		var clazz = this.getObjectClass(src);
 		/**
-		 * @returns {Number}
+		 * @returns {number}
 		 */
 		var ret = 0;
 		var len = 0;
@@ -2092,9 +2161,9 @@ var FyHeap;
 	 */
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.unwrapBooleanTo = function(handle, pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_BOOLEAN);
@@ -2108,9 +2177,9 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            value
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.wrapBooleanFrom = function(pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_BOOLEAN);
@@ -2122,9 +2191,9 @@ var FyHeap;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.unwrapByteTo = function(handle, pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_BYTE);
@@ -2138,9 +2207,9 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            value
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.wrapByteFrom = function(pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_BYTE);
@@ -2151,9 +2220,9 @@ var FyHeap;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.unwrapShortTo = function(handle, pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_SHORT);
@@ -2167,9 +2236,9 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            value
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.wrapShortFrom = function(pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_SHORT);
@@ -2181,9 +2250,9 @@ var FyHeap;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.unwrapCharTo = function(handle, pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_CHAR);
@@ -2197,9 +2266,9 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            value
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.wrapCharFrom = function(pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_CHAR);
@@ -2211,9 +2280,9 @@ var FyHeap;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.unwrapIntTo = function(handle, pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_INT);
@@ -2227,9 +2296,9 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            value
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.wrapIntFrom = function(pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_INT);
@@ -2241,9 +2310,9 @@ var FyHeap;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.unwrapFloatTo = function(handle, pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_FLOAT);
@@ -2257,9 +2326,9 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            value
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.wrapFloatFrom = function(pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_FLOAT);
@@ -2271,9 +2340,9 @@ var FyHeap;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.unwrapLongTo = function(handle, pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_LONG);
@@ -2287,9 +2356,9 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            value
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.wrapLongFrom = function(pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_LONG);
@@ -2301,9 +2370,9 @@ var FyHeap;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            handle
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.unwrapDoubleTo = function(handle, pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_DOUBLE);
@@ -2318,9 +2387,9 @@ var FyHeap;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            value
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	FyHeap.prototype.wrapDoubleFrom = function(pos) {
 		var clazz = this.context.lookupClass(FyConst.FY_BASE_DOUBLE);

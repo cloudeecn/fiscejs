@@ -26,9 +26,9 @@ var HashMapIObj;
 	var DUMMY_ENTRY = new EntryIO(0, {});
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            capShift
-	 * @param {Number}
+	 * @param {number}
 	 *            factor
 	 */
 	HashMapIObj = function(capShift, factor) {
@@ -108,11 +108,11 @@ var HashMapIObj;
 
 	/**
 	 * 
-	 * @param {Number}
+	 * @param {number}
 	 *            key
-	 * @param {Number}
+	 * @param {number}
 	 *            value
-	 * @returns {Number}
+	 * @returns {number}
 	 */
 	HashMapIObj.prototype.put = function(key, value) {
 		key = key | 0;

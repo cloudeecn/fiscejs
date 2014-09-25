@@ -1,100 +1,120 @@
 (function() {
 	"use strict";
-	fisceTests
-			.extend({
-				"     Performance" : function() {
-					var i, j, ROUNDS = 256, TIMES = 16384;
-					var array = new Array(TIMES);
-					var farray = new Array(TIMES);
-					var intArray = new Uint32Array(TIMES);
-					var floatArray = new Float32Array(TIMES);
-					var arrayBuffer = new ArrayBuffer(TIMES << 2);
-					var bufferBackedIntArray = new Uint32Array(arrayBuffer);
-					var bufferBackedFloatArray = new Float32Array(arrayBuffer);
-					var dataView = new DataView(arrayBuffer);
-					var begin, end;
+	fisceTests.extendPrerequisite({
+		"     Performance" : function(assert) {
+			"use strict";
+			var i, j, ROUNDS = 10, TIMES = 1048576;
+			var array = new Array(TIMES);
+			var farray = new Array(TIMES);
+			var intArray = new Int32Array(TIMES);
+			var floatArray = new Float32Array(TIMES);
+			var arrayBuffer = new ArrayBuffer(TIMES << 2);
+			var bufferBackedIntArray = new Int32Array(arrayBuffer);
+			var bufferBackedFloatArray = new Float32Array(arrayBuffer);
+			var bufferBackedFloat64Array = new Float64Array(arrayBuffer);
+			var dataView = new DataView(arrayBuffer);
+			var begin, end;
+			var time;
 
-					begin = performance.now();
-					for (j = 0; j < ROUNDS; j++) {
-						for (i = 0; i < TIMES; i++) {
-							array[i] = i;
-						}
+			time = benchmark(function() {
+				var i, j;
+				for (j = 0; j < ROUNDS; j++) {
+					for (i = 0; i < TIMES; i++) {
+						array[i] = i + 1;
 					}
-					end = performance.now();
-					ok(true, ROUNDS + " rounds " + (TIMES / 256)
-							+ "kB ints writes to array: " + (end - begin));
-
-					begin = performance.now();
-					for (j = 0; j < ROUNDS; j++) {
-						for (i = 0; i < TIMES; i++) {
-							farray[i] = i + 0.1;
-						}
-					}
-					end = performance.now();
-					ok(true, ROUNDS + " rounds " + (TIMES / 256)
-							+ "kB floats writes to array: " + (end - begin));
-
-					begin = performance.now();
-					for (j = 0; j < ROUNDS; j++) {
-						for (i = 0; i < TIMES; i++) {
-							intArray[i] = i;
-						}
-					}
-					end = performance.now();
-					ok(true, ROUNDS + " rounds " + (TIMES / 256)
-							+ "kB writes Uint32Array: " + (end - begin));
-
-					begin = performance.now();
-					for (j = 0; j < ROUNDS; j++) {
-						for (i = 0; i < TIMES; i++) {
-							floatArray[i] = i;
-						}
-					}
-					end = performance.now();
-					ok(true, ROUNDS + " rounds " + (TIMES / 256)
-							+ "kB writes Float32Array: " + (end - begin));
-
-					begin = performance.now();
-					for (j = 0; j < ROUNDS; j++) {
-						for (i = 0; i < TIMES; i++) {
-							bufferBackedIntArray[i] = i;
-						}
-					}
-					end = performance.now();
-					ok(true, ROUNDS + " rounds " + (TIMES / 256)
-							+ "kB writes Uint32Array(ArrayBuffer backed): "
-							+ (end - begin));
-
-					begin = performance.now();
-					for (j = 0; j < ROUNDS; j++) {
-						for (i = 0; i < TIMES; i++) {
-							bufferBackedFloatArray[i] = i;
-						}
-					}
-					end = performance.now();
-					ok(true, ROUNDS + " rounds " + (TIMES / 256)
-							+ "kB writes Float32Array(ArrayBuffer backed): "
-							+ (end - begin));
-
-					begin = performance.now();
-					for (j = 0; j < ROUNDS / 10; j++) {
-						for (i = 0; i < TIMES; i++) {
-							dataView.setUint32(i << 2, i);
-						}
-					}
-					end = performance.now();
-					ok(true, ROUNDS / 10 + " rounds " + (TIMES / 256)
-							+ "kB writes DataView/uint32: " + (end - begin));
-
-					begin = performance.now();
-					for (j = 0; j < ROUNDS / 10; j++) {
-						for (i = 0; i < TIMES; i++) {
-							dataView.setFloat32(i << 2, i);
-						}
-					}
-					end = performance.now();
-					ok(true, ROUNDS / 10 + " rounds " + (TIMES / 256)
-							+ "kB writes DataView/float32: " + (end - begin));
 				}
 			});
+			assert.ok(true, ROUNDS + " rounds " + (TIMES / 256)
+					+ "kB ints writes to array: " + time);
+
+			time = benchmark(function() {
+				var i, j;
+				for (j = 0; j < ROUNDS; j++) {
+					for (i = 0; i < TIMES; i++) {
+						farray[i] = i + 0.1;
+					}
+				}
+			});
+			assert.ok(true, ROUNDS + " rounds " + (TIMES / 256)
+					+ "kB floats writes to array: " + time);
+
+			time = benchmark(function() {
+				var i, j;
+				for (j = 0; j < ROUNDS; j++) {
+					for (i = 0; i < TIMES; i++) {
+						intArray[i] = i;
+					}
+				}
+			});
+			assert.ok(true, ROUNDS + " rounds " + (TIMES / 256)
+					+ "kB writes Uint32Array: " + time);
+
+			time = benchmark(function() {
+				var i, j;
+				for (j = 0; j < ROUNDS; j++) {
+					for (i = 0; i < TIMES; i++) {
+						floatArray[i] = i;
+					}
+				}
+			});
+			assert.ok(true, ROUNDS + " rounds " + (TIMES / 256)
+					+ "kB writes Float32Array: " + time);
+
+			time = benchmark(function() {
+				var i, j;
+				for (j = 0; j < ROUNDS; j++) {
+					for (i = 0; i < TIMES; i++) {
+						bufferBackedIntArray[i] = i;
+					}
+				}
+			});
+			assert.ok(true, ROUNDS + " rounds " + (TIMES / 256)
+					+ "kB writes Uint32Array(ArrayBuffer backed): " + time);
+
+			time = benchmark(function() {
+				var i, j;
+				for (j = 0; j < ROUNDS; j++) {
+					for (i = 0; i < TIMES; i++) {
+						bufferBackedFloatArray[i] = i;
+					}
+				}
+			});
+			assert.ok(true, ROUNDS + " rounds " + (TIMES / 256)
+					+ "kB writes Float32Array(ArrayBuffer backed): " + time);
+
+			time = benchmark(function() {
+				var i, j;
+				var max = TIMES / 2;
+				for (j = 0; j < ROUNDS; j++) {
+					for (i = 0; i < max; i++) {
+						bufferBackedFloat64Array[i] = i;
+					}
+				}
+			});
+			assert.ok(true, ROUNDS + " rounds " + (TIMES / 256)
+					+ "kB writes Float64Array(ArrayBuffer backed): " + time);
+
+			time = benchmark(function() {
+				var i, j;
+				for (j = 0; j < ROUNDS / 10; j++) {
+					for (i = 0; i < TIMES; i++) {
+						dataView.setUint32(i << 2, i);
+					}
+				}
+			});
+			assert.ok(true, ROUNDS / 10 + " rounds " + (TIMES / 256)
+					+ "kB writes DataView/uint32: " + time);
+
+			time = benchmark(function() {
+				var i, j;
+				for (j = 0; j < ROUNDS / 10; j++) {
+					for (i = 0; i < TIMES; i++) {
+						dataView.setFloat32(i << 2, i);
+					}
+				}
+			});
+			assert.ok(true, ROUNDS / 10 + " rounds " + (TIMES / 256)
+					+ "kB writes DataView/float32: " + time);
+		}
+	});
 })();

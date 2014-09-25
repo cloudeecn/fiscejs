@@ -41,7 +41,7 @@ var FyClassLoader;
 	};
 
 	/**
-	 * @param {String}
+	 * @param {string}
 	 *            name
 	 * @returns {FyClass}
 	 */
@@ -52,7 +52,7 @@ var FyClassLoader;
 	};
 
 	/**
-	 * @param {Number}
+	 * @param {number}
 	 *            constant
 	 * @returns {FyClass}
 	 */
@@ -98,7 +98,7 @@ var FyClassLoader;
 	/**
 	 * Get array size shift from array class name
 	 * 
-	 * @param {String}
+	 * @param {string}
 	 *            arrayName
 	 */
 	FyClassLoader.getArrayContentType = function(arrayName) {
@@ -141,26 +141,9 @@ var FyClassLoader;
 			 */
 			var cd = this.context.classDefs[i];
 			if (name in cd.classes) {
-				var data = FyUtils.unbase64(cd.classes[name], undefined, 0, 0);
-				var gunzip = new Zlib.Gunzip(data);
-				var utf8 = gunzip.decompress();
-				data = undefined;
-				var outArray = new Array(1);
-				var ofs = 0;
-				var str = "";
-				while (ofs < utf8.length) {
-					ofs += FyUtils.utf8Decode(utf8, ofs, outArray, 0);
-					str += String.fromCharCode(outArray[0]);
-				}
-				utf8 = undefined;
-				classDef = JSON.parse(str);
-
-				// delete cd.classes[name];
-
-				global = cd.global;
 				return {
-					classDef : classDef,
-					global : global
+					classDef : JSON.parse(LZString.decompressFromUTF16(cd.classes[name])),
+					global : cd
 				};
 			}
 		}
@@ -345,7 +328,7 @@ var FyClassLoader;
 	/**
 	 * load class
 	 * 
-	 * @param {String}
+	 * @param {string}
 	 *            name
 	 */
 	FyClassLoader.prototype.loadClass = function(name) {

@@ -2,8 +2,8 @@
 
 	fisceTests
 			.extend({
-				"HelloWorld" : function() {
-					ok(true);
+				"HelloWorld" : function(assert, context) {
+					assert.ok(true);
 					return;
 					var context = fisceTests.context();
 					var clazz = context

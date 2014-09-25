@@ -25,7 +25,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathACos(context, thread, sp, ops) {
@@ -41,7 +41,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathASin(context, thread, sp, ops) {
@@ -57,7 +57,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathATan(context, thread, sp, ops) {
@@ -73,7 +73,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathATan2(context, thread, sp, ops) {
@@ -90,7 +90,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathCbrt(context, thread, sp, ops) {
@@ -106,7 +106,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathCeil(context, thread, sp, ops) {
@@ -122,7 +122,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathCos(context, thread, sp, ops) {
@@ -138,7 +138,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathCosh(context, thread, sp, ops) {
@@ -155,7 +155,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathExp(context, thread, sp, ops) {
@@ -171,7 +171,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathExpm1(context, thread, sp, ops) {
@@ -187,7 +187,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathFloor(context, thread, sp, ops) {
@@ -203,7 +203,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathHypot(context, thread, sp, ops) {
@@ -226,7 +226,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathIEEERemainder(context, thread, sp, ops) {
@@ -247,7 +247,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathLog(context, thread, sp, ops) {
@@ -263,7 +263,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathLog10(context, thread, sp, ops) {
@@ -279,7 +279,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathLog1p(context, thread, sp, ops) {
@@ -295,7 +295,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathPow(context, thread, sp, ops) {
@@ -312,7 +312,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathRint(context, thread, sp, ops) {
@@ -328,7 +328,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathSignum(context, thread, sp, ops) {
@@ -348,7 +348,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathSignumf(context, thread, sp, ops) {
@@ -368,7 +368,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathSin(context, thread, sp, ops) {
@@ -384,7 +384,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathSinh(context, thread, sp, ops) {
@@ -401,7 +401,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathSqrt(context, thread, sp, ops) {
@@ -417,7 +417,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathTan(context, thread, sp, ops) {
@@ -433,7 +433,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathTanh(context, thread, sp, ops) {
@@ -450,7 +450,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathUlp(context, thread, sp, ops) {
@@ -464,7 +464,7 @@
 	 *            context
 	 * @param {FyThread}
 	 *            thread
-	 * @param {Number}
+	 * @param {number}
 	 *            ops
 	 */
 	function mathUlpf(context, thread, sp, ops) {

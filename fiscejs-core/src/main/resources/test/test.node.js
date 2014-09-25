@@ -7,13 +7,13 @@
 	//
 	// };
 	/**
-	 * @param {String}
+	 * @param {string}
 	 *            message
 	 */
 	function format(message) {
 		// return message;
 		/**
-		 * @returns {String}
+		 * @returns {string}
 		 */
 		var msg = message.replace(/^(.*)$/g, "\t$1\n");
 		return msg.substring(0, msg.length - 1);
@@ -31,7 +31,7 @@
 	 * 
 	 * @param {Boolean}
 	 *            status
-	 * @param {String}
+	 * @param {string}
 	 *            message
 	 */
 	global.ok = function(status, message) {
@@ -135,7 +135,7 @@
 	fisceTests.classDefData = data;
 	fisceTests.iterate(
 	/**
-	 * @param {String}
+	 * @param {string}
 	 *            message
 	 * @param {Function}
 	 *            fun

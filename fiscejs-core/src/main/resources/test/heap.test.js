@@ -1,33 +1,33 @@
 (function() {
 	fisceTests
 			.extend({
-				"   Heap.array" : function() {
+				"   Heap.array" : function(assert, context) {
 					var length = 256;
-					var context = fisceTests.context();
 					var heap = context.heap;
 					var i;
 
 					/**
 					 * 
-					 * @param {String}type
-					 * @param {String}func
+					 * @param {string}type
+					 * @param {string}func
 					 */
 					function test(type, func) {
 						var handle;
 						var handle2;
 						var handle3;
 						var arrayName = "[" + FyContext.mapPrimitivesRev[type];
-						var typeName = type.substring(1).charAt(0).toUpperCase()
+						var typeName = type.substring(1).charAt(0)
+								.toUpperCase()
 								+ type.substring(2);
 						var setter = heap["putArray" + typeName];
 						var getter = heap["getArray" + typeName];
-						
+
 						handle = heap.allocateArray(context
 								.lookupClass(arrayName), length);
 						if (length = heap.arrayLength(handle)) {
-							ok(true, type + "[] length=" + length);
+							assert.ok(true, type + "[] length=" + length);
 						} else {
-							ok(false, type + "[] length="
+							assert.ok(false, type + "[] length="
 									+ heap.arrayLength(handle) + "/" + length);
 						}
 						for (i = 0; i < length; i++) {
@@ -39,18 +39,18 @@
 							}
 						}
 						if (i === length) {
-							ok(true, type + "[] values");
+							assert.ok(true, type + "[] values");
 						} else {
-							ok(false, type + "[" + i + "]="
+							assert.ok(false, type + "[" + i + "]="
 									+ getter.call(heap, handle, i)
 									+ " expects " + eval(func));
 						}
 
 						handle2 = heap.clone(handle);
-						ok(handle2, type + " clone returns");
-						notEqual(handle, handle2,
+						assert.ok(handle2, type + " clone returns");
+						assert.notEqual(handle, handle2,
 								"Cloned array has different handles");
-						equal(heap.arrayLength(handle), heap
+						assert.equal(heap.arrayLength(handle), heap
 								.arrayLength(handle2),
 								"cloned array has same length");
 						for (i = 0; i < length; i++) {
@@ -59,9 +59,9 @@
 							}
 						}
 						if (i === length) {
-							ok(true, "cloned " + type + "[] values");
+							assert.ok(true, "cloned " + type + "[] values");
 						} else {
-							ok(false, "cloned " + type + "[" + i + "]="
+							assert.ok(false, "cloned " + type + "[" + i + "]="
 									+ getter.call(heap, handle2, i)
 									+ " expects " + eval(func));
 						}
@@ -77,10 +77,10 @@
 							}
 						}
 						if (i === length) {
-							ok(true, "copied " + type + "[] values");
+							assert.ok(true, "copied " + type + "[] values");
 						} else {
-							ok(false, "copyied " + type + "[" + (i + 5) + "]="
-									+ getter.call(heap, handle3, i + 5)
+							assert.ok(false, "copyied " + type + "[" + (i + 5)
+									+ "]=" + getter.call(heap, handle3, i + 5)
 									+ " expects " + eval(func));
 						}
 					}
@@ -124,18 +124,21 @@
 							}
 						}
 						if (i === length) {
-							ok(true, "long[] values");
+							assert.ok(true, "long[] values");
 						} else {
-							ok(false, "long[" + i + "]=[" + data1[i * 2] + ","
-									+ data1[i * 2 + 1] + "] expects ["
-									+ data[i * 2] + "," + data[i * 2 + 1] + "]");
+							assert
+									.ok(false, "long[" + i + "]=["
+											+ data1[i * 2] + ","
+											+ data1[i * 2 + 1] + "] expects ["
+											+ data[i * 2] + ","
+											+ data[i * 2 + 1] + "]");
 						}
 
 						handle2 = heap.clone(handle);
-						ok(handle2, "long clone returns");
-						notEqual(handle, handle2,
+						assert.ok(handle2, "long clone returns");
+						assert.notEqual(handle, handle2,
 								"Cloned array has different handles");
-						equal(heap.arrayLength(handle), heap
+						assert.equal(heap.arrayLength(handle), heap
 								.arrayLength(handle2),
 								"cloned array has same length");
 						for (i = 0; i < length; i++) {
@@ -148,11 +151,12 @@
 							}
 						}
 						if (i === length) {
-							ok(true, "cloned long[] values");
+							assert.ok(true, "cloned long[] values");
 						} else {
-							ok(false, "cloned long[" + i + "]=[" + data1[i * 2]
-									+ "," + data1[i * 2 + 1] + "] expects ["
-									+ data[i * 2] + "," + data[i * 2 + 1] + "]");
+							assert.ok(false, "cloned long[" + i + "]=["
+									+ data1[i * 2] + "," + data1[i * 2 + 1]
+									+ "] expects [" + data[i * 2] + ","
+									+ data[i * 2 + 1] + "]");
 						}
 
 						handle3 = heap.allocateArray(context.lookupClass("[J"),
@@ -169,17 +173,16 @@
 							}
 						}
 						if (i === length) {
-							ok(true, "copied long[] values");
+							assert.ok(true, "copied long[] values");
 						} else {
-							ok(false, "copied long[" + (i + 5) + "]=["
+							assert.ok(false, "copied long[" + (i + 5) + "]=["
 									+ data1[i * 2] + "," + data1[i * 2 + 1]
 									+ "] expects [" + data[i * 2] + ","
 									+ data[i * 2 + 1] + "]");
 						}
 					}
 				},
-				"   Heap.field" : function() {
-					var context = fisceTests.context();
+				"   Heap.field" : function(assert, context) {
 					var heap = context.heap;
 					var clazz = context
 							.lookupClass("EXCLUDE/fisce/test/FieldHolder3");
@@ -203,20 +206,20 @@
 					var doubleField = context.lookupFieldVirtual(clazz,
 							".doubleField.D");
 
-					ok(booleanField, "boolean field loaded");
-					ok(byteField, "byte field loaded");
+					assert.ok(booleanField, "boolean field loaded");
+					assert.ok(byteField, "byte field loaded");
 
-					ok(charField, "char field loaded");
-					ok(shortField, "short field loaded");
+					assert.ok(charField, "char field loaded");
+					assert.ok(shortField, "short field loaded");
 
-					ok(intField, "int field loaded");
-					ok(floatField, "float field loaded");
+					assert.ok(intField, "int field loaded");
+					assert.ok(floatField, "float field loaded");
 
-					ok(longField, "long field loaded");
-					ok(doubleField, "double field loaded");
+					assert.ok(longField, "long field loaded");
+					assert.ok(doubleField, "double field loaded");
 
 					var handle = heap.allocate(clazz);
-					ok(handle > 0, "Test object got " + handle);
+					assert.ok(handle > 0, "Test object got " + handle);
 
 					heap.putFieldBoolean(handle, booleanField.posAbs, true);
 					heap.putFieldByte(handle, byteField.posAbs, -3);
@@ -234,90 +237,93 @@
 
 					var pos = heap.allocatePerm(2);
 
-					equal(true, heap.getFieldBoolean(handle,
+					assert.equal(true, heap.getFieldBoolean(handle,
 							booleanField.posAbs), "boolean field operation");
 					heap.getFieldRaw32To(handle, booleanField.posAbs, pos);
-					equal(1, heap.get32(pos), "boolean field raw operation");
+					assert.equal(1, heap.get32(pos),
+							"boolean field raw operation");
 
-					equal(-3, heap.getFieldByte(handle, byteField.posAbs),
+					assert.equal(-3, heap
+							.getFieldByte(handle, byteField.posAbs),
 							"byte field operation");
 					heap.getFieldRaw32To(handle, byteField.posAbs, pos);
-					equal(-3 & 0xff, heap.get32(pos),
+					assert.equal(-3 & 0xff, heap.get32(pos),
 							"byte field raw operation");
 
-					equal(0x5678, heap.getFieldChar(handle, charField.posAbs),
-							"char field operation");
+					assert.equal(0x5678, heap.getFieldChar(handle,
+							charField.posAbs), "char field operation");
 					heap.getFieldRaw32To(handle, charField.posAbs, pos);
-					equal(0x5678, heap.get32(pos), "char field raw operation");
+					assert.equal(0x5678, heap.get32(pos),
+							"char field raw operation");
 
-					equal(-5566, heap.getFieldShort(handle, shortField.posAbs),
-							"short field operation");
+					assert.equal(-5566, heap.getFieldShort(handle,
+							shortField.posAbs), "short field operation");
 					heap.getFieldRaw32To(handle, shortField.posAbs, pos);
-					equal(-5566 & 0xffff, heap.get32(pos),
+					assert.equal(-5566 & 0xffff, heap.get32(pos),
 							"short field raw operation");
 
 					var longPair = [ 0, 0, 0 ];
 					var longResult = heap.getFieldLongTo(handle,
 							longField.posAbs, longPair, 1);
-					ok(longResult, "long returns");
-					equal(0x12345678 >> 0, longPair[1], "long high part");
-					equal(0x90abcdef >> 0, longPair[2], "long low part");
+					assert.ok(longResult, "long returns");
+					assert
+							.equal(0x12345678 >> 0, longPair[1],
+									"long high part");
+					assert.equal(0x90abcdef >> 0, longPair[2], "long low part");
 
-					equal(1.2345678901E98, heap.getFieldDouble(handle,
+					assert.equal(1.2345678901E98, heap.getFieldDouble(handle,
 							doubleField.posAbs), "double value");
-					ok(
-							heap.getFieldLongTo(handle, doubleField.posAbs, [],
-									1)[1], "double raw value high");
-					ok(
-							heap.getFieldLongTo(handle, doubleField.posAbs, [],
-									1)[2], "double raw value low");
+					assert.ok(heap.getFieldLongTo(handle, doubleField.posAbs,
+							[], 1)[1], "double raw value high");
+					assert.ok(heap.getFieldLongTo(handle, doubleField.posAbs,
+							[], 1)[2], "double raw value low");
 
 					var handle2 = heap.clone(handle);
-					ok(handle2, "object cloned");
-					notEqual(handle, handle2,
+					assert.ok(handle2, "object cloned");
+					assert.notEqual(handle, handle2,
 							"Cloned object has different handles");
-					equal(true, heap.getFieldBoolean(handle2,
+					assert.equal(true, heap.getFieldBoolean(handle2,
 							booleanField.posAbs), "boolean field operation");
 					heap.getFieldRaw32To(handle2, booleanField.posAbs, pos);
-					equal(1, heap.get32(pos), "boolean field raw operation");
+					assert.equal(1, heap.get32(pos),
+							"boolean field raw operation");
 
-					equal(-3, heap.getFieldByte(handle2, byteField.posAbs),
-							"byte field operation");
+					assert.equal(-3, heap.getFieldByte(handle2,
+							byteField.posAbs), "byte field operation");
 					heap.getFieldRaw32To(handle2, byteField.posAbs, pos);
-					equal(-3 & 0xff, heap.get32(pos),
+					assert.equal(-3 & 0xff, heap.get32(pos),
 							"byte field raw operation");
 
-					equal(0x5678, heap.getFieldChar(handle2, charField.posAbs),
-							"char field operation");
+					assert.equal(0x5678, heap.getFieldChar(handle2,
+							charField.posAbs), "char field operation");
 					heap.getFieldRaw32To(handle2, charField.posAbs, pos);
-					equal(0x5678, heap.get32(pos), "char field raw operation");
+					assert.equal(0x5678, heap.get32(pos),
+							"char field raw operation");
 
-					equal(-5566,
-							heap.getFieldShort(handle2, shortField.posAbs),
-							"short field operation");
+					assert.equal(-5566, heap.getFieldShort(handle2,
+							shortField.posAbs), "short field operation");
 					heap.getFieldRaw32To(handle2, shortField.posAbs, pos);
-					equal(-5566 & 0xffff, heap.get32(pos),
+					assert.equal(-5566 & 0xffff, heap.get32(pos),
 							"short field raw operation");
 
 					var longPair = [ 0, 0, 0 ];
 					var longResult = heap.getFieldLongTo(handle2,
 							longField.posAbs, longPair, 1);
-					ok(longResult, "long returns");
-					equal(0x12345678 >> 0, longPair[1], "long high part");
-					equal(0x90abcdef >> 0, longPair[2], "long low part");
+					assert.ok(longResult, "long returns");
+					assert
+							.equal(0x12345678 >> 0, longPair[1],
+									"long high part");
+					assert.equal(0x90abcdef >> 0, longPair[2], "long low part");
 
-					equal(1.2345678901E98, heap.getFieldDouble(handle2,
+					assert.equal(1.2345678901E98, heap.getFieldDouble(handle2,
 							doubleField.posAbs), "double value");
-					ok(
-							heap.getFieldLongTo(handle2, doubleField.posAbs,
-									[], 1)[1], "double raw value high");
-					ok(
-							heap.getFieldLongTo(handle2, doubleField.posAbs,
-									[], 1)[2], "double raw value low");
+					assert.ok(heap.getFieldLongTo(handle2, doubleField.posAbs,
+							[], 1)[1], "double raw value high");
+					assert.ok(heap.getFieldLongTo(handle2, doubleField.posAbs,
+							[], 1)[2], "double raw value low");
 
 				},
-				"   Heap.static" : function() {
-					var context = fisceTests.context();
+				"   Heap.static" : function(assert, context) {
 					var heap = context.heap;
 					var clazz = context
 							.lookupClass("EXCLUDE/fisce/test/FieldHolder3");
@@ -341,17 +347,17 @@
 					var doubleStatic = context.lookupFieldVirtual(clazz,
 							".doubleStatic.D");
 
-					ok(booleanStatic, "boolean static loaded");
-					ok(byteStatic, "byte static loaded");
+					assert.ok(booleanStatic, "boolean static loaded");
+					assert.ok(byteStatic, "byte static loaded");
 
-					ok(charStatic, "char static loaded");
-					ok(shortStatic, "short static loaded");
+					assert.ok(charStatic, "char static loaded");
+					assert.ok(shortStatic, "short static loaded");
 
-					ok(intStatic, "int static loaded");
-					ok(floatStatic, "float static loaded");
+					assert.ok(intStatic, "int static loaded");
+					assert.ok(floatStatic, "float static loaded");
 
-					ok(longStatic, "long static loaded");
-					ok(doubleStatic, "double static loaded");
+					assert.ok(longStatic, "long static loaded");
+					assert.ok(doubleStatic, "double static loaded");
 
 					// allocat 2 dwords for tmp var
 					var pos = heap.allocatePerm(2);
@@ -395,62 +401,70 @@
 								+ heap.get32(pos) + ", " + heap.get32(pos + 1)
 								+ "]" + "(" + f.type.name + ")");
 					}
-					equal(true, heap.getStaticBoolean(booleanStatic.owner,
-							booleanStatic.posAbs), "boolean static operation");
+					assert.equal(true, heap.getStaticBoolean(
+							booleanStatic.owner, booleanStatic.posAbs),
+							"boolean static operation");
 					heap.getStaticRaw32To(booleanStatic.owner,
 							booleanStatic.posAbs, pos);
-					equal(1, heap.get32(pos), "boolean static raw operation");
+					assert.equal(1, heap.get32(pos),
+							"boolean static raw operation");
 
-					equal(-3, heap.getStaticByte(byteStatic.owner,
+					assert.equal(-3, heap.getStaticByte(byteStatic.owner,
 							byteStatic.posAbs), "byte static operation");
-					heap.getStaticRaw32To(byteStatic.owner, byteStatic.posAbs, pos);
-					equal(-3 & 0xff, heap.get32(pos),
+					heap.getStaticRaw32To(byteStatic.owner, byteStatic.posAbs,
+							pos);
+					assert.equal(-3 & 0xff, heap.get32(pos),
 							"byte static raw operation");
 
-					equal(0x5678, heap.getStaticChar(charStatic.owner,
+					assert.equal(0x5678, heap.getStaticChar(charStatic.owner,
 							charStatic.posAbs), "char static operation");
-					heap.getStaticRaw32To(charStatic.owner, charStatic.posAbs, pos);
-					equal(0x5678, heap.get32(pos), "char static raw operation");
-
-					equal(-5566, heap.getStaticShort(shortStatic.owner,
-							shortStatic.posAbs), "short static operation");
-					heap.getStaticRaw32To(shortStatic.owner, shortStatic.posAbs,
+					heap.getStaticRaw32To(charStatic.owner, charStatic.posAbs,
 							pos);
-					equal(-5566 & 0xffff, heap.get32(pos),
+					assert.equal(0x5678, heap.get32(pos),
+							"char static raw operation");
+
+					assert.equal(-5566, heap.getStaticShort(shortStatic.owner,
+							shortStatic.posAbs), "short static operation");
+					heap.getStaticRaw32To(shortStatic.owner,
+							shortStatic.posAbs, pos);
+					assert.equal(-5566 & 0xffff, heap.get32(pos),
 							"short static raw operation");
 
 					var longPair = [ 0, 0, 0 ];
 					var longResult = heap.getStaticLongTo(longStatic.owner,
 							longStatic.posAbs, longPair, 1);
-					ok(longResult, "long returns");
-					equal(0x12345678 >> 0, longPair[1], "long high part");
-					equal(0x90abcdef >> 0, longPair[2], "long low part");
+					assert.ok(longResult, "long returns");
+					assert
+							.equal(0x12345678 >> 0, longPair[1],
+									"long high part");
+					assert.equal(0x90abcdef >> 0, longPair[2], "long low part");
 
-					equal(1.2345678901E98, heap.getStaticDouble(
+					assert.equal(1.2345678901E98, heap.getStaticDouble(
 							doubleStatic.owner, doubleStatic.posAbs),
 							"double value");
-					ok(heap.getStaticLongTo(doubleStatic.owner,
+					assert.ok(heap.getStaticLongTo(doubleStatic.owner,
 							doubleStatic.posAbs, [], 1)[1],
 							"double raw value high");
-					ok(heap.getStaticLongTo(doubleStatic.owner,
+					assert.ok(heap.getStaticLongTo(doubleStatic.owner,
 							doubleStatic.posAbs, [], 1)[2],
 							"double raw value low");
 				},
-				"   Heap.string" : function() {
-					var context = fisceTests.context();
+				"   Heap.string" : function(assert, context) {
 					var heap = context.heap;
 
 					var str = "asdfghjkl";
 					var handle = heap.allocate(context
 							.lookupClass(FyConst.FY_BASE_STRING));
 					heap.fillString(handle, str);
-					ok(handle, "String made handle=" + handle);
-					equal(heap.getString(handle), str, "String got");
+					assert.ok(handle, "String made handle=" + handle);
+					assert.equal(heap.getString(handle), str, "String got");
 
 					handle = heap.literal(str);
-					ok(handle, "Literal made handle=" + handle);
-					equal(heap.getString(handle), str, "Literal content");
-					equal(heap.literal(str), handle,
+					assert.ok(handle, "Literal made handle=" + handle);
+					assert
+							.equal(heap.getString(handle), str,
+									"Literal content");
+					assert.equal(heap.literal(str), handle,
 							"Same handle returned for two literal calls");
 				}
 			});

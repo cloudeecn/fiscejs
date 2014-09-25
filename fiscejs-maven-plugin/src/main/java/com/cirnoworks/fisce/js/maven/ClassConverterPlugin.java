@@ -23,7 +23,7 @@ public class ClassConverterPlugin extends AbstractMojo {
 	private String[] jars;
 
 	/**
-	 * @parameter default-value="${project.build.directory}/json"
+	 * @parameter default-value="${project.build.directory}"
 	 */
 	private String outputDir;
 
@@ -31,21 +31,6 @@ public class ClassConverterPlugin extends AbstractMojo {
 	 * @parameter default-value="rt"
 	 */
 	private String outputFilename;
-
-	/**
-	 * @parameter default-value="rt-vfs"
-	 */
-	private String outputVFSFilename;
-
-	/**
-	 * @parameter default-value=false
-	 */
-	private boolean jsonp;
-
-	/**
-	 * @parameter default-value=true
-	 */
-	private boolean gz;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
@@ -64,7 +49,7 @@ public class ClassConverterPlugin extends AbstractMojo {
 				outputDirFile.mkdirs();
 			}
 			ClassConverterUtil.convert(Arrays.asList(jars), outputDir
-					+ outputFilename, outputDir + outputVFSFilename, jsonp, gz);
+					+ outputFilename);
 		} catch (IOException e) {
 			throw new MojoExecutionException("Exception occored", e);
 		} finally {
