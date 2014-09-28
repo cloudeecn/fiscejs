@@ -13,7 +13,7 @@ var FyVFS;
 	 */
 	function VFSEntry(filename, string, pos) {
 		this.pos = pos | 0;
-		this.content = FyUtils.unbase64(string, undefined, 0, 0);
+		this.content = FyUtils.unbase64(string, null, 0, 0);
 		console.log("Decompress string " + string + " to byte["
 				+ this.content.length + "]");
 		this.len = this.content.length;
@@ -70,10 +70,12 @@ var FyVFS;
 	FyVFS.prototype.add = function(name, content) {
 		// TODO
 		return;
+		/*
 		for ( var name in json) {
 			var key = createKey(this.namespace, name);
 			localStorage.setItem(key, json[name]);
 		}
+		*/
 	};
 
 	FyVFS.prototype.bind = function(handle, name, pos) {
@@ -105,8 +107,8 @@ var FyVFS;
 		 * @returns {VFSEntry}
 		 */
 		var entry = this.entries[handle];
-		if (entry === undefined) {
-			throw new FyException(undefined,
+		if (!entry) {
+			throw new FyException(null,
 					"Can't get VFSEntry for ResourceInputStream #" + handle);
 		}
 		return entry.read();
@@ -117,8 +119,8 @@ var FyVFS;
 		 * @returns {VFSEntry}
 		 */
 		var entry = this.entries[handle];
-		if (entry === undefined) {
-			throw new FyException(undefined,
+		if (!entry) {
+			throw new FyException(null,
 					"Can't get VFSEntry for ResourceInputStream #" + handle);
 		}
 		return entry.read();
@@ -129,8 +131,8 @@ var FyVFS;
 		 * @returns {VFSEntry}
 		 */
 		var entry = this.entries[handle];
-		if (entry === undefined) {
-			throw new FyException(undefined,
+		if (!entry) {
+			throw new FyException(null,
 					"Can't get VFSEntry for ResourceInputStream #" + handle);
 		}
 		return entry.readTo(target, pos, len);

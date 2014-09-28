@@ -15,7 +15,11 @@
  * fiscejs. If not, see <http://www.gnu.org/licenses/>.
  */
 
-(function() {
+/**
+ * @param {FyContext}
+ *            context
+ */
+function fyRegisterNativeMath(context) {
 	"use strict";
 
 	var LOG10 = Math.log(10);
@@ -81,7 +85,7 @@
 		var stack = thread.stack;
 		var x = FyPortable.ieee64ToDouble(stack, sp);
 		var y = FyPortable.ieee64ToDouble(stack, sp + 2);
-		thread.nativeReturnDouble(sp, Math.atan(x, y));
+		thread.nativeReturnDouble(sp, Math.atan2(x, y));
 		return ops - 1;
 	}
 
@@ -474,53 +478,59 @@
 	}
 
 	(function() {
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".acos.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".acos.(D)D",
 				mathACos);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".asin.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".asin.(D)D",
 				mathASin);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".atan.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".atan.(D)D",
 				mathATan);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".atan2.(DD)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".atan2.(DD)D",
 				mathATan2);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".cbrt.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".cbrt.(D)D",
 				mathCbrt);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".ceil.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".ceil.(D)D",
 				mathCeil);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".cos.(D)D", mathCos);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".cosh.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".cos.(D)D",
+				mathCos);
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".cosh.(D)D",
 				mathCosh);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".exp.(D)D", mathExp);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".expm1.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".exp.(D)D",
+				mathExp);
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".expm1.(D)D",
 				mathExpm1);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".floor.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".floor.(D)D",
 				mathFloor);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".hypot.(DD)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".hypot.(DD)D",
 				mathHypot);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH
+		context.registerNativeHandler(FyConst.FY_BASE_MATH
 				+ ".IEEEremainder.(DD)D", mathIEEERemainder);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".log.(D)D", mathLog);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".log10.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".log.(D)D",
+				mathLog);
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".log10.(D)D",
 				mathLog10);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".log1p.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".log1p.(D)D",
 				mathLog1p);
-		FyContext
-				.registerStaticNH(FyConst.FY_BASE_MATH + ".pow.(DD)D", mathPow);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".rint.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".pow.(DD)D",
+				mathPow);
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".rint.(D)D",
 				mathRint);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".signum.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".signum.(D)D",
 				mathSignum);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".signum.(F)F",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".signum.(F)F",
 				mathSignumf);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".sin.(D)D", mathSin);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".sinh.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".sin.(D)D",
+				mathSin);
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".sinh.(D)D",
 				mathSinh);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".sqrt.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".sqrt.(D)D",
 				mathSqrt);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".tan.(D)D", mathTan);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".tanh.(D)D",
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".tan.(D)D",
+				mathTan);
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".tanh.(D)D",
 				mathTanh);
-		FyContext.registerStaticNH(FyConst.FY_BASE_MATH + ".ulp.(D)D", mathUlp);
-		FyContext
-				.registerStaticNH(FyConst.FY_BASE_MATH + ".ulp.(F)F", mathUlpf);
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".ulp.(D)D",
+				mathUlp);
+		context.registerNativeHandler(FyConst.FY_BASE_MATH + ".ulp.(F)F",
+				mathUlpf);
 	})();
-})();
+}

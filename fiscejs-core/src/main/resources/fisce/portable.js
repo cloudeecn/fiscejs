@@ -15,10 +15,16 @@
  * fiscejs. If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @export
+ */
 function persistStages() {
 	eval("//" + arguments);
 }
 
+/**
+ * @export
+ */
 function benchmark(fun) {
 	var i = 0;
 	var time = 0.1;
@@ -34,18 +40,23 @@ function benchmark(fun) {
 	return time / 8.0;
 }
 
-(function() {
-	"use strict";
-
+/**
+ * @constructor
+ * @class
+ * @struct
+ * @export
+ * @private
+ */
+function __FyPortable() {
 	var littleEndian;
 
 	// We use ArrayBuffer for converting floats from/to ieee754 integers by
 	// default
 
 	var buffer = new ArrayBuffer(8);
-	var intView = new Int32Array(buffer);
-	var floatView = new Float32Array(buffer);
-	var doubleView = new Float64Array(buffer);
+	this.intView = new Int32Array(buffer);
+	this.floatView = new Float32Array(buffer);
+	this.doubleView = new Float64Array(buffer);
 
 	(function() {
 		var darr = new Float64Array(1);
@@ -55,113 +66,107 @@ function benchmark(fun) {
 		if (iarr[0]) {
 			// Big Endian
 			console.log("Big endian");
-			littleEndian = false;
+			this.littleEndian = false;
 		} else {
 			// Little Endian
 			console.log("Little endian");
-			littleEndian = true;
+			this.littleEndian = true;
 		}
-	})();
+	}).call(this);
+};
 
-	/**
-	 * @constructor
-	 */
-	var __FyPortable = function() {
-	};
+/**
+ * convert float to ieee754 int
+ *
+ * @export
+ * @param {number}
+ *            floatValue
+ * @returns {number} ieee754 int
+ */
+__FyPortable.prototype.floatToIeee32 = function(floatValue) {
+	this.floatView[0] = floatValue;
+	return this.intView[0];
+};
 
-	/**
-	 * convert float to ieee754 int
-	 * 
-	 * @param {number}
-	 *            floatValue
-	 * @returns {number} ieee754 int
-	 */
-	__FyPortable.prototype.floatToIeee32 = function(floatValue) {
-		floatView[0] = floatValue;
-		return intView[0];
-	};
+/**
+ * convert ieee754 int to float
+ * 
+ * @param {number}
+ *            intValue
+ * @returns {number} floatValue
+ */
+__FyPortable.prototype.ieee32ToFloat = function(intValue) {
+	this.intView[0] = intValue;
+	return this.floatView[0];
+};
 
-	/**
-	 * convert ieee754 int to float
-	 * 
-	 * @param {number}
-	 *            intValue
-	 * @returns {number} floatValue
-	 */
-	__FyPortable.prototype.ieee32ToFloat = function(intValue) {
-		intView[0] = intValue;
-		return floatView[0];
-	};
+/**
+ * convert double to ieee754 int pair
+ *
+ * @export
+ * @param {number}
+ *            doubleValue
+ * @param {Int32Array}
+ *            container int pair container
+ * @returns {Int32Array} int pair
+ */
+__FyPortable.prototype.doubleToIeee64 = function(doubleValue, container, ofs) {
+	this.doubleView[0] = doubleValue;
+	container[ofs] = this.intView[1];
+	container[ofs + 1] = this.intView[0];
+	return container;
+};
 
-	if (littleEndian) {
-		/**
-		 * convert double to ieee754 int pair
-		 * 
-		 * @param {number}
-		 *            doubleValue
-		 * @param {Int32Array}
-		 *            container int pair container, if null/undefined,will
-		 *            create a new one
-		 * @returns {Array} int pair
-		 */
-		__FyPortable.prototype.doubleToIeee64 = function(doubleValue,
-				container, ofs) {
-			doubleView[0] = doubleValue;
-			container[ofs] = intView[1];
-			container[ofs + 1] = intView[0];
-			return container;
-		};
+/**
+ * convert int pair to double
+ *
+ * @export
+ * @param {Int32Array}
+ *            container int pair container
+ * @returns {number} doubleValue
+ */
+__FyPortable.prototype.ieee64ToDouble = function(container, ofs) {
+	this.intView[1] = container[ofs];
+	this.intView[0] = container[ofs + 1];
+	return this.doubleView[0];
+};
 
-		/**
-		 * convert int pair to double
-		 * 
-		 * @param {Int32Array}
-		 *            container int pair container
-		 * @returns {number} doubleValue
-		 */
-		__FyPortable.prototype.ieee64ToDouble = function(container, ofs) {
-			intView[1] = container[ofs];
-			intView[0] = container[ofs + 1];
-			return doubleView[0];
-		};
+/**
+ * @export
+ * @param  {number} value1
+ * @param  {number} value2
+ * @return {number}
+ */
+__FyPortable.prototype.dcmpg = function(value1, value2) {
+	var result = value1 - value2;
+	if (result !== result) { // NaN
+		return 1;
 	} else {
-
-		__FyPortable.prototype.doubleToIeee64 = function(doubleValue,
-				container, ofs) {
-			doubleView[0] = doubleValue;
-			container[ofs] = intView[0];
-			container[ofs + 1] = intView[1];
-			return container;
-		};
-
-		__FyPortable.prototype.ieee64ToDouble = function(container, ofs) {
-			intView[0] = container[ofs];
-			intView[1] = container[ofs + 1];
-			return doubleView[0];
-		};
+		return result > 0 ? 1 : (result === 0 ? 0 : -1);
 	}
+};
 
-	__FyPortable.prototype.dcmpg = function(value1, value2) {
-		var result = value1 - value2;
-		if (result !== result) { // NaN
-			return 1;
-		} else {
-			return result > 0 ? 1 : (result === 0 ? 0 : -1);
-		}
-	};
+/**
+ * @export
+ * @param  {number} value1
+ * @param  {number} value2
+ * @return {number}
+ */
+__FyPortable.prototype.dcmpl = function(value1, value2) {
+	var result = value1 - value2;
+	if (result !== result) { // NaN
+		return -1;
+	} else {
+		return result > 0 ? 1 : (result === 0 ? 0 : -1);
+	}
+};
 
-	__FyPortable.prototype.dcmpl = function(value1, value2) {
-		var result = value1 - value2;
-		if (result !== result) { // NaN
-			return -1;
-		} else {
-			return result > 0 ? 1 : (result === 0 ? 0 : -1);
-		}
-	};
+__FyPortable.prototype.getLongOps = function(stack, tmpBegin) {
+	return new __FyLongOps(stack, tmpBegin);
+};
 
-	__FyPortable.prototype.getLongOps = function(stack, tmpBegin) {
-		return FyCreateLongOps(this, 0, stack, tmpBegin);
-	};
-
-	window.FyPortable = new __FyPortable();
-})();
+/**
+ * @export
+ * @type {__FyPortable}
+ */
+var FyPortable=new __FyPortable();

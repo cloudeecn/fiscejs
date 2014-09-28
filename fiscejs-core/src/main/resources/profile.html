@@ -1,16 +1,26 @@
 <html>
 <head>
 <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
+
 <script type="text/javascript" src="fisce.js"></script>
 <script type="text/javascript">
 	var clazz = "com/cirnoworks/fisce/privat/Profile";
 	var context = new FyContext();
+	var t0 = performance.now();
 </script>
+<style type="text/css">
+.fisce-data-iframe {
+	position: absolute;
+	width: 0px;
+	height: 0px;
+	overflow: hidden;
+	border: none;
+}
+</style>
+
 </head>
 <body onload="startup();">
 	<pre id="console">Loading...</pre>
-	<script type="text/javascript" src="rt.js"></script>
-	<script type="text/javascript" src="rt-vfs.js"></script>
 	<script type="text/javascript">
 		function startup() {
 			if (window.console) {
@@ -24,65 +34,41 @@
 			window.console = {
 				log : function(param) {
 					document.getElementById("console").appendChild(
-							document.createTextNode(param+"\n"));
+							document.createTextNode(param + "\n"));
 					window.oldConsole.log.apply(window.oldConsole, arguments);
 				}
 			}
 			context
-					.registerNativeHandler(
-							"EXCLUDE/fisce/test/TestService.fail0.(Ljava/lang/String;)V",
-							function(context, thread, ops) {
-								throw new FyException(
-										"java/lang/Error",
-										"Test failed: "
-												+ context.heap
-														.getString(thread.stack[thread.sp]));
-								return 0;
+					.loadClassDefines(
+							[ "http://2.0.0-SNAPSHOT.fisce.dev.cirnoworks.com" ],
+							{
+								success : function() {
+									document.getElementById("console").innerHTML = "data loaded in "
+											+ ((((performance.now() - t0) * 1000) | 0) / 1000)
+											+ "ms\n";
+									context.bootup(clazz);
+									context
+											.run({
+												end : function() {
+													console.log("ended");
+												},
+												panic : function(e) {
+													console.log("panic!\n"
+															+ e.message);
+													console.log(e.cause.stack);
+												}
+											});
+								},
+								error : function(message) {
+									console.log("error: " + message);
+								},
+								begin : function(url) {
+									console.log("begin receive");
+								},
+								done : function(url) {
+									console.log("done receive");
+								}
 							});
-			context.bootup(clazz);
-			function Exec(context) {
-				this.context = context;
-				this.message = new FyMessage();
-				this.fun = function() {
-					try {
-						context.threadManager.run(this.message);
-					} catch (e) {
-						console.log("##HL " + clazz + " end with exception");
-						throw e;
-					}
-					switch (this.message.type) {
-					case FyMessage.message_vm_dead:
-						console.log("##HL " + clazz + " end");
-						return;
-					case FyMessage.message_sleep:
-						var target = performance.now()
-								+ Number(this.message.sleepTime);
-						if (target !== target) {
-							// Nan
-							throw new FyException(undefined,
-									"Illegal sleep time: " + sleepTime);
-						}
-						var delay = target - performance.now();
-						if (delay < 0) {
-							delay = 0;
-						}
-						if (delay > 0) {
-							console.log("sleep " + delay + "ms");
-							setTimeout(this.f2, delay);
-						} else {
-							this.fun();
-						}
-						break;
-					default:
-						console.log("##HL " + clazz + " end with exception");
-						throw new FyException(undefined,
-								"Unknown message type: " + message.type);
-					}
-				};
-				this.f2 = this.fun.bind(this);
-			}
-			var exec = new Exec(context);
-			setTimeout(exec.f2, 1);
 		}
 	</script>
 </body>

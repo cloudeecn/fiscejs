@@ -9,7 +9,7 @@ console.log(files);
 for (var i = 0; i < files.length; i++) {
 	includeInThisContext(files[i]);
 }
-var hm = new HashMapIObj(1, 0.6);
+var hm = new HashMapIObj(1, 0.6, undefined);
 var rounds = 0;
 var count = 0;
 var key;

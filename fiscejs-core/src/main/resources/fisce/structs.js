@@ -1,774 +1,1443 @@
 /**
  * Copyright 2013 Yuxuan Huang. All rights reserved.
- * 
+ *
  * This file is part of fiscejs.
- * 
+ *
  * fiscejs is free software: you can redistribute it and/or modify it under the
  * terms of the GNU General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or any later version.
- * 
+ *
  * fiscejs is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with
  * fiscejs. If not, see <http://www.gnu.org/licenses/>.
  */
 
 // Utils and some plain structs without methods.
 /**
- * @returns {__FyUtils}
+ * Config class
+ * @constructor
+ * @export
+ * @struct
  */
-var FyUtils;
+function FyConfig() {
+  /**
+   * @type {number}
+   */
+  this.maxObjects = 131072;
+  /**
+   * @type {number}
+   */
+  this.maxThreads = 16;
+  /**
+   * @type {number}
+   */
+  this.gcIdv = 60000;
+  /**
+   * @type {number}
+   */
+  this.gcForceIdv = 120000;
+  /**
+   * @type {number}
+   */
+  this.heapSize = 4000000;
+  /**
+   * @type {number}
+   */
+  this.edenSize = 1000000;
+  /**
+   * @type {number}
+   */
+  this.copySize = 400000;
+  /**
+   * @type {number}
+   */
+  this.stackSize = 16384;
+  /**
+   * @type {boolean}
+   */
+  this.debugMode = false;
+  /**
+   * @type {boolean}
+   */
+  this.verboseMode = false;
+  /**
+   * @type {boolean}
+   */
+  this.aggresiveGC = false;
+};
+
+FyConfig.verboseMode = false;
+
 /**
- * @returns {__FyConst}
+ * @constructor
  */
-var FyConst;
-var FyClass;
-var FyException;
-var FyPanicException;
-var FyGlobal;
-var FyMessage;
-var FyTableSwitchTarget;
-var FyLookupSwitchTarget;
-(function() {
-	"use strict";
+function __FyUtils() {};
 
-	var code = new HashMapI(-1, 7, 0.6);
+/**
+ *
+ * @param {Array.<number>}
+ *            src
+ * @param {Array.<number>}
+ *            dest
+ */
+__FyUtils.prototype.cloneIntArray = function(src, dest) {
+  if (dest.length !== 0) {
+    throw new FyException(null,
+      "Dest array must be empty, dest.length=" + dest.length);
+  }
+  for (var i = 0, max = src.length; i < max; i++) {
+    dest.push(src[i] | 0);
+  }
+};
+/**
+ * copy all attributes from src into dest
+ *
+ * @param {?} src
+ * @param {?} dest
+ */
+__FyUtils.prototype.shallowClone = function(src, dest) {
+  var keys = Object.keys(src);
+  for (var i = 0, max = keys.length; i < max; i++) {
+    var key = keys[i];
+    dest[key] = src[key];
+  }
+};
 
-	(function initCode(str) {
-		var len = str.length;
-		for (var i = len; i--;) {
-			code.put(str.charCodeAt(i), i);
-		}
-	})("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=");
+/**
+ * copy all strings and numbers from src into dest
+ *
+ * @param {?} src
+ * @param {?} dest
+ * @param {Array.<string>}
+ *            keys
+ */
+__FyUtils.prototype.simpleClone = function(src, dest, keys) {
+  var i, imax;
+  var key, value;
+  if (keys) {
+    imax = keys.length;
+    for (i = 0; i < imax; i++) {
+      key = keys[i];
+      value = src[key];
+      if (value == null) {
 
-	/**
-	 * Config class
-	 * 
-	 * @constructor
-	 * @export
-	 * @struct
-	 */
-	window.FyConfig = function() {
-		/**
-		 * @type {number}
-		 */
-		this["maxObjects"] = 131072;
-		/**
-		 * @type {number}
-		 */
-		this["maxThreads"] = 16;
-		/**
-		 * @type {number}
-		 */
-		this["gcIdv"] = 60000;
-		/**
-		 * @type {number}
-		 */
-		this["gcForceIdv"] = 120000;
-		/**
-		 * @type {number}
-		 */
-		this["heapSize"] = 4000000;
-		/**
-		 * @type {number}
-		 */
-		this["edenSize"] = 1000000;
-		/**
-		 * @type {number}
-		 */
-		this["copySize"] = 400000;
-		/**
-		 * @type {number}
-		 */
-		this["stackSize"] = 16384;
-		/**
-		 * @type {boolean}
-		 */
-		this["debugMode"] = false;
-		/**
-		 * @type {boolean}
-		 */
-		this["verboseMode"] = false;
-		/**
-		 * @type {boolean}
-		 */
-		this["aggresiveGC"] = false;
-	};
+      } else if (typeof value === "string" || typeof value === "number") {
+        dest[key] = value;
+      } else {
+        throw new FyException(null, "Value of key[" + key + "] is not string or number");
+      }
+    }
+  } else {
+    keys = Object.keys(src);
+    imax = keys.length;
+    for (i = 0; i < imax; i++) {
+      key = keys[i];
+      value = src[key];
+      if (typeof value === "string" || typeof value === "number") {
+        dest[key] = value;
+      }
+    }
+  }
+};
 
-	var __FyUtils = function() {
-	};
+/**
+ *
+ * @param {number}
+ *            code
+ * @returns {number}
+ */
+__FyUtils.prototype.utf8Size = function(code) {
+  code = code & 0xffff;
+  if (code > 0x0800) {
+    return 3;
+  } else if (code > 0x80 || code === 0) {
+    return 2;
+  } else {
+    return 1;
+  }
+};
 
-	__FyUtils.prototype.cloneIntArray = function(src, dest) {
-		if (dest.length !== 0) {
-			throw new FyException(undefined,
-					"Dest array must be empty, dest.length=" + dest.length);
-		}
-		if (src !== undefined) {
-			for (var i = 0, max = src.length; i < max; i++) {
-				dest.push(src[i] | 0);
-			}
-		}
-	};
-	/**
-	 * copy all attributes from src into dest
-	 * 
-	 * @param src
-	 * @param dest
-	 */
-	__FyUtils.prototype.shallowClone = function(src, dest) {
-		var keys = Object.keys(src);
-		for (var i = 0, max = keys.length; i < max; i++) {
-			var key = keys[i];
-			dest[key] = src[key];
-		}
-	};
+/**
+ *
+ * @param {number}
+ *            first
+ * @returns {number}
+ */
+__FyUtils.prototype.utf8SizeU = function(first) {
+  first = first << 24 >> 24;
+  if (first > 127) {
+    first -= 256;
+  }
+  if (first >= 0) {
+    return 1;
+  } else if (first >= -16) {
+    return -1;
+  } else if (first >= -32) {
+    return 3;
+  } else if (first >= -64) {
+    return 2;
+  } else {
+    return -1;
+  }
+};
 
-	/**
-	 * copy all strings and numbers from src into dest
-	 */
-	__FyUtils.prototype.simpleClone = function(src, dest, keys) {
-		var i, imax;
-		if (keys) {
-			imax = keys.length;
-			for (i = 0; i < imax; i++) {
-				var key = keys[i];
-				var value = src[key];
-				if (value === undefined) {
-				} else if (typeof value === "string"
-						|| typeof value === "number") {
-					dest[key] = value;
-				} else {
-					throw new FyException(undefined, "Value of key[" + key
-							+ "] is not string or number");
-				}
-			}
-		} else {
-			var keys = Object.keys(src);
-			imax = keys.length;
-			for (i = 0; i < imax; i++) {
-				var key = keys[i];
-				var value = src[key];
-				if (typeof value === "string" || typeof value === "number") {
-					dest[key] = value;
-				}
-			}
-		}
-	};
+/**
+ *
+ * @param {Array.<number>|Int32Array}
+ *            utf8Array
+ * @param {number}
+ *            ofs
+ * @param {Array.<number>|Int32Array}
+ *            unicodeArray
+ * @param {number}
+ *            ofs1
+ * @returns {Number}
+ */
+__FyUtils.prototype.utf8Decode = function(utf8Array, ofs, unicodeArray, ofs1) {
+  switch (this.utf8SizeU(utf8Array[ofs])) {
+    case 1:
+      unicodeArray[ofs1] = utf8Array[ofs];
+      return 1;
+    case 2:
+      unicodeArray[ofs1] = ((utf8Array[ofs] & 0x1f) << 6) + (utf8Array[ofs + 1] & 0x3f);
+      return 2;
+    case 3:
+      unicodeArray[ofs1] = ((utf8Array[ofs] & 0xf) << 12) + ((utf8Array[ofs + 1] & 0x3f) << 6) + (utf8Array[ofs + 2] & 0x3f);
+      return 3;
+    default:
+      unicodeArray[ofs1] = 63;
+      return 1;
+  }
+};
 
-	__FyUtils.prototype.utf8Size = function(code) {
-		code = code & 0xffff;
-		if (code > 0x0800) {
-			return 3;
-		} else if (code > 0x80 || code === 0) {
-			return 2;
-		} else {
-			return 1;
-		}
-	};
+/**
+ *
+ * @param {number}
+ *            unicode
+ * @param {Array.<number>|Int32Array}
+ *            utf8Array
+ * @param {number}
+ *            ofs
+ * @returns {number}
+ */
+__FyUtils.prototype.utf8Encode = function(unicode, utf8Array, ofs) {
+  unicode &= 0xffff;
+  switch (this.utf8Size(unicode)) {
+    case 3:
+      utf8Array[ofs] = (unicode >> 12) - 32;
+      utf8Array[ofs + 1] = ((unicode >> 6) & 0x3f) - 128;
+      utf8Array[ofs + 2] = (unicode & 0x3f) - 128;
+      return 3;
+    case 2:
+      utf8Array[ofs] = (unicode >> 6) - 64;
+      utf8Array[ofs + 1] = (unicode & 0x3f) - 128;
+      return 2;
+    case 1:
+      utf8Array[ofs] = unicode;
+      return 1;
+    default:
+      utf8Array[ofs] = 63;
+      return 1;
+  }
+};
 
-	__FyUtils.prototype.utf8SizeU = function(first) {
-		first = first << 24 >> 24;
-		if (first > 127) {
-			first -= 256;
-		}
-		if (first >= 0) {
-			return 1;
-		} else if (first >= -16) {
-			return -1;
-		} else if (first >= -32) {
-			return 3;
-		} else if (first >= -64) {
-			return 2;
-		} else {
-			return -1;
-		}
-	};
+/**
+ *
+ * @returns {number}
+ */
+__FyUtils.prototype.breakpoint = function() {
+  var i = 0;
+  i++;
+  i++;
+  return i;
+};
 
-	__FyUtils.prototype.utf8Decode = function(utf8Array, ofs, unicodeArray,
-			ofs1) {
-		switch (this.utf8SizeU(utf8Array[ofs])) {
-		case 1:
-			unicodeArray[ofs1] = utf8Array[ofs];
-			return 1;
-		case 2:
-			unicodeArray[ofs1] = ((utf8Array[ofs] & 0x1f) << 6)
-					+ (utf8Array[ofs + 1] & 0x3f);
-			return 2;
-		case 3:
-			unicodeArray[ofs1] = ((utf8Array[ofs] & 0xf) << 12)
-					+ ((utf8Array[ofs + 1] & 0x3f) << 6)
-					+ (utf8Array[ofs + 2] & 0x3f);
-			return 3;
-		default:
-			unicodeArray[ofs1] = 63;
-			return 1;
-		}
-	};
+/**
+ *
+ * @param {string}
+ *            str
+ * @returns {Uint8Array}
+ */
+__FyUtils.prototype.unbase64 = (function() {
+  var base64Code = new HashMapI(-1, 7, 0.6);
 
-	__FyUtils.prototype.utf8Encode = function(unicode, utf8Array, ofs) {
-		unicode &= 0xffff;
-		switch (this.utf8Size(unicode)) {
-		case 3:
-			utf8Array[ofs] = (unicode >> 12) - 32;
-			utf8Array[ofs + 1] = ((unicode >> 6) & 0x3f) - 128;
-			utf8Array[ofs + 2] = (unicode & 0x3f) - 128;
-			return 3;
-		case 2:
-			utf8Array[ofs] = (unicode >> 6) - 64;
-			utf8Array[ofs + 1] = (unicode & 0x3f) - 128;
-			return 2;
-		case 1:
-			utf8Array[ofs] = unicode;
-			return 1;
-		default:
-			utf8Array[ofs] = 63;
-			return 1;
-		}
-	};
+  (function initCode(str) {
+    var len = str.length;
+    for (var i = len; i--;) {
+      base64Code.put(str.charCodeAt(i), i);
+    }
+  })("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=");
+  return function(str) {
+    var slen = str.length;
+    if (slen & 3 !== 0) {
+      throw new FyException(FyConst.FY_EXCEPTION_IO,
+        "Illegal base64 code");
+    }
+    var tlen = (slen >> 2) * 3;
+    if (str.endsWith("==")) {
+      tlen -= 2;
+    } else if (str.endsWith("=")) {
+      tlen--;
+    }
 
-	__FyUtils.prototype.breakpoint = function() {
-		var i = 0;
-		i++;
-		i++;
-		return i;
-	};
+    var len = tlen;
+    var container = new Uint8Array(len);
 
-	var atobReady = false;
-	try {
-		atob("AAAA");
-		atobReady = true;
-	} catch (e) {
+    var i = 0;
+    var p = 0;
+    while (i < slen) {
+      var c1 = base64Code.get(str.charCodeAt(i));
+      if (c1 < 0) {
+        throw new FyException(FyConst.FY_EXCEPTION_IO,
+          "Illegal base64 code");
+      }
+      var c2 = base64Code.get(str.charCodeAt(i + 1));
+      if (c2 < 0) {
+        throw new FyException(FyConst.FY_EXCEPTION_IO,
+          "Illegal base64 code");
+      }
+      var c3 = base64Code.get(str.charCodeAt(i + 2));
+      if (c3 < 0) {
+        throw new FyException(FyConst.FY_EXCEPTION_IO,
+          "Illegal base64 code");
+      }
+      var c4 = base64Code.get(str.charCodeAt(i + 3));
+      if (c4 < 0) {
+        throw new FyException(FyConst.FY_EXCEPTION_IO,
+          "Illegal base64 code for file.");
+      }
 
-	}
+      container[p] = ((c1 << 2) | (c2 >> 4)) & 0xff;
+      if (c3 !== 64) {
+        container[p + 1] = (((c2 & 15) << 4) | (c3 >> 2)) & 0xff;
+      }
 
-	if (false) {
-		__FyUtils.prototype.unbase64 = function(str) {
-			return atob(str);
-		};
-	} else {
-		__FyUtils.prototype.unbase64 = function(str) {
-			var slen = str.length;
-			if (slen & 3 !== 0) {
-				throw new FyException(FyConst.FY_EXCEPTION_IO,
-						"Illegal base64 code");
-			}
-			var tlen = (slen >> 2) * 3;
-			if (str.endsWith("==")) {
-				tlen -= 2;
-			} else if (str.endsWith("=")) {
-				tlen--;
-			}
+      if (c4 !== 64) {
+        container[p + 2] = (((c3 & 3) << 6) | c4) & 0xff;
+      }
 
-			var len = tlen;
-			var container = new Uint8Array(len);
-
-			var i = 0;
-			var p = 0;
-			while (i < slen) {
-				var c1 = code.get(str.charCodeAt(i));
-				if (c1 < 0) {
-					throw new FyException(FyConst.FY_EXCEPTION_IO,
-							"Illegal base64 code");
-				}
-				var c2 = code.get(str.charCodeAt(i + 1));
-				if (c2 < 0) {
-					throw new FyException(FyConst.FY_EXCEPTION_IO,
-							"Illegal base64 code");
-				}
-				var c3 = code.get(str.charCodeAt(i + 2));
-				if (c3 < 0) {
-					throw new FyException(FyConst.FY_EXCEPTION_IO,
-							"Illegal base64 code");
-				}
-				var c4 = code.get(str.charCodeAt(i + 3));
-				if (c4 < 0) {
-					throw new FyException(FyConst.FY_EXCEPTION_IO,
-							"Illegal base64 code for file.");
-				}
-
-				container[p] = ((c1 << 2) | (c2 >> 4)) & 0xff;
-				if (c3 !== 64) {
-					container[p + 1] = (((c2 & 15) << 4) | (c3 >> 2)) & 0xff;
-				}
-
-				if (c4 !== 64) {
-					container[p + 2] = (((c3 & 3) << 6) | c4) & 0xff;
-				}
-
-				p += 3;
-				i += 4;
-			}
-			return container;
-		};
-	}
-	FyUtils = new __FyUtils();
-
-	function __FyConst() {
-		this.TYPE_OBJECT = 0 | 0;
-		this.TYPE_PRIMITIVE = 1 | 0;
-		this.TYPE_ARRAY = 2 | 0;
-		this.ARRAY_TYPE_BYTE = 0 | 0;
-		this.ARRAY_TYPE_SHORT = 1 | 0;
-		this.ARRAY_TYPE_INT = 2 | 0;
-		this.ARRAY_TYPE_LONG = 3 | 0;
-		/* Access flags */
-		this.FY_ACC_ABSTRACT = 1024 | 0;
-		this.FY_ACC_FINAL = 16 | 0;
-		this.FY_ACC_INTERFACE = 512 | 0;
-		this.FY_ACC_NATIVE = 256 | 0;
-		this.FY_ACC_PRIVATE = 2 | 0;
-		this.FY_ACC_PROTECTED = 4 | 0;
-		this.FY_ACC_PUBLIC = 1 | 0;
-		this.FY_ACC_STATIC = 8 | 0;
-		this.FY_ACC_STRICT = 2048 | 0;
-		this.FY_ACC_SUPER = 32 | 0;
-		this.FY_ACC_SYNCHRONIZED = 32 | 0;
-		this.FY_ACC_TRANSIENT = 128 | 0;
-		this.FY_ACC_VOLATILE = 64 | 0;
-		this.FY_ACC_VARARGS = 128 | 0;
-		this.FY_ACC_BRIDGE = 64 | 0;
-		/* Extended access flags */
-		this.FY_ACC_SYNTHETIC = 0x00001000 | 0;
-		this.FY_ACC_ANNOTATION = 0x00002000 | 0;
-		this.FY_ACC_ENUM = 0x00004000 | 0;
-		this.FY_ACC_SOFT_REF = 0x00008000 | 0;
-		this.FY_ACC_WEAK_REF = 0x00010000 | 0;
-		this.FY_ACC_PHANTOM_REF = 0x00020000 | 0;
-		this.FY_ACC_REF = this.FY_ACC_SOFT_REF | this.FY_ACC_WEAK_REF
-				| this.FY_ACC_PHANTOM_REF;
-		this.FY_ACC_NEED_FINALIZE = 0x00040000 | 0;
-		this.FY_ACC_CONSTRUCTOR = 0x00100000 | 0;
-		this.FY_ACC_CLINIT = 0x00200000 | 0;
-
-		this.FY_TM_STATE_NEW = 0 | 0;
-		this.FY_TM_STATE_BOOT_PENDING = 1 | 0;
-		this.FY_TM_STATE_STOP = 2 | 0;
-		this.FY_TM_STATE_RUN_PENDING = 3 | 0;
-		this.FY_TM_STATE_RUNNING = 4 | 0;
-		this.FY_TM_STATE_STOP_PENDING = 5 | 0;
-		this.FY_TM_STATE_DEAD_PENDING = 6 | 0;
-		this.FY_TM_STATE_DEAD = 7 | 0;
-
-		/* Array types */
-		this.FY_AT_BYTE = 0 | 0;
-		this.FY_AT_SHORT = 1 | 0;
-		this.FY_AT_INT = 2 | 0;
-		this.FY_AT_LONG = 3 | 0;
-
-		/* Prm types */
-		this.FY_TYPE_BYTE = 'B';
-		this.FY_TYPE_CHAR = 'C';
-		this.FY_TYPE_DOUBLE = 'D';
-		this.FY_TYPE_FLOAT = 'F';
-		this.FY_TYPE_LONG = 'J';
-		this.FY_TYPE_SHORT = 'S';
-		this.FY_TYPE_BOOLEAN = 'Z';
-		this.FY_TYPE_ARRAY = '[';
-		/* Below are shared by thread and context */
-		this.FY_TYPE_INT = 'I';
-		this.FY_TYPE_HANDLE = 'L';
-		/* Below are used only by thread */
-		this.FY_TYPE_WIDE = 'W';
-		this.FY_TYPE_RETURN = 'R';
-		this.FY_TYPE_WIDE2 = '_';
-		this.FY_TYPE_UNKNOWN = 'X';
-		this.FY_TYPE_VOID = 'V';
-
-		this.FY_ATT_CODE = "Code";
-		this.FY_ATT_LINENUM = "LineNumberTable";
-		this.FY_ATT_SYNTH = "Synthetic";
-		this.FY_ATT_SOURCE_FILE = "SourceFile";
-		this.FY_ATT_CONSTANT_VALIE = "ConstantValue";
-
-		/* Core classes */
-		this.FY_BASE_STRING = "java/lang/String";
-		this.FY_BASE_VM = "com/cirnoworks/fisce/privat/FiScEVM";
-		this.FY_BASE_ENUM = "java/lang/Enum";
-		this.FY_BASE_ANNOTATION = "java/lang/annotation/Annotation";
-		this.FY_BASE_STRING_BUILDER = "java/lang/StringBuilder";
-		this.FY_BASE_OBJECT = "java/lang/Object";
-		this.FY_BASE_CLASS = "java/lang/Class";
-		this.FY_BASE_CLASSLOADER = "java/lang/ClassLoader";
-		this.FY_BASE_THROWABLE = "java/lang/Throwable";
-		this.FY_BASE_THREAD = "java/lang/Thread";
-		this.FY_BASE_SYSTEM = "java/lang/System";
-		this.FY_BASE_RUNTIME = "java/lang/Runtime";
-		this.FY_BASE_BOOLEAN = "java/lang/Boolean";
-		this.FY_BASE_BYTE = "java/lang/Byte";
-		this.FY_BASE_CHAR = "java/lang/Character";
-		this.FY_BASE_SHORT = "java/lang/Short";
-		this.FY_BASE_INT = "java/lang/Integer";
-		this.FY_BASE_LONG = "java/lang/Long";
-		this.FY_BASE_FLOAT = "java/lang/Float";
-		this.FY_BASE_DOUBLE = "java/lang/Double";
-		this.FY_BASE_MATH = "java/lang/Math";
-		this.FY_BASE_FINALIZER = "java/lang/Finalizer";
-		this.FY_BASE_RUNTIME = "java/lang/Runtime";
-
-		this.FY_PRIM_BOOLEAN = "<boolean";
-		this.FY_PRIM_BYTE = "<byte";
-		this.FY_PRIM_SHORT = "<short";
-		this.FY_PRIM_CHAR = "<char";
-		this.FY_PRIM_INT = "<int";
-		this.FY_PRIM_FLOAT = "<float";
-		this.FY_PRIM_LONG = "<long";
-		this.FY_PRIM_DOUBLE = "<double";
-		this.FY_PRIM_VOID = "<void";
-
-		this.FY_IO_INPUTSTREAM = "java/io/InputStream";
-		this.FY_IO_PRINTSTREAM = "java/io/PrintStream";
-
-		this.FY_REFLECT_ARRAY = "java/lang/reflect/Array";
-		this.FY_REFLECT_CONSTRUCTOR = "java/lang/reflect/Constructor";
-		this.FY_REFLECT_FIELD = "java/lang/reflect/Field";
-		this.FY_REFLECT_METHOD = "java/lang/reflect/Method";
-		this.FY_REFLECT_PROXY = "java/lang/reflect/Proxy";
-
-		this.FY_REF_SOFT = "java/lang/ref/SoftReference";
-		this.FY_REF_WEAK = "java/lang/ref/WeakReference";
-		this.FY_REF_PHANTOM = "java/lang/ref/PhantomReference";
-		this.FY_REF = "java/lang/ref/Reference";
-
-		this.FY_BASE_STACKTHREADELEMENT = "java/lang/StackTraceElement";
-
-		this.FY_BOX_BOOLEAN = this.FY_BASE_BOOLEAN + ".valueOf.(Z).L"
-				+ this.FY_BASE_BOOLEAN + ";",
-				this.FY_BOX_BYTE = this.FY_BASE_BYTE + ".valueOf.(B).L"
-						+ this.FY_BASE_BYTE + ";";
-		this.FY_BOX_SHORT = this.FY_BASE_SHORT + ".valueOf.(S).L"
-				+ this.FY_BASE_SHORT + ";";
-		this.FY_BOX_CHARACTER = this.FY_BASE_CHARACTER + ".valueOf.(C).L"
-				+ this.FY_BASE_CHARACTER + ";";
-		this.FY_BOX_INTEGER = this.FY_BASE_INTEGER + ".valueOf.(I).L"
-				+ this.FY_BASE_INTEGER + ";";
-		this.FY_BOX_FLOAT = this.FY_BASE_FLOAT + ".valueOf.(F).L"
-				+ this.FY_BASE_FLOAT + ";";
-		this.FY_BOX_LONG = this.FY_BASE_LONG + ".valueOf.(J).L"
-				+ this.FY_BASE_LONG + ";",
-				this.FY_BOX_DOUBLE = this.FY_BASE_DOUBLE + ".valueOf.(D).L"
-						+ this.FY_BASE_DOUBLE + ";";
-
-		this.FY_UNBOX_BOOLEAN = this.FY_BASE_BOOLEAN + ".booleanValue.()Z";
-		this.FY_UNBOX_BYTE = this.FY_BASE_BYTE + ".byteValue.()B";
-		this.FY_UNBOX_SHORT = this.FY_BASE_SHORT + ".shortValue.()S";
-		this.FY_UNBOX_CHARACTER = this.FY_BASE_CHAR + ".charValue.()C";
-		this.FY_UNBOX_INTEGER = this.FY_BASE_INT + ".intValue.()I";
-		this.FY_UNBOX_FLOAT = this.FY_BASE_FLOAT + ".floatValue.()F";
-		this.FY_UNBOX_LONG = this.FY_BASE_LONG + ".longValue.()J";
-		this.FY_UNBOX_DOUBLE = this.FY_BASE_DOUBLE + ".doubleValue.()D";
-
-		this.FY_VALUE_BOOLEAN = this.FY_BASE_BOOLEAN + ".value.Z";
-		this.FY_VALUE_BYTE = this.FY_BASE_BYTE + ".value.B";
-		this.FY_VALUE_SHORT = this.FY_BASE_SHORT + ".value.S";
-		this.FY_VALUE_CHARACTER = this.FY_BASE_CHAR + ".value.C";
-		this.FY_VALUE_INTEGER = this.FY_BASE_INT + ".value.I";
-		this.FY_VALUE_FLOAT = this.FY_BASE_FLOAT + ".value.F";
-		this.FY_VALUE_LONG = this.FY_BASE_LONG + ".value.J";
-		this.FY_VALUE_DOUBLE = this.FY_BASE_DOUBLE + ".value.D";
-
-		/* Methods */
-		this.FY_METHOD_INIT = "<init>";
-		this.FY_METHOD_CLINIT = "<clinit>";
-		this.FY_METHODF_INIT = ".<init>.()V";
-		this.FY_METHODF_MAIN = ".main.([L" + this.FY_BASE_STRING + ";)V";
-		this.FY_METHODF_RUN = ".run.()V";
-		this.FY_METHODF_FINALIZE = ".finalize.()V";
-		this.FY_FIELDF_PRIORITY = ".priority.I";
-		this.FY_FIELDF_NAME = ".name.[C";
-		this.FY_FIELDF_DAEMON = ".daemon.Z";
-
-		/* Exceptions */
-		this.FY_EXCEPTION_ITE = "java/lang/InvocationTargetException";
-		this.FY_EXCEPTION_MONITOR = "java/lang/IllegalMonitorStateException";
-		this.FY_EXCEPTION_NO_METHOD = "java/lang/NoSuchMethodError";
-		this.FY_EXCEPTION_NPT = "java/lang/NullPointerException";
-		this.FY_EXCEPTION_ARITHMETIC = "java/lang/ArithmeticException";
-		this.FY_EXCEPTION_INCOMPAT_CHANGE = "java/lang/IncompatibleClassChangeError";
-		this.FY_EXCEPTION_VM = "java/lang/VirtualMachineError";
-		this.FY_EXCEPTION_CAST = "java/lang/ClassCastException";
-		this.FY_EXCEPTION_IO = "java/io/IOException";
-		this.FY_EXCEPTION_FNF = "java/io/FileNotFoundException";
-		this.FY_EXCEPTION_RT = "java/lang/RuntimeException";
-		this.FY_EXCEPTION_IOOB = "java/lang/IndexOutOfBoundsException";
-		this.FY_EXCEPTION_AIOOB = "java/lang/ArrayIndexOutOfBoundsException";
-		this.FY_EXCEPTION_STORE = "java/lang/ArrayStoreException";
-		this.FY_EXCEPTION_CLASSNOTFOUND = "java/lang/ClassNotFoundException";
-		this.FY_EXCEPTION_ABSTRACT = "java/lang/AbstractMethodError";
-		this.FY_EXCEPTION_ACCESS = "java/lang/IllegalAccessError";
-		this.FY_EXCEPTION_NASE = "java/lang/NegativeArraySizeException";
-		this.FY_EXCEPTION_INTR = "java/lang/InterruptedException";
-		this.FY_EXCEPTION_IMSE = "java/lang/IllegalMonitorStateException";
-		this.FY_EXCEPTION_ARGU = "java/lang/IllegalArgumentException";
-
-		/* Unique names */
-		this.stringArray = "[L" + this.FY_BASE_STRING + ";";
-		this.throwablePrintStacktrace = this.FY_BASE_THROWABLE
-				+ ".printStackTrace.()V";
-		this.throwableDetailMessage = this.FY_BASE_THROWABLE
-				+ ".detailMessage.L" + this.FY_BASE_STRING + ";";
-		this.throwableStackTrace = this.FY_BASE_THROWABLE + ".stackTrace.[L"
-				+ this.FY_BASE_STACKTHREADELEMENT + ";";
-
-		this.stringCount = this.FY_BASE_STRING + ".count.I";
-		this.stringValue = this.FY_BASE_STRING + ".value.[C";
-		this.stringOffset = this.FY_BASE_STRING + ".offset.I";
-
-		this.stackTraceElementArray = "[L" + this.FY_BASE_STACKTHREADELEMENT
-				+ ";";
-		this.stackTraceElementDeclaringClass = this.FY_BASE_STACKTHREADELEMENT
-				+ ".declaringClass.L" + this.FY_BASE_STRING + ";";
-		this.stackTraceElementMethodName = this.FY_BASE_STACKTHREADELEMENT
-				+ ".methodName.L" + this.FY_BASE_STRING + ";";
-		this.stackTraceElementFileName = this.FY_BASE_STACKTHREADELEMENT
-				+ ".fileName.L" + this.FY_BASE_STRING + ";";
-		this.stackTraceElementLineNumber = this.FY_BASE_STACKTHREADELEMENT
-				+ ".lineNumber.I";
-
-		this.Z = "Z".charCodeAt(0);
-		this.B = "B".charCodeAt(0);
-		this.C = "C".charCodeAt(0);
-		this.S = "S".charCodeAt(0);
-		this.I = "I".charCodeAt(0);
-		this.F = "F".charCodeAt(0);
-		this.J = "J".charCodeAt(0);
-		this.D = "D".charCodeAt(0);
-		this.L = "L".charCodeAt(0);
-		this.V = "V".charCodeAt(0);
-		this.ARR = "[".charCodeAt(0);
-
-	}
-
-	FyConst = new __FyConst();
-	FyTableSwitchTarget = function(def) {
-		this.targets = new Array();
-		if ("dflt" in def) {
-			this.dflt = def.dflt | 0;
-		} else {
-			this.dflt = 0;
-		}
-		if ("min" in def) {
-			this.min = def.min | 0;
-		} else {
-			this.min = 0;
-		}
-		if ("max" in def) {
-			this.max = def.max | 0;
-		} else {
-			this.max = 0;
-		}
-
-		var targets = this.targets;
-		var defTargets = def.targets;
-		for (var j = 0; j < defTargets.length; j++) {
-			var target = defTargets[j] | 0;
-			targets.push(target);
-		}
-	};
-
-	FyLookupSwitchTarget = function(def) {
-		if ("dflt" in def) {
-			this.dflt = def.dflt | 0;
-		} else {
-			this.dflt = 0;
-		}
-		this.targets = new HashMapI(-1, 1, 0.8);
-
-		var targets = this.targets;
-		var defTargets = def.targets;
-
-		for (var j = 0, max = defTargets.length - 1; j < max; j += 2) {
-			var j2 = j + 1;
-			var key = defTargets[j] | 0;
-			var value = defTargets[j2] | 0;
-			targets.put(key, value);
-		}
-	};
-
-	/**
-	 * FyException
-	 * 
-	 * @param {string}
-	 *            clazz Class name for inner class
-	 * @param {string}
-	 *            msg message
-	 * @constructor
-	 * @export
-	 * @struct
-	 */
-	FyException = function(clazz, message) {
-		Error.call(this, (clazz ? (clazz + ": ") : "") + message);
-		/**
-		 * @override
-		 */
-		this.name = "FyException";
-		/**
-		 * @type {string}
-		 */
-		this.clazz = clazz;
-		/**
-		 * @type {string}
-		 */
-		this.message = message;
-		/**
-		 * @override
-		 */
-		this.stack = new Error((clazz ? (clazz + ": ") : "") + message).stack;
-		if (clazz === undefined) {
-			clazz = undefined;
-		}
-	};
-
-	FyException.prototype = new Error("FyException");
-
-	/**
-	 * @override
-	 * @return {string}
-	 * @nosideeffects
-	 */
-	FyException.prototype.toString = function() {
-		return "" + (this.clazz ? this.clazz : "FatalError") + ": "
-				+ this.message + (this.stack ? ("\n" + this.stack) : "");
-	};
-
-	FyPanicException = function(data, cause) {
-		if (Object.prototype.toString.call([]) === "[object Array]") {
-			/**
-			 * @type {string}
-			 */
-			this.message = data.join("\n");
-		} else {
-			this.message = String(data);
-		}
-		/**
-		 * @type {Error}
-		 */
-		this.cause = cause;
-		/**
-		 * @type {string}
-		 */
-		this.name = "FyPanicException";
-		/**
-		 * @type {string}
-		 */
-		this.stack = new Error("panic").stack;
-	};
-
-	FyPanicException.prototype = new Error("FyPanicException");
-
-	/**
-	 * Message method <-> thread <-> threadManager <-> outer
-	 * 
-	 * @constructor
-	 * @struct
-	 * @export
-	 */
-	FyMessage = function() {
-		/**
-		 * @type {number}
-		 */
-		this.type = 0;
-		/**
-		 * @type {FyThread}
-		 */
-		this.thread = undefined;
-		/**
-		 * @type {number}
-		 */
-		this.sleepTime = 0;
-		/**
-		 * @type {string}
-		 */
-		this.nativeMethod = undefined;
-		/**
-		 * @type {number}
-		 */
-		this.sp = 0;
-	};
-
-	/**
-	 * @export
-	 * @nosideeffects
-	 * @returns {number}
-	 */
-	FyMessage.prototype.getType = function() {
-		return this.type;
-	}
-
-	/**
-	 * @export
-	 * @nosideeffects
-	 * @returns {FyThread}
-	 */
-	FyMessage.prototype.getThread = function() {
-		return this.thread;
-	}
-
-	/**
-	 * @export
-	 * @nosideeffects
-	 * @returns {number}
-	 */
-	FyMessage.prototype.getSleepTime = function() {
-		return this.sleepTime;
-	}
-
-	/**
-	 * @export
-	 * @nosideeffects
-	 * @returns {string}
-	 */
-	FyMessage.prototype.getNativeMethod = function() {
-		return this.nativeMethod;
-	}
-
-	/**
-	 * @export
-	 * @nosideeffects
-	 * @returns {number}
-	 */
-	FyMessage.prototype.getsp = function() {
-		return this.sp;
-	}
-
-	/**
-	 * @const
-	 * @type {number}
-	 */
-	FyMessage.message_continue = 0; // In thread
-	/**
-	 * @const
-	 * @type {number}
-	 */
-	FyMessage.message_none = 1; // Thread Only
-	/**
-	 * @const
-	 * @type {number}
-	 */
-	FyMessage.message_thread_dead = 2; // Thread Only
-	/**
-	 * @const
-	 * @export
-	 * @type {number}
-	 */
-	FyMessage.message_invoke_native = 3;// Thread And TM pass thread
-	/**
-	 * @const
-	 * @export
-	 * @type {number}
-	 */
-	FyMessage.message_exception = 4;// Thread And TM pass thread
-	/**
-	 * @const
-	 * @export
-	 * @type {number}
-	 */
-	FyMessage.message_sleep = 5;// TM Only
-	/**
-	 * @const
-	 * @export
-	 * @type {number}
-	 */
-	FyMessage.message_vm_dead = 6;
+      p += 3;
+      i += 4;
+    }
+    return container;
+  }
 })();
+var FyUtils = new __FyUtils();
+
+/**
+ * @constructor
+ * @struct
+ */
+function __FyConst() {
+  /**
+   * @const
+   *
+   */
+  this.TYPE_OBJECT = 0 | 0;
+  /**
+   * @const
+   *
+   */
+  this.TYPE_PRIMITIVE = 1 | 0;
+  /**
+   * @const
+   *
+   */
+  this.TYPE_ARRAY = 2 | 0;
+
+  /**
+   * @const
+   *
+   */
+  this.ARRAY_TYPE_BYTE = 0 | 0;
+  /**
+   * @const
+   *
+   */
+  this.ARRAY_TYPE_SHORT = 1 | 0;
+  /**
+   * @const
+   *
+   */
+  this.ARRAY_TYPE_INT = 2 | 0;
+  /**
+   * @const
+   *
+   */
+  this.ARRAY_TYPE_LONG = 3 | 0;
+  /* Access flags */
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_ABSTRACT = 1024 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_FINAL = 16 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_INTERFACE = 512 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_NATIVE = 256 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_PRIVATE = 2 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_PROTECTED = 4 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_PUBLIC = 1 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_STATIC = 8 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_STRICT = 2048 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_SUPER = 32 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_SYNCHRONIZED = 32 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_TRANSIENT = 128 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_VOLATILE = 64 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_VARARGS = 128 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_BRIDGE = 64 | 0;
+
+  /* Extended access flags */
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_SYNTHETIC = 0x00001000 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_ANNOTATION = 0x00002000 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_ENUM = 0x00004000 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_SOFT_REF = 0x00008000 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_WEAK_REF = 0x00010000 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_PHANTOM_REF = 0x00020000 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_REF = this.FY_ACC_SOFT_REF | this.FY_ACC_WEAK_REF | this.FY_ACC_PHANTOM_REF;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_NEED_FINALIZE = 0x00040000 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_CONSTRUCTOR = 0x00100000 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_ACC_CLINIT = 0x00200000 | 0;
+
+  /**
+   * @const
+   *
+   */
+  this.FY_TM_STATE_NEW = 0 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_TM_STATE_BOOT_PENDING = 1 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_TM_STATE_STOP = 2 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_TM_STATE_RUN_PENDING = 3 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_TM_STATE_RUNNING = 4 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_TM_STATE_STOP_PENDING = 5 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_TM_STATE_DEAD_PENDING = 6 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_TM_STATE_DEAD = 7 | 0;
+
+  /* Array types */
+  /**
+   * @const
+   *
+   */
+  this.FY_AT_BYTE = 0 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_AT_SHORT = 1 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_AT_INT = 2 | 0;
+  /**
+   * @const
+   *
+   */
+  this.FY_AT_LONG = 3 | 0;
+
+  /* Prm types */
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_BYTE = 'B';
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_CHAR = 'C';
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_DOUBLE = 'D';
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_FLOAT = 'F';
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_LONG = 'J';
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_SHORT = 'S';
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_BOOLEAN = 'Z';
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_ARRAY = '[';
+
+  /* Below are shared by thread and context */
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_INT = 'I';
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_HANDLE = 'L';
+  /* Below are used only by thread */
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_WIDE = 'W';
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_RETURN = 'R';
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_WIDE2 = '_';
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_UNKNOWN = 'X';
+  /**
+   * @const
+   *
+   */
+  this.FY_TYPE_VOID = 'V';
+
+  /**
+   * @const
+   *
+   */
+  this.FY_ATT_CODE = "Code";
+  /**
+   * @const
+   *
+   */
+  this.FY_ATT_LINENUM = "LineNumberTable";
+  /**
+   * @const
+   *
+   */
+  this.FY_ATT_SYNTH = "Synthetic";
+  /**
+   * @const
+   *
+   */
+  this.FY_ATT_SOURCE_FILE = "SourceFile";
+  /**
+   * @const
+   *
+   */
+  this.FY_ATT_CONSTANT_VALIE = "ConstantValue";
+
+  /* Core classes */
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_STRING = "java/lang/String";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_VM = "com/cirnoworks/fisce/privat/FiScEVM";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_ENUM = "java/lang/Enum";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_ANNOTATION = "java/lang/annotation/Annotation";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_STRING_BUILDER = "java/lang/StringBuilder";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_OBJECT = "java/lang/Object";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_CLASS = "java/lang/Class";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_CLASSLOADER = "java/lang/ClassLoader";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_THROWABLE = "java/lang/Throwable";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_THREAD = "java/lang/Thread";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_SYSTEM = "java/lang/System";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_RUNTIME = "java/lang/Runtime";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_BOOLEAN = "java/lang/Boolean";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_BYTE = "java/lang/Byte";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_CHAR = "java/lang/Character";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_SHORT = "java/lang/Short";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_INT = "java/lang/Integer";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_LONG = "java/lang/Long";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_FLOAT = "java/lang/Float";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_DOUBLE = "java/lang/Double";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_MATH = "java/lang/Math";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_FINALIZER = "java/lang/Finalizer";
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_RUNTIME = "java/lang/Runtime";
+
+  /**
+   * @const
+   *
+   */
+  this.FY_PRIM_BOOLEAN = "<boolean";
+  /**
+   * @const
+   *
+   */
+  this.FY_PRIM_BYTE = "<byte";
+  /**
+   * @const
+   *
+   */
+  this.FY_PRIM_SHORT = "<short";
+  /**
+   * @const
+   *
+   */
+  this.FY_PRIM_CHAR = "<char";
+  /**
+   * @const
+   *
+   */
+  this.FY_PRIM_INT = "<int";
+  /**
+   * @const
+   *
+   */
+  this.FY_PRIM_FLOAT = "<float";
+  /**
+   * @const
+   *
+   */
+  this.FY_PRIM_LONG = "<long";
+  /**
+   * @const
+   *
+   */
+  this.FY_PRIM_DOUBLE = "<double";
+  /**
+   * @const
+   *
+   */
+  this.FY_PRIM_VOID = "<void";
+
+  /**
+   * @const
+   *
+   */
+  this.FY_IO_INPUTSTREAM = "java/io/InputStream";
+  /**
+   * @const
+   *
+   */
+  this.FY_IO_PRINTSTREAM = "java/io/PrintStream";
+
+  /**
+   * @const
+   *
+   */
+  this.FY_REFLECT_ARRAY = "java/lang/reflect/Array";
+  /**
+   * @const
+   *
+   */
+  this.FY_REFLECT_CONSTRUCTOR = "java/lang/reflect/Constructor";
+  /**
+   * @const
+   *
+   */
+  this.FY_REFLECT_FIELD = "java/lang/reflect/Field";
+  /**
+   * @const
+   *
+   */
+  this.FY_REFLECT_METHOD = "java/lang/reflect/Method";
+  /**
+   * @const
+   *
+   */
+  this.FY_REFLECT_PROXY = "java/lang/reflect/Proxy";
+
+  /**
+   * @const
+   *
+   */
+  this.FY_REF_SOFT = "java/lang/ref/SoftReference";
+  /**
+   * @const
+   *
+   */
+  this.FY_REF_WEAK = "java/lang/ref/WeakReference";
+  /**
+   * @const
+   *
+   */
+  this.FY_REF_PHANTOM = "java/lang/ref/PhantomReference";
+  /**
+   * @const
+   *
+   */
+  this.FY_REF = "java/lang/ref/Reference";
+
+  /**
+   * @const
+   *
+   */
+  this.FY_BASE_STACKTHREADELEMENT = "java/lang/StackTraceElement";
+
+  /**
+   * @const
+   *
+   */
+  this.FY_BOX_BOOLEAN = this.FY_BASE_BOOLEAN + ".valueOf.(Z).L" + this.FY_BASE_BOOLEAN + ";", this.FY_BOX_BYTE = this.FY_BASE_BYTE + ".valueOf.(B).L" + this.FY_BASE_BYTE + ";";
+  /**
+   * @const
+   *
+   */
+  this.FY_BOX_SHORT = this.FY_BASE_SHORT + ".valueOf.(S).L" + this.FY_BASE_SHORT + ";";
+  /**
+   * @const
+   *
+   */
+  this.FY_BOX_CHARACTER = this.FY_BASE_CHARACTER + ".valueOf.(C).L" + this.FY_BASE_CHARACTER + ";";
+  /**
+   * @const
+   *
+   */
+  this.FY_BOX_INTEGER = this.FY_BASE_INTEGER + ".valueOf.(I).L" + this.FY_BASE_INTEGER + ";";
+  /**
+   * @const
+   *
+   */
+  this.FY_BOX_FLOAT = this.FY_BASE_FLOAT + ".valueOf.(F).L" + this.FY_BASE_FLOAT + ";";
+  /**
+   * @const
+   *
+   */
+  this.FY_BOX_LONG = this.FY_BASE_LONG + ".valueOf.(J).L" + this.FY_BASE_LONG + ";", this.FY_BOX_DOUBLE = this.FY_BASE_DOUBLE + ".valueOf.(D).L" + this.FY_BASE_DOUBLE + ";";
+
+  /**
+   * @const
+   *
+   */
+  this.FY_UNBOX_BOOLEAN = this.FY_BASE_BOOLEAN + ".booleanValue.()Z";
+  /**
+   * @const
+   *
+   */
+  this.FY_UNBOX_BYTE = this.FY_BASE_BYTE + ".byteValue.()B";
+  /**
+   * @const
+   *
+   */
+  this.FY_UNBOX_SHORT = this.FY_BASE_SHORT + ".shortValue.()S";
+  /**
+   * @const
+   *
+   */
+  this.FY_UNBOX_CHARACTER = this.FY_BASE_CHAR + ".charValue.()C";
+  /**
+   * @const
+   *
+   */
+  this.FY_UNBOX_INTEGER = this.FY_BASE_INT + ".intValue.()I";
+  /**
+   * @const
+   *
+   */
+  this.FY_UNBOX_FLOAT = this.FY_BASE_FLOAT + ".floatValue.()F";
+  /**
+   * @const
+   *
+   */
+  this.FY_UNBOX_LONG = this.FY_BASE_LONG + ".longValue.()J";
+  /**
+   * @const
+   *
+   */
+  this.FY_UNBOX_DOUBLE = this.FY_BASE_DOUBLE + ".doubleValue.()D";
+
+  /**
+   * @const
+   *
+   */
+  this.FY_VALUE_BOOLEAN = this.FY_BASE_BOOLEAN + ".value.Z";
+  /**
+   * @const
+   *
+   */
+  this.FY_VALUE_BYTE = this.FY_BASE_BYTE + ".value.B";
+  /**
+   * @const
+   *
+   */
+  this.FY_VALUE_SHORT = this.FY_BASE_SHORT + ".value.S";
+  /**
+   * @const
+   *
+   */
+  this.FY_VALUE_CHARACTER = this.FY_BASE_CHAR + ".value.C";
+  /**
+   * @const
+   *
+   */
+  this.FY_VALUE_INTEGER = this.FY_BASE_INT + ".value.I";
+  /**
+   * @const
+   *
+   */
+  this.FY_VALUE_FLOAT = this.FY_BASE_FLOAT + ".value.F";
+  /**
+   * @const
+   *
+   */
+  this.FY_VALUE_LONG = this.FY_BASE_LONG + ".value.J";
+  /**
+   * @const
+   *
+   */
+  this.FY_VALUE_DOUBLE = this.FY_BASE_DOUBLE + ".value.D";
+
+  /* Methods */
+  /**
+   * @const
+   *
+   */
+  this.FY_METHOD_INIT = "<init>";
+  /**
+   * @const
+   *
+   */
+  this.FY_METHOD_CLINIT = "<clinit>";
+  /**
+   * @const
+   *
+   */
+  this.FY_METHODF_INIT = ".<init>.()V";
+  /**
+   * @const
+   *
+   */
+  this.FY_METHODF_MAIN = ".main.([L" + this.FY_BASE_STRING + ";)V";
+  /**
+   * @const
+   *
+   */
+  this.FY_METHODF_RUN = ".run.()V";
+  /**
+   * @const
+   *
+   */
+  this.FY_METHODF_FINALIZE = ".finalize.()V";
+  /**
+   * @const
+   *
+   */
+  this.FY_FIELDF_PRIORITY = ".priority.I";
+  /**
+   * @const
+   *
+   */
+  this.FY_FIELDF_NAME = ".name.[C";
+  /**
+   * @const
+   *
+   */
+  this.FY_FIELDF_DAEMON = ".daemon.Z";
+
+  /* Exceptions */
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_ITE = "java/lang/InvocationTargetException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_MONITOR = "java/lang/IllegalMonitorStateException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_NO_METHOD = "java/lang/NoSuchMethodError";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_NPT = "java/lang/NullPointerException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_ARITHMETIC = "java/lang/ArithmeticException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_INCOMPAT_CHANGE = "java/lang/IncompatibleClassChangeError";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_VM = "java/lang/VirtualMachineError";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_CAST = "java/lang/ClassCastException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_IO = "java/io/IOException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_FNF = "java/io/FileNotFoundException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_RT = "java/lang/RuntimeException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_IOOB = "java/lang/IndexOutOfBoundsException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_AIOOB = "java/lang/ArrayIndexOutOfBoundsException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_STORE = "java/lang/ArrayStoreException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_CLASSNOTFOUND = "java/lang/ClassNotFoundException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_ABSTRACT = "java/lang/AbstractMethodError";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_ACCESS = "java/lang/IllegalAccessError";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_NASE = "java/lang/NegativeArraySizeException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_INTR = "java/lang/InterruptedException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_IMSE = "java/lang/IllegalMonitorStateException";
+  /**
+   * @const
+   *
+   */
+  this.FY_EXCEPTION_ARGU = "java/lang/IllegalArgumentException";
+
+  /* Unique names */
+  /**
+   * @const
+   *
+   */
+  this.stringArray = "[L" + this.FY_BASE_STRING + ";";
+  /**
+   * @const
+   *
+   */
+  this.throwablePrintStacktrace = this.FY_BASE_THROWABLE + ".printStackTrace.()V";
+  this.throwableDetailMessage = this.FY_BASE_THROWABLE + ".detailMessage.L" + this.FY_BASE_STRING + ";";
+  this.throwableStackTrace = this.FY_BASE_THROWABLE + ".stackTrace.[L" + this.FY_BASE_STACKTHREADELEMENT + ";";
+
+  this.stringCount = this.FY_BASE_STRING + ".count.I";
+  this.stringValue = this.FY_BASE_STRING + ".value.[C";
+  this.stringOffset = this.FY_BASE_STRING + ".offset.I";
+
+  this.stackTraceElementArray = "[L" + this.FY_BASE_STACKTHREADELEMENT + ";";
+  this.stackTraceElementDeclaringClass = this.FY_BASE_STACKTHREADELEMENT + ".declaringClass.L" + this.FY_BASE_STRING + ";";
+  this.stackTraceElementMethodName = this.FY_BASE_STACKTHREADELEMENT + ".methodName.L" + this.FY_BASE_STRING + ";";
+  this.stackTraceElementFileName = this.FY_BASE_STACKTHREADELEMENT + ".fileName.L" + this.FY_BASE_STRING + ";";
+  this.stackTraceElementLineNumber = this.FY_BASE_STACKTHREADELEMENT + ".lineNumber.I";
+
+  this.Z = "Z".charCodeAt(0);
+  this.B = "B".charCodeAt(0);
+  this.C = "C".charCodeAt(0);
+  this.S = "S".charCodeAt(0);
+  this.I = "I".charCodeAt(0);
+  this.F = "F".charCodeAt(0);
+  this.J = "J".charCodeAt(0);
+  this.D = "D".charCodeAt(0);
+  this.L = "L".charCodeAt(0);
+  this.V = "V".charCodeAt(0);
+  this.ARR = "[".charCodeAt(0);
+
+}
+
+/**
+ * @type {__FyConst}
+ */
+var FyConst = new __FyConst();
+
+/**
+ * @constructor
+ */
+function FyTableSwitchTarget(def) {
+  this.targets = new Array();
+  if ("dflt" in def) {
+    this.dflt = def["dflt"] | 0;
+  } else {
+    this.dflt = 0;
+  }
+  if ("min" in def) {
+    this.min = def["min"] | 0;
+  } else {
+    this.min = 0;
+  }
+  if ("max" in def) {
+    this.max = def["max"] | 0;
+  } else {
+    this.max = 0;
+  }
+
+  var targets = this.targets;
+  var defTargets = def["targets"];
+  for (var j = 0; j < defTargets.length; j++) {
+    var target = defTargets[j] | 0;
+    targets.push(target);
+  }
+};
+
+/**
+ * @constructor
+ */
+function FyLookupSwitchTarget(def) {
+  if ("dflt" in def) {
+    this.dflt = def["dflt"] | 0;
+  } else {
+    this.dflt = 0;
+  }
+  this.targets = new HashMapI(-1, 1, 0.8);
+
+  var targets = this.targets;
+  var defTargets = def["targets"];
+
+  for (var j = 0, max = defTargets.length - 1; j < max; j += 2) {
+    var j2 = j + 1;
+    var key = defTargets[j] | 0;
+    var value = defTargets[j2] | 0;
+    targets.put(key, value);
+  }
+};
+
+/**
+ * FyException
+ *
+ * @param {string}
+ *            clazz Class name for inner class
+ * @param {string}
+ *            msg message
+ * @class
+ * @constructor
+ * @export
+ * @struct
+ */
+function FyException(clazz, message) {
+  Error.call(this, (clazz ? (clazz + ": ") : "") + message);
+  /**
+   * @override
+   */
+  this.name = "FyException";
+  /**
+   * @type {string}
+   */
+  this.clazz = clazz;
+  /**
+   * @type {string}
+   */
+  this.message = message;
+  /**
+   * @override
+   */
+  this.stack = new Error((clazz ? (clazz + ": ") : "") + message).stack;
+  if (!clazz) {
+    clazz = null;
+  }
+};
+
+FyException.prototype = new Error("FyException");
+
+/**
+ * @override
+ * @return {string}
+ */
+FyException.prototype.toString = function() {
+  return "" + (this.clazz ? this.clazz : "FatalError") + ": " + this.message + (this.stack ? ("\n" + this.stack) : "");
+};
+
+/**
+ * @constructor
+ * @export
+ * @class
+ * @param {?} data
+ * @param {Error}
+ */
+function FyPanicException(data, cause) {
+  Error.call(this, "panic");
+  if (Object.prototype.toString.call([]) === "[object Array]") {
+    /**
+     * @type {string}
+     */
+    this.message = data.join("\n");
+  } else {
+    this.message = String(data);
+  }
+  /**
+   * @type {Error}
+   */
+  this.cause = cause;
+  /**
+   * @type {string}
+   */
+  this.name = "FyPanicException";
+  /**
+   * @type {string}
+   */
+  this.stack = new Error("panic").stack;
+};
+
+FyPanicException.prototype = new Error("FyPanicException");
+
+/**
+ * Message method <-> thread <-> threadManager <-> outer
+ *
+ * @constructor
+ * @struct
+ * @export
+ */
+function FyMessage() {
+  /**
+   * @type {number}
+   */
+  this.type = 0;
+  /**
+   * @type {FyThread}
+   */
+  this.thread = null;
+  /**
+   * @type {number}
+   */
+  this.sleepTime = 0;
+  /**
+   * @type {string}
+   */
+  this.nativeMethod = null;
+  /**
+   * @type {number}
+   */
+  this.sp = 0;
+};
+
+/**
+ * @export
+ * @returns {number}
+ */
+FyMessage.prototype.getType = function() {
+  return this.type;
+}
+
+/**
+ * @export
+ * @returns {FyThread}
+ */
+FyMessage.prototype.getThread = function() {
+  return this.thread;
+}
+
+/**
+ * @export
+ * @returns {number}
+ */
+FyMessage.prototype.getSleepTime = function() {
+  return this.sleepTime;
+}
+
+/**
+ * @export
+ * @returns {string}
+ */
+FyMessage.prototype.getNativeMethod = function() {
+  return this.nativeMethod;
+}
+
+/**
+ * @export
+ * @returns {number}
+ */
+FyMessage.prototype.getsp = function() {
+  return this.sp;
+}
+
+/**
+ * @const
+ * @type {number}
+ */
+FyMessage.message_continue = 0; // In thread
+/**
+ * @const
+ * @type {number}
+ */
+FyMessage.message_none = 1; // Thread Only
+/**
+ * @const
+ * @type {number}
+ */
+FyMessage.message_thread_dead = 2; // Thread Only
+/**
+ * @const
+ * @export
+ * @type {number}
+ */
+FyMessage.message_invoke_native = 3; // Thread And TM pass thread
+/**
+ * @const
+ * @export
+ * @type {number}
+ */
+FyMessage.message_exception = 4; // Thread And TM pass thread
+/**
+ * @const
+ * @export
+ * @type {number}
+ */
+FyMessage.message_sleep = 5; // TM Only
+/**
+ * @const
+ * @export
+ * @type {number}
+ */
+FyMessage.message_vm_dead = 6;

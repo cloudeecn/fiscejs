@@ -15,7 +15,11 @@
  * fiscejs. If not, see <http://www.gnu.org/licenses/>.
  */
 
-(function() {
+/**
+ * @param {FyContext}
+ *            context
+ */
+function fyRegisterNativeCore(context) {
 	"use strict";
 
 	/**
@@ -340,15 +344,15 @@
 		var stack = thread.stack;
 
 		if (stack[sp + 1] === 10 || stack[sp + 1] === 13) {
-			console.log(String.fromCharCode.apply(undefined, displayBuffer));
+			console.log(String.fromCharCode.apply(null, displayBuffer));
 			displayBuffer = [];
 		} else {
 			displayBuffer.push(stack[sp + 1]);
 			if (displayBuffer.length >= 132) {
-				// throw String.fromCharCode.apply(undefined, displayBuffer);
+				// throw String.fromCharCode.apply(null, displayBuffer);
 				console
 						.log(String.fromCharCode
-								.apply(undefined, displayBuffer));
+								.apply(null, displayBuffer));
 				displayBuffer = [];
 			}
 		}
@@ -449,7 +453,7 @@
 	function systemExit(context, thread, sp, ops) {
 		// TODO
 		throw "exited";
-		return ops - 1;
+		// return ops - 1;
 	}
 
 	/**
@@ -817,8 +821,7 @@
 	 *            ops
 	 */
 	function refGet(context, thread, sp, ops) {
-		thread.nativeReturnInt(sp, context.heap
-				.getReferent(thread.stack[sp]));
+		thread.nativeReturnInt(sp, context.heap.getReferent(thread.stack[sp]));
 		return ops - 1;
 	}
 
@@ -950,146 +953,148 @@
 		return ops - 1;
 	}
 
-	FyContext.registerStaticNH(
+	context.registerNativeHandler(
 			"com/cirnoworks/fisce/privat/SystemInputStream.read0.()I",
 			systemInputStreamRead0);
-	FyContext.registerStaticNH(
+	context.registerNativeHandler(
 			"com/cirnoworks/fisce/privat/SystemOutputStream.write0.(IL"
 					+ FyConst.FY_BASE_STRING + ";)V", systemOutStreamWrite);
 
-	FyContext.registerStaticNH(FyConst.FY_BASE_DOUBLE
+	context.registerNativeHandler(FyConst.FY_BASE_DOUBLE
 			+ ".longBitsToDouble.(J)D", doubleLongBitsToDouble);
-	FyContext.registerStaticNH(FyConst.FY_BASE_DOUBLE
+	context.registerNativeHandler(FyConst.FY_BASE_DOUBLE
 			+ ".doubleToRawLongBits.(D)J", doubleLongBitsToDouble);
-	FyContext.registerStaticNH(FyConst.FY_BASE_FLOAT + ".intBitsToFloat.(I)F",
-			floatIntBitsToFloat);
-	FyContext.registerStaticNH(FyConst.FY_BASE_FLOAT
+	context.registerNativeHandler(FyConst.FY_BASE_FLOAT
+			+ ".intBitsToFloat.(I)F", floatIntBitsToFloat);
+	context.registerNativeHandler(FyConst.FY_BASE_FLOAT
 			+ ".floatToRawIntBits.(F)I", floatIntBitsToFloat);
-	FyContext.registerStaticNH(FyConst.FY_BASE_STRING + ".intern.()L"
+	context.registerNativeHandler(FyConst.FY_BASE_STRING + ".intern.()L"
 			+ FyConst.FY_BASE_STRING + ";", stringIntern);
 
-	FyContext.registerStaticNH(FyConst.FY_BASE_RUNTIME + ".freeMemory.()J",
+	context.registerNativeHandler(FyConst.FY_BASE_RUNTIME + ".freeMemory.()J",
 			runtimeFreeMemory);
-	FyContext.registerStaticNH(FyConst.FY_BASE_RUNTIME + ".totalMemory.()J",
+	context.registerNativeHandler(FyConst.FY_BASE_RUNTIME + ".totalMemory.()J",
 			runtimeTotalMemory);
-	FyContext.registerStaticNH(FyConst.FY_BASE_RUNTIME + ".maxMemory.()J",
+	context.registerNativeHandler(FyConst.FY_BASE_RUNTIME + ".maxMemory.()J",
 			runtimeMaxMemory);
 
-	FyContext.registerStaticNH(FyConst.FY_BASE_SYSTEM + ".setIn0.(L"
+	context.registerNativeHandler(FyConst.FY_BASE_SYSTEM + ".setIn0.(L"
 			+ FyConst.FY_IO_INPUTSTREAM + ";)V", systemSetIn);
-	FyContext.registerStaticNH(FyConst.FY_BASE_SYSTEM + ".setOut0.(L"
+	context.registerNativeHandler(FyConst.FY_BASE_SYSTEM + ".setOut0.(L"
 			+ FyConst.FY_IO_PRINTSTREAM + ";)V", systemSetOut);
-	FyContext.registerStaticNH(FyConst.FY_BASE_SYSTEM + ".setErr0.(L"
+	context.registerNativeHandler(FyConst.FY_BASE_SYSTEM + ".setErr0.(L"
 			+ FyConst.FY_IO_PRINTSTREAM + ";)V", systemSetErr);
-	FyContext.registerStaticNH(FyConst.FY_BASE_SYSTEM + ".setProperty0.(L"
+	context.registerNativeHandler(FyConst.FY_BASE_SYSTEM + ".setProperty0.(L"
 			+ FyConst.FY_BASE_STRING + ";L" + FyConst.FY_BASE_STRING + ";)L"
 			+ FyConst.FY_BASE_STRING + ";", systemSetProperty);
-	FyContext.registerStaticNH(FyConst.FY_BASE_SYSTEM + ".getProperty0.(L"
+	context.registerNativeHandler(FyConst.FY_BASE_SYSTEM + ".getProperty0.(L"
 			+ FyConst.FY_BASE_STRING + ";)L" + FyConst.FY_BASE_STRING + ";",
 			systemGetProperty);
-	FyContext
-			.registerStaticNH(FyConst.FY_BASE_SYSTEM + ".arraycopy.(L"
+	context
+			.registerNativeHandler(FyConst.FY_BASE_SYSTEM + ".arraycopy.(L"
 					+ FyConst.FY_BASE_OBJECT + ";IL" + FyConst.FY_BASE_OBJECT
 					+ ";II)V", systemArrayCopy);
-	FyContext.registerStaticNH(FyConst.FY_BASE_SYSTEM
+	context.registerNativeHandler(FyConst.FY_BASE_SYSTEM
 			+ ".currentTimeMillis.()J", systemTimeMS);
-	FyContext.registerStaticNH(FyConst.FY_BASE_SYSTEM + ".nanoTime.()J",
+	context.registerNativeHandler(FyConst.FY_BASE_SYSTEM + ".nanoTime.()J",
 			systemTimeNS);
-	FyContext.registerStaticNH(FyConst.FY_BASE_SYSTEM + ".identityHashCode.(L"
-			+ FyConst.FY_BASE_OBJECT + ";)I", systemIdentityHashCode);
-	FyContext.registerStaticNH(FyConst.FY_BASE_SYSTEM + ".gc.()V", systemGC);
-	FyContext.registerStaticNH(FyConst.FY_BASE_SYSTEM + ".exit.(I)V",
+	context.registerNativeHandler(FyConst.FY_BASE_SYSTEM
+			+ ".identityHashCode.(L" + FyConst.FY_BASE_OBJECT + ";)I",
+			systemIdentityHashCode);
+	context.registerNativeHandler(FyConst.FY_BASE_SYSTEM + ".gc.()V", systemGC);
+	context.registerNativeHandler(FyConst.FY_BASE_SYSTEM + ".exit.(I)V",
 			systemExit);
 
-	FyContext.registerStaticNH(FyConst.FY_BASE_OBJECT + ".clone.()L"
+	context.registerNativeHandler(FyConst.FY_BASE_OBJECT + ".clone.()L"
 			+ FyConst.FY_BASE_OBJECT + ";", objectClone);
-	FyContext.registerStaticNH(FyConst.FY_BASE_OBJECT + ".getClass.()L"
+	context.registerNativeHandler(FyConst.FY_BASE_OBJECT + ".getClass.()L"
 			+ FyConst.FY_BASE_CLASS + ";", objectGetClass);
-	FyContext.registerStaticNH(FyConst.FY_BASE_OBJECT + ".wait.(J)V",
+	context.registerNativeHandler(FyConst.FY_BASE_OBJECT + ".wait.(J)V",
 			objectWait);
-	FyContext.registerStaticNH(FyConst.FY_BASE_OBJECT + ".notify.()V",
+	context.registerNativeHandler(FyConst.FY_BASE_OBJECT + ".notify.()V",
 			objectNotify);
-	FyContext.registerStaticNH(FyConst.FY_BASE_OBJECT + ".notifyAll.()V",
+	context.registerNativeHandler(FyConst.FY_BASE_OBJECT + ".notifyAll.()V",
 			objectNorifyAll);
 
-	FyContext.registerStaticNH(FyConst.FY_BASE_THROWABLE
+	context.registerNativeHandler(FyConst.FY_BASE_THROWABLE
 			+ ".fillInStackTrace0.()V", throwableFillInStackTrace);
 
-	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".logOut0.(IL"
+	context.registerNativeHandler(FyConst.FY_BASE_VM + ".logOut0.(IL"
 			+ FyConst.FY_BASE_STRING + ";)V", vmLogOut);
-	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".throwOut.(L"
+	context.registerNativeHandler(FyConst.FY_BASE_VM + ".throwOut.(L"
 			+ FyConst.FY_BASE_THROWABLE + ";)V", vmThrowOut);
-	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".exit.(I)V", vmExit);
-	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".decode.(L"
+	context.registerNativeHandler(FyConst.FY_BASE_VM + ".exit.(I)V", vmExit);
+	context.registerNativeHandler(FyConst.FY_BASE_VM + ".decode.(L"
 			+ FyConst.FY_BASE_STRING + ";[BII)[C", vmDecode);
-	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".encode.(L"
+	context.registerNativeHandler(FyConst.FY_BASE_VM + ".encode.(L"
 			+ FyConst.FY_BASE_STRING + ";[CII)[B", vmEncode);
-	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".getDoubleRaw.(D)J",
+	context.registerNativeHandler(FyConst.FY_BASE_VM + ".getDoubleRaw.(D)J",
 			doubleLongBitsToDouble);
-	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".getFloatRaw.(F)[I",
+	context.registerNativeHandler(FyConst.FY_BASE_VM + ".getFloatRaw.(F)[I",
 			floatIntBitsToFloat);
-	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".stringToDouble.(L"
+	context.registerNativeHandler(FyConst.FY_BASE_VM + ".stringToDouble.(L"
 			+ FyConst.FY_BASE_STRING + ";)D", vmStringToDouble);
-	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".stringToFloat.(L"
+	context.registerNativeHandler(FyConst.FY_BASE_VM + ".stringToFloat.(L"
 			+ FyConst.FY_BASE_STRING + ";)F", vmStringToFloat);
-	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".floatToString.(F)L"
+	context.registerNativeHandler(FyConst.FY_BASE_VM + ".floatToString.(F)L"
 			+ FyConst.FY_BASE_STRING + ";", vmFloatToString);
-	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".doubleToString.(D)L"
+	context.registerNativeHandler(FyConst.FY_BASE_VM + ".doubleToString.(D)L"
 			+ FyConst.FY_BASE_STRING + ";", vmDoubleToString);
-	FyContext.registerStaticNH(FyConst.FY_BASE_VM + ".breakpoint.()V",
+	context.registerNativeHandler(FyConst.FY_BASE_VM + ".breakpoint.()V",
 			vmBreakpoint);
 
-	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".currentThread.()L"
+	context.registerNativeHandler(FyConst.FY_BASE_THREAD + ".currentThread.()L"
 			+ FyConst.FY_BASE_THREAD + ";", threadCurrentThread);
-	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".setPriority0.(I)V",
-			threadSetPriority);
-	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".isAlive.()Z",
+	context.registerNativeHandler(
+			FyConst.FY_BASE_THREAD + ".setPriority0.(I)V", threadSetPriority);
+	context.registerNativeHandler(FyConst.FY_BASE_THREAD + ".isAlive.()Z",
 			threadIsAlive);
-	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".start0.()V",
+	context.registerNativeHandler(FyConst.FY_BASE_THREAD + ".start0.()V",
 			threadStart);
-	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".interrupt0.()V",
+	context.registerNativeHandler(FyConst.FY_BASE_THREAD + ".interrupt0.()V",
 			threadInterrupt);
-	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".isInterrupted.(Z)Z",
-			threadInterrupted);
-	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".sleep.(J)V",
+	context.registerNativeHandler(FyConst.FY_BASE_THREAD
+			+ ".isInterrupted.(Z)Z", threadInterrupted);
+	context.registerNativeHandler(FyConst.FY_BASE_THREAD + ".sleep.(J)V",
 			threadSleep);
-	FyContext.registerStaticNH(FyConst.FY_BASE_THREAD + ".yield.()V",
+	context.registerNativeHandler(FyConst.FY_BASE_THREAD + ".yield.()V",
 			threadYield);
 
-	FyContext.registerStaticNH(FyConst.FY_REF + ".register.(L"
+	context.registerNativeHandler(FyConst.FY_REF + ".register.(L"
 			+ FyConst.FY_BASE_OBJECT + ";)V", refRegister);
-	FyContext.registerStaticNH(FyConst.FY_REF + ".clear0.()V", refClear);
-	FyContext.registerStaticNH(FyConst.FY_REF + ".get0.()L"
+	context.registerNativeHandler(FyConst.FY_REF + ".clear0.()V", refClear);
+	context.registerNativeHandler(FyConst.FY_REF + ".get0.()L"
 			+ FyConst.FY_BASE_OBJECT + ";", refGet);
 
-	FyContext.registerStaticNH(FyConst.FY_BASE_FINALIZER
+	context.registerNativeHandler(FyConst.FY_BASE_FINALIZER
 			+ ".getReferencesToEnqueue.()[L" + FyConst.FY_REF + ";",
 			finalizerGetReferencesToEnqueue);
-	FyContext.registerStaticNH(FyConst.FY_BASE_FINALIZER + ".getFinalizee.()[L"
-			+ FyConst.FY_BASE_OBJECT + ";", finalizerGetFinalizee);
-	FyContext.registerStaticNH("java/lang/reflect/Proxy.defineClassImpl.(L"
+	context.registerNativeHandler(FyConst.FY_BASE_FINALIZER
+			+ ".getFinalizee.()[L" + FyConst.FY_BASE_OBJECT + ";",
+			finalizerGetFinalizee);
+	context.registerNativeHandler("java/lang/reflect/Proxy.defineClassImpl.(L"
 			+ FyConst.FY_BASE_CLASSLOADER + ";L" + FyConst.FY_BASE_STRING
 			+ ";[B)L" + FyConst.FY_BASE_CLASS + ";", proxyDefineClass);
 
-	FyContext.registerStaticNH(
+	context.registerNativeHandler(
 			"com/cirnoworks/fisce/js/ProxyHelper.defineClassViaJSON.(L"
 					+ FyConst.FY_BASE_STRING + ";)V", proxyHelperDefineClass);
-	FyContext
-			.registerStaticNH(
+	context
+			.registerNativeHandler(
 					"com/cirnoworks/fisce/privat/ResourceInputStream.bind0.(Ljava/lang/String;I)V",
 					risBind);
-	FyContext.registerStaticNH(
+	context.registerNativeHandler(
 			"com/cirnoworks/fisce/privat/ResourceInputStream.read0.()I",
 			risRead);
-	FyContext.registerStaticNH(
+	context.registerNativeHandler(
 			"com/cirnoworks/fisce/privat/ResourceInputStream.read0.([BII)I",
 			risReadTo);
-	FyContext.registerStaticNH(
+	context.registerNativeHandler(
 			"com/cirnoworks/fisce/privat/ResourceInputStream.close0.()V",
 			risClose);
 
-	FyContext.registerStaticNH("com/cirnoworks/fisce/privat/FiScEVM.save.()V",
-			function() {/* TODO */
+	context.registerNativeHandler(
+			"com/cirnoworks/fisce/privat/FiScEVM.save.()V", function() {/* TODO */
 				return 0;
 			});
-})();
+}

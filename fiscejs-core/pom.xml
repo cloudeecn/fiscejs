@@ -137,7 +137,11 @@
 						</goals>
 						<configuration>
 							<zipFile>${project.build.directory}/assembly-js.zip</zipFile>
-							<compiledFile>${project.build.directory}/fiscejs-${project.version}</compiledFile>
+							<compiledFile>${project.build.directory}/fiscejs-${project.version}.js</compiledFile>
+							<externs>
+								<extern>${basedir}/src/main/resources/fisce/extern.js</extern>
+							</externs>
+							<stopOnWarning>true</stopOnWarning>
 						</configuration>
 					</execution>
 					<execution>

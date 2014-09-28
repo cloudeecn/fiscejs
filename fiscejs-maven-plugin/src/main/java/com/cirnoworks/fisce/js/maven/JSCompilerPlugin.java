@@ -6,20 +6,23 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.zip.GZIPOutputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.plugin.logging.Log;
 
 import com.google.javascript.jscomp.CompilationLevel;
 import com.google.javascript.jscomp.Compiler;
 import com.google.javascript.jscomp.CompilerOptions;
+import com.google.javascript.jscomp.CompilerOptions.LanguageMode;
+import com.google.javascript.jscomp.JSError;
 import com.google.javascript.jscomp.SourceFile;
+import com.google.javascript.jscomp.WarningLevel;
 
 /**
  * @goal compile-zip
@@ -39,18 +42,22 @@ public class JSCompilerPlugin extends AbstractMojo {
 	/**
 	 * @parameter
 	 */
+	private File[] externs;
+
+	/**
+	 * @parameter
+	 */
 	private File[] extras;
 
 	/**
-	 * @parameter default-value=true
+	 * @parameter
 	 */
-	private boolean gz;
+	private boolean stopOnWarning;
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
+		Log log = this.getLog();
 		try {
-			compiledFile = new File(compiledFile.getAbsolutePath()
-					+ (gz ? ".js.gz" : ".js"));
 			File outputDir = compiledFile.getParentFile();
 			if (!outputDir.exists()) {
 				outputDir.mkdirs();
@@ -74,26 +81,64 @@ public class JSCompilerPlugin extends AbstractMojo {
 				} catch (IOException e) {
 				}
 			}
+
+			ArrayList<SourceFile> externSources = new ArrayList<SourceFile>();
+			zis = new ZipInputStream(getClass().getResourceAsStream(
+					"/externs.zip"));
+			try {
+				ZipEntry entry;
+				while ((entry = zis.getNextEntry()) != null) {
+					if (entry.getName().endsWith(".js")) {
+						this.getLog().info("Adding extern " + entry.getName() + "...");
+						externSources.add(SourceFile.fromInputStream(entry.getName(),
+								zis));
+						zis.closeEntry();
+					}
+				}
+			} finally {
+				try {
+					zis.close();
+				} catch (IOException e) {
+
+				}
+			}
 			// regenerate
 			Compiler compiler = new Compiler();
 			CompilerOptions options = new CompilerOptions();
 			CompilationLevel.ADVANCED_OPTIMIZATIONS
 					.setOptionsForCompilationLevel(options);
-
-			SourceFile extern = SourceFile.fromCode("externs.js",
-					"function alert(x) {}");
-			compiler.compile(Arrays.asList(extern), inputs, options);
+			options.setLanguage(LanguageMode.ECMASCRIPT5);
+			WarningLevel.VERBOSE.setOptionsForWarningLevel(options);;
+//			options.setWarningLevel(DiagnosticGroups.CHECK_TYPES, CheckLevel.ERROR);
+//			options.setCheckDeterminism(true);
+			options.setGenerateExports(true);
+			options.setPrettyPrint(true);
+			options.setRenamePrefix("xw");
+			
+			if (externs != null) {
+				for (File extern : externs) {
+					externSources.add(SourceFile.fromFile(extern,
+							Charset.forName("utf-8")));
+				}
+			}
+			compiler.compile(externSources, inputs, options);
+			for (JSError warning : compiler.getWarnings()) {
+				log.warn(warning.toString());
+			}
+			for (JSError error : compiler.getErrors()) {
+				log.error(error.toString());
+			}
+			if (compiler.getErrorCount() > 0) {
+				throw new MojoExecutionException("JS Compile error");
+			}
+			if (stopOnWarning && compiler.getWarningCount() > 0) {
+				throw new MojoExecutionException("JS Compiles with warning");
+			}
 			String output = compiler.toSource();
 			FileOutputStream fos = new FileOutputStream(compiledFile);
 			try {
-				GZIPOutputStream gos = null;
 				OutputStreamWriter writer;
-				if (gz) {
-					gos = new GZIPOutputStream(fos);
-					writer = new OutputStreamWriter(gos, "utf-8");
-				} else {
-					writer = new OutputStreamWriter(fos, "utf-8");
-				}
+				writer = new OutputStreamWriter(fos, "utf-8");
 				writer.write(output);
 				if (extras != null) {
 					char[] cbuf = new char[65536];
@@ -116,9 +161,6 @@ public class JSCompilerPlugin extends AbstractMojo {
 					}
 				}
 				writer.close();
-				if (gos != null) {
-					gos.close();
-				}
 			} finally {
 				try {
 					fos.close();

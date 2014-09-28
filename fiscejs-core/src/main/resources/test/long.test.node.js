@@ -52,7 +52,7 @@
 
 	function testLong(op, mode) {
 		var stack = new Int32Array(65536);
-		var lop = FyCreateLongOps(window, mode, stack);
+		var lop = new __FyLongOps(stack, 0);
 		var resultData = eval("FyLongTestData_" + op);
 
 		var pos = 0 | 0;
