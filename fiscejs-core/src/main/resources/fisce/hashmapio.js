@@ -20,7 +20,7 @@
  * @struct
  * @private
  * @template T
- * @param {!number} key
+ * @param {number} key
  * @param {T} value
  */
 function EntryIO(key, value) {
@@ -35,7 +35,7 @@ function EntryIO(key, value) {
 }
 
 /**
- * @returns {!number}
+ * @returns {number}
  */
 EntryIO.prototype.getKey = function() {
   return this.key;
@@ -49,7 +49,7 @@ EntryIO.prototype.getValue = function() {
 }
 
 /**
- * @param {!number} key
+ * @param {number} key
  */
 EntryIO.prototype.setKey = function(key) {
   this.key = key | 0;
@@ -70,7 +70,7 @@ EntryIO.prototype.setValue = function(value) {
  *            capShift
  * @param {number}
  *            factor
- * @param {T|undefined} nullValue
+ * @param {undefined|null} nullValue
  * @template T
  */
 function HashMapIObj(capShift, factor, nullValue) {
@@ -84,7 +84,7 @@ function HashMapIObj(capShift, factor, nullValue) {
    */
   var i;
   /**
-   * @type {T|undefined}
+   * @type {undefined|null}
    */
   this.nullValue = nullValue;
   /**
@@ -192,7 +192,7 @@ HashMapIObj.prototype.expand = function() {
 
 /**
  *
- * @param {!number}
+ * @param {number}
  *            key
  * @param {T}
  *            value
@@ -228,14 +228,14 @@ HashMapIObj.prototype.put = function(key, value) {
 };
 
 /**
- * @param  {!number} key
+ * @param  {number} key
  * @returns {T}
  */
 HashMapIObj.prototype.get = function(key) {
   key = key | 0;
   var pos = this._pos(key);
   var arr;
-  var i, entry = EntryIO.DUMMY_ENTRY;
+  var i, entry = null;
   arr = this.backend[pos];
   if (arr === null) {
     return this.nullValue;
@@ -251,7 +251,7 @@ HashMapIObj.prototype.get = function(key) {
 };
 
 /**
- * @param  {!number} key
+ * @param  {number} key
  * @returns {T}
  */
 HashMapIObj.prototype.remove = function(key) {
@@ -276,14 +276,14 @@ HashMapIObj.prototype.remove = function(key) {
 };
 
 /**
- * @param  {!number} key
+ * @param  {number} key
  * @returns {boolean}
  */
 HashMapIObj.prototype.contains = function(key) {
   key = key | 0;
   var pos = this._pos(key);
   var arr;
-  var i, entry = EntryIO.DUMMY_ENTRY;
+  var i, entry = null;
   arr = this.backend[pos];
   if (arr === null) {
     return false;

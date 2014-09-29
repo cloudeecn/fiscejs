@@ -527,7 +527,7 @@ var LZString = {
   },
   /**
    * @param  {string} compressed
-   * @returns {string}
+   * @returns {string|null}
    */
   decompress: function(compressed) {
     if (compressed == null) return "";

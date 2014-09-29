@@ -241,7 +241,7 @@ function fyRegisterNativeMath(context) {
 		if (y === 0) {
 			thread.nativeReturnDouble(sp, 0.0 / y);
 		} else {
-			thread.nativeReturnDouble(sp, x - Math.floot(x / y) * y);
+			thread.nativeReturnDouble(sp, x - Math.floor(x / y) * y);
 		}
 		return ops - 1;
 	}

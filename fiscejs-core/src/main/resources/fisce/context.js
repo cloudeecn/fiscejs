@@ -17,25 +17,85 @@
 
 /**
  * @constructor
- * @param {!Object.<string, string>} classes
- * @param {!Array.<string>} strings
- * @param {!Int32Array} constants
+ * @param {Object.<string, string>} classes
+ * @param {Array.<string>} strings
+ * @param {Int32Array} constants
  */
-function FyClassDef(classes, strings, constants) {
+function FyClassDef() {
 	/**
-	 * @type {!Object.<string, string>}
+	 * @dict
+	 * @type {Object.<string, string>}
 	 */
-	this.classes = classes;
+	this.classes = {};
 	/**
-	 * @type {!Array.<string>}
+	 * @type {Array.<string>}
 	 */
-	this.strings = strings;
+	this.strings = null;
 	/**
-	 * @type {!Array.<number>}
+	 * @type {Int32Array}
 	 */
-	this.constants = constants;
+	this.constants = null;
+
+	/**
+	 * @dict
+	 * @type {Object.<string,string>}
+	 */
+	this.files = {};
 };
 
+/**
+ * @param  {string} str
+ * @return
+ */
+FyClassDef.prototype.addStrings = function(str) {
+	if (this.strings) {
+		throw new FyException(null, "Illegal status: strings already parsed");
+	}
+	var t0 = performance.now();
+	var decompressed = LZString
+		.decompressFromUTF16(str);
+	var pos = 0;
+	var idx;
+	var len = decompressed.length;
+	this.strings = [];
+	while (pos < len) {
+		idx = decompressed.indexOf('\0', pos);
+		if (idx < 0) {
+			idx = len;
+		}
+		// console.log(pos + " - " + idx);
+		this.strings.push(LZString
+			.decodeUTF16(decompressed
+				.substring(pos, idx)));
+		pos = idx + 1;
+	}
+	console.log("String decode " + (performance.now() - t0) + "ms");
+};
+
+FyClassDef.prototype.addConstants = function(str) {
+	if (this.constants) {
+		throw new FyException(null, "Illegal status: constants already parsed");
+	}
+	var t0 = performance.now();
+	var constantsStr = LZString
+		.decompressFromUTF16(str);
+	this.constants = new Int32Array(
+		constantsStr.length);
+	for (var i = 0, max = constantsStr.length; i < max; i++) {
+		this.constants[i >> 1] |= constantsStr
+			.charCodeAt(i) << ((i & 1) << 4);
+
+	}
+	console.log("Constants decode " + (performance.now() - t0) + "ms");
+}
+
+FyClassDef.prototype.addClassDef = function(name, def) {
+	this.classes[name] = def;
+}
+
+FyClassDef.prototype.addFile = function(name, content) {
+	this.files[name] = content;
+}
 /**
  * Walk through all interfaces from one class, and invoke a custom function on
  * it
@@ -120,7 +180,7 @@ function FyContext(namespace, config) {
 	/**
 	 * @type {HashMapIObj.<FyClass>}
 	 */
-	this.classes = new HashMapIObj(8, 0.6);
+	this.classes = new HashMapIObj(8, 0.6, null);
 	/**
 	 * @dict
 	 * @type {Object.<string,number>}
@@ -132,7 +192,7 @@ function FyContext(namespace, config) {
 	/**
 	 * @type {HashMapIObj.<FyMethod>}
 	 */
-	this.methods = new HashMapIObj(10, 0.6);
+	this.methods = new HashMapIObj(10, 0.6, null);
 	/**
 	 * @dict
 	 * @type {Object.<string,number>}
@@ -144,7 +204,7 @@ function FyContext(namespace, config) {
 	/**
 	 * @type {HashMapIObj.<FyField>}
 	 */
-	this.fields = new HashMapIObj(10, 0.6);
+	this.fields = new HashMapIObj(10, 0.6, null);
 	/**
 	 * @dict
 	 * @type {Object.<string,number>}
@@ -289,19 +349,89 @@ FyContext.prototype.pool = function(string) {
 };
 
 /**
- * @param {string} name
- * @param {string} strData
- */
-FyContext.prototype.addDynamicClassDef = function(name, strData) {
-	this.dynamicClassDef[name] = strData;
-	this.addClassDef(JSON.parse(strData));
-};
-
-/**
- * @param {Object} data
+ * @param {string} data
  */
 FyContext.prototype.addClassDef = function(data) {
-	this.classDefs.push(new FyClassDef(this, data));
+	var def = new FyClassDef();
+	/**
+	 * @type {number}
+	 */
+	var len = data.length;
+	/**
+	 * @type {number}
+	 */
+	var pos = 0;
+	/**
+	 * @type {number}
+	 */
+	var idx = 0;
+	/**
+	 * @type {number}
+	 */
+	var mode = 0;
+	/**
+	 * @type {number}
+	 */
+	var splitter = 0;
+	/**
+	 * @type {string}
+	 */
+	var line;
+	/**
+	 * @type {string}
+	 */
+	var key;
+	/**
+	 * @type {string}
+	 */
+	var value;
+	while (pos < len) {
+		idx = data.indexOf("\n", pos);
+		if (idx < 0) {
+			idx = pos.len;
+		}
+
+		line = data.substring(pos, idx);
+		pos = idx + 1;
+		if (line.length === 0) {
+			//blank line, change process mode
+			mode++;
+			continue;
+		}
+		switch (mode) {
+			case 0: //classes
+				splitter = line.indexOf("\0");
+				if (splitter < 0 || splitter >= line.length - 1) {
+					key = line;
+					value = "";
+				} else {
+					key = line.substring(0, splitter);
+					value = line.substring(splitter + 1);
+				}
+				def.addClassDef(key, value);
+				break;
+			case 1: //constants
+				value = line;
+				def.addConstants(value);
+				break;
+			case 2: //strings
+				value = line;
+				def.addStrings(value);
+				break;
+			case 3: //files
+				splitter = line.indexOf("\0");
+				if (splitter < 0 || splitter >= line.length - 1) {
+					key = line;
+					value = "";
+				} else {
+					key = line.substring(0, splitter);
+					value = line.substring(splitter + 1);
+				}
+				def.addFile(key, value);
+				break;
+		}
+	}
+	this.classDefs.push(def);
 };
 /**
  * Register a field to context
@@ -920,7 +1050,7 @@ FyContext.prototype.panic = function(message, e) {
 
 		for (var i = 0; i < this.config.maxThreads; i++) {
 			/**
-			 * @returns {FyThread}
+			 * @type {FyThread}
 			 */
 			var thread = this.threadManager.threads[i];
 			if (thread) {
@@ -928,11 +1058,12 @@ FyContext.prototype.panic = function(message, e) {
 				try {
 					thread.walkFrames(function(frameId, methodId, sb, ip, lip) {
 						/**
-						 * @returns {FyMethod}
+						 * @type {FyMethod}
 						 */
 						var method = context.methods.get(methodId);
 						var lineNumber = method.getLineNumber(lip);
 						data.push("  frame #" + frameId + ": " + method.owner.name.replace(/\//g, ".") + "." + method.name + " line " + lineNumber);
+						return false;
 					});
 				} catch (ex) {
 					console.log("Exception occored while dumping frames:");
@@ -976,7 +1107,7 @@ FyContext.prototype.registerNativeAOT = function(name, func) {
 /**
  *
  * @param  {string} name
- * @param  {function(this:FyMethod, !FyContext, !FyThread, !number, !number)} func
+ * @param  {function(this:FyMethod, FyContext, FyThread, number, number)} func
  */
 FyContext.prototype.registerNativeHandler = function(name, func) {
 	this.nativeHandlers[name] = func;
@@ -1040,25 +1171,11 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
 				function(context, url) {
 					var lowerUrl = url.toLowerCase();
 					var hash = "#" + Math.floor(Math.random() * (2147483647)).toString(16) + "-" + Math.floor(Math.random() * (2147483647)).toString(16);
-					/**
-					 *
-					 * @type {!Object.<string,string>}
-					 */
-					var classes = {};
-					/**
-					 * @type {Int32Array}
-					 */
-					var constants = null;
-					/**
-					 *
-					 * @type {!Array.<string>}
-					 */
-					var strings = [];
 
 					/**
 					 * @type {FyClassDef}
 					 */
-					var def;
+					var def = new FyClassDef();
 					/**
 					 * @param {MessageEvent}
 					 *            event
@@ -1068,55 +1185,23 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
 						 * @type {FyMessageData}
 						 */
 						var data = event.data;
-						console.log(event.origin + ": " + data.op + " " + data.name + " // " + url + " " + data.hash);
+						// console.log(event.origin + ": " + data.op + " " + data.name + " // " + url + " " + data.hash);
 						if (event.origin.toLowerCase() === lowerUrl && !failed && data.hash === hash) {
 							var name, value;
 							if (data.op === "class") {
 								value = data.value;
 								name = data.name;
-								classes[name] = String(value);
+								def.addClassDef(name, value);
 							} else if (data.op === "constants") {
 								value = data.value;
-								(function() {
-									var t0 = performance.now();
-									var constantsStr = LZString
-										.decompressFromUTF16(value);
-									constants = new Int32Array(
-										constantsStr.length);
-									for (var i = 0, max = constantsStr.length; i < max; i++) {
-										constants[i >> 1] |= constantsStr
-											.charCodeAt(i) << ((i & 1) << 4);
-
-									}
-									constantsStr = null;
-									console.log("Constants decode " + (performance.now() - t0) + "ms");
-								})();
+								def.addConstants(value);
 							} else if (data.op === "strings") {
 								value = data.value;
-								(function() {
-									var t0 = performance.now();
-									var decompressed = LZString
-										.decompressFromUTF16(value);
-									var pos = 0;
-									var idx;
-									var len = decompressed.length;
-									while (pos < len) {
-										idx = decompressed.indexOf('\0', pos);
-										if (idx < 0) {
-											idx = len;
-										}
-										// console.log(pos + " - " + idx);
-										strings.push(LZString
-											.decodeUTF16(decompressed
-												.substring(pos, idx)));
-										pos = idx + 1;
-									}
-									console.log("String decode " + (performance.now() - t0) + "ms");
-								})();
+								def.addStrings(value);
 							} else if (data.op === "file") {
 								value = data.value;
 								name = data.name;
-								context.vfs.add(name, String(value));
+								def.addFile(name, value);
 							} else if (data.op === "begin") {
 								if ("begin" in callbacks) {
 									callbacks["begin"](url, count);
@@ -1124,11 +1209,6 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
 							} else if (data.op === "done") {
 								count--;
 								iframe.parentNode.removeChild(iframe);
-								if (!constants) {
-									throw new FyException(null, "Illegal data: constants pool not found");
-								} else {
-									def = new FyClassDef(classes, strings, constants);
-								}
 								context.classDefs[urlMap[url]] = def;
 								if ("done" in callbacks) {
 									callbacks["done"](url, count);

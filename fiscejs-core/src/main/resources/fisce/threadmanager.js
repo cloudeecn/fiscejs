@@ -39,7 +39,7 @@ function FyThreadManager(context) {
 	this.nextWakeUpTimeTotal = 0;
 	this.nextThreadId = 1;
 	/**
-	 * @returns {FyException}
+	 * @type {FyException}
 	 */
 	this.exitException = null;
 	this.exitCode = 0;
@@ -177,12 +177,12 @@ FyThreadManager.prototype.pushThrowable = function(thread, e) {
 	}
 	heap.beginProtect();
 	try {
-		var exceptionClass = context.lookupClass(e.clazz);
+		var exceptionClass = context.lookupClass(e.clazz || "");
 		if (!context.classLoader.canCast(exceptionClass, context.TOP_THROWABLE)) {
 			throw new FyException(null, "Exception " + e.clazz + " is not a " + context.TOP_THROWABLE);
 		}
 		var detailMessageField = context.getField(FyConst.FY_BASE_THROWABLE + ".detailMessage.L" + FyConst.FY_BASE_STRING + ";");
-		thread.currentThrowable = heap.allocate(context.lookupClass(e.clazz));
+		thread.currentThrowable = heap.allocate(context.lookupClass(e.clazz || ""));
 		if (!!e.message) {
 			heap.putFieldString(thread.currentThrowable,
 				detailMessageField.posAbs, e.message);
@@ -248,9 +248,9 @@ FyThreadManager.prototype.interrupt = function(targetHandle) {
 /**
  * @param {number}
  *            targetHandle
- * @param {Boolean}
+ * @param {boolean}
  *            clear
- * @returns {Boolean}
+ * @returns {boolean}
  */
 FyThreadManager.prototype.isInterrupted = function(targetHandle, clear) {
 	var target = this._getThreadByHandle(targetHandle);
@@ -295,7 +295,7 @@ FyThreadManager.prototype.wait = function(thread, monitorId, time) {
  *            thread
  * @param {number}
  *            monitorId
- * @param {Boolean}
+ * @param {boolean}
  *            all
  */
 FyThreadManager.prototype.notify = function(thread, monitorId, all) {
@@ -409,19 +409,19 @@ FyThreadManager.prototype.pushThread = function(threadHandle) {
 	var priority;
 	var daemon;
 	/**
-	 * @returns {FyClass}
+	 * @type {FyClass}
 	 */
 	var threadClass;
 	/**
-	 * @returns {FyField}
+	 * @type {FyField}
 	 */
 	var threadDaemonField;
 	/**
-	 * @returns {FyField}
+	 * @type {FyField}
 	 */
 	var threadPriorityField;
 	/**
-	 * @returns {FyField}
+	 * @type {FyField}
 	 */
 	var threadNameField;
 	if (this.state !== FyConst.FY_TM_STATE_RUNNING && this.state !== FyConst.FY_TM_STATE_STOP_PENDING) {
@@ -521,18 +521,18 @@ FyThreadManager.prototype.run = function(message) {
 								case 6 /* FyMessage.message_vm_dead */ :
 								case 5 /* FyMessage.message_sleep */ :
 									// Illegal!
-									this.context.panic("Illegal message type " + message.type);
+									this.context.panic("Illegal message type " + message.type, null);
 								case 1 /* FyMessage.message_none */ :
 									break;
 								case 4 /* FyMessage.message_exception */ :
-									this.context.panic("Illegal message type " + message.type);
+									this.context.panic("Illegal message type " + message.type, null);
 								case 2 /* FyMessage.message_thread_dead */ :
 									thread.destroyPending = true;
 									break;
 								case 3 /* FyMessage.message_invoke_native */ :
 									return;
 								default:
-									this.context.panic("Illegal message type " + message.type);
+									this.context.panic("Illegal message type " + message.type, null);
 							}
 						} else {
 							if (!this.nonDaemonRunned) {
@@ -575,7 +575,7 @@ FyThreadManager.prototype.run = function(message) {
 				message.type = FyMessage.message_vm_dead;
 				return;
 			default:
-				this.context.panic("Illegal vm state " + stateLocal);
+				this.context.panic("Illegal vm state " + stateLocal, null);
 		}
 	}
 };

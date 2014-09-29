@@ -156,7 +156,7 @@ function FyMethod(owner, methodDef, strings) {
   /**
    * @type {HashMapIObj.<string>}
    */
-  this.frames = new HashMapIObj(2, 1.2);
+  this.frames = new HashMapIObj(2, 1.2, null);
   for (var idx = 0, im = methodDef["frames"].length; idx < im; idx += 2) {
     this.frames.put(methodDef["frames"][idx] | 0,
       strings[methodDef["frames"][idx + 1]]);
@@ -176,7 +176,7 @@ function FyMethod(owner, methodDef, strings) {
   // this.clinited = false;
 
   /**
-   * @type {function(this:FyMethod, FyContext, FyThread, number, number):number}
+   * @type {function(this:FyMethod, FyContext, FyThread, number, number):number|null}
    */
   this.invoke = null;
 };

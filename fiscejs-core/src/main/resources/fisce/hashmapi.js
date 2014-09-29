@@ -96,7 +96,7 @@ function HashMapI(nullNumber, capShift, factor) {
    */
   this.currentSize = 0;
   /**
-   * @type {Array.<EntryII>}
+   * @type {Array.<Array.<EntryII>>}
    */
   this.backend = null;
   this.clear();

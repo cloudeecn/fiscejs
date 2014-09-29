@@ -144,12 +144,12 @@ FyClassLoader.getArrayName = function(arrayContentName) {
 /**
  *
  * @param {string} name
- * @returns {{classDef : Object, global: !FyClassDef}}
+ * @returns {{classDef : ?, global: !FyClassDef}}
  */
 FyClassLoader.prototype.getClassDef = function(name) {
   for (var i = 0, max = this.context.classDefs.length; i < max; i++) {
     /**
-     * @type {!FyClassDef}
+     * @type {FyClassDef}
      */
     var cd = this.context.classDefs[i];
     if (name in cd.classes) {
@@ -261,7 +261,7 @@ FyClassLoader.prototype._locAddMethods = function(clazz, global, classDef) {
  * @param {Object}
  *            fieldDef
  * @param {Array.<string>} strings
- * @param {Array.<number>} constants
+ * @param {Array.<number>|Int32Array} constants
  */
 FyClassLoader.prototype._locAddField = function(clazz, fieldDef, strings,
   constants) {
@@ -394,7 +394,7 @@ FyClassLoader.prototype.loadClass = function(name) {
   var clazz;
   if (name.charAt(0) === "[" || name.charAt(0) === "<") {
     var cd = this.getClassDef(FyConst.FY_BASE_OBJECT);
-    clazz = new FyClass(this, name, cd.global, cd.classDef);
+    clazz = new FyClass(this, name, cd.classDef, cd.global);
   } else {
     var cd = this.getClassDef(name);
     clazz = new FyClass(this, name, cd.classDef, cd.global);

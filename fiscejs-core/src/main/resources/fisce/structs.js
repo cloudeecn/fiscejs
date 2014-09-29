@@ -194,7 +194,7 @@ __FyUtils.prototype.utf8SizeU = function(first) {
  *            unicodeArray
  * @param {number}
  *            ofs1
- * @returns {Number}
+ * @returns {number}
  */
 __FyUtils.prototype.utf8Decode = function(utf8Array, ofs, unicodeArray, ofs1) {
   switch (this.utf8SizeU(utf8Array[ofs])) {
@@ -777,11 +777,6 @@ function __FyConst() {
    *
    */
   this.FY_BASE_FINALIZER = "java/lang/Finalizer";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_RUNTIME = "java/lang/Runtime";
 
   /**
    * @const
@@ -907,12 +902,12 @@ function __FyConst() {
    * @const
    *
    */
-  this.FY_BOX_CHARACTER = this.FY_BASE_CHARACTER + ".valueOf.(C).L" + this.FY_BASE_CHARACTER + ";";
+  this.FY_BOX_CHARACTER = this.FY_BASE_CHAR + ".valueOf.(C).L" + this.FY_BASE_CHAR + ";";
   /**
    * @const
    *
    */
-  this.FY_BOX_INTEGER = this.FY_BASE_INTEGER + ".valueOf.(I).L" + this.FY_BASE_INTEGER + ";";
+  this.FY_BOX_INTEGER = this.FY_BASE_INT + ".valueOf.(I).L" + this.FY_BASE_INT + ";";
   /**
    * @const
    *
@@ -1257,14 +1252,13 @@ function FyLookupSwitchTarget(def) {
 /**
  * FyException
  *
- * @param {string}
+ * @param {string|null}
  *            clazz Class name for inner class
- * @param {string}
- *            msg message
+ * @param {string|null}
+ *            message message
  * @class
  * @constructor
  * @export
- * @struct
  */
 function FyException(clazz, message) {
   Error.call(this, (clazz ? (clazz + ": ") : "") + message);
@@ -1273,11 +1267,11 @@ function FyException(clazz, message) {
    */
   this.name = "FyException";
   /**
-   * @type {string}
+   * @type {string|null}
    */
   this.clazz = clazz;
   /**
-   * @type {string}
+   * @type {string|null}
    */
   this.message = message;
   /**
@@ -1304,7 +1298,7 @@ FyException.prototype.toString = function() {
  * @export
  * @class
  * @param {?} data
- * @param {Error}
+ * @param {Error} cause
  */
 function FyPanicException(data, cause) {
   Error.call(this, "panic");
@@ -1353,7 +1347,7 @@ function FyMessage() {
    */
   this.sleepTime = 0;
   /**
-   * @type {string}
+   * @type {string|null}
    */
   this.nativeMethod = null;
   /**
@@ -1388,7 +1382,7 @@ FyMessage.prototype.getSleepTime = function() {
 
 /**
  * @export
- * @returns {string}
+ * @returns {string|null}
  */
 FyMessage.prototype.getNativeMethod = function() {
   return this.nativeMethod;

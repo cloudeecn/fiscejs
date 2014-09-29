@@ -367,8 +367,8 @@ __FyLongOps.prototype.rem = function(pos1, pos2) {
 
 /**
  * @export
- * @param  {number} pos1
- * @param  {number} pos2
+ * @param  {number} pos
+ * @param  {number} ofs
  */
 __FyLongOps.prototype.shl = function(pos, ofs) {
 	var stack = this.stack;
@@ -385,8 +385,8 @@ __FyLongOps.prototype.shl = function(pos, ofs) {
 
 /**
  * @export
- * @param  {number} pos1
- * @param  {number} pos2
+ * @param  {number} pos
+ * @param  {number} ofs
  */
 __FyLongOps.prototype.shr = function(pos, ofs) {
 	var stack = this.stack;
@@ -403,8 +403,8 @@ __FyLongOps.prototype.shr = function(pos, ofs) {
 
 /**
  * @export
- * @param  {number} pos1
- * @param  {number} pos2
+ * @param  {number} pos
+ * @param  {number} ofs
  */
 __FyLongOps.prototype.ushr = function(pos, ofs) {
 	var stack = this.stack;

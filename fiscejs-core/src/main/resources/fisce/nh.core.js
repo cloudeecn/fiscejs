@@ -948,8 +948,7 @@ function fyRegisterNativeCore(context) {
 	 */
 	function proxyHelperDefineClass(context, thread, sp, ops) {
 		var str = context.heap.getString(thread.stack[sp]);
-		var data = JSON.parse(str);
-		context.addClassDef(data);
+		context.addClassDef(str);
 		return ops - 1;
 	}
 

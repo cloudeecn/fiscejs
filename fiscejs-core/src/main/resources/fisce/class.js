@@ -20,12 +20,12 @@
  * @struct
  * @export
  * @constructor
- * @param {!FyClassLoader}
+ * @param {FyClassLoader}
  *            classloader
- * @param {!string} name
+ * @param {string} name
  * @param {Object}
  *            classDef
- * @param {!FyClassDef}
+ * @param {FyClassDef}
  *            global
  */
 function FyClass(classloader, name, classDef, global) {
@@ -71,7 +71,7 @@ function FyClass(classloader, name, classDef, global) {
   /**
    * @type {string}
    */
-  this.pType = null;
+  this.pType = "";
   /**
    * @type {FyClass}
    */
@@ -79,7 +79,7 @@ function FyClass(classloader, name, classDef, global) {
   /**
    * @type {string}
    */
-  this.sourceFile = null;
+  this.sourceFile = "";
   /**
    * @type {FyClass}
    */
@@ -90,11 +90,11 @@ function FyClass(classloader, name, classDef, global) {
 
     this.accessFlags = (FyConst.FY_ACC_PUBLIC & FyConst.FY_ACC_FINAL) | 0;
     this.arrayType = FyClassLoader.getArrayContentType(this.name);
-    this.pType = null;
+    this.pType = "";
     this.contentClass = classloader.lookupAndPend(FyClassLoader
       .getArrayContentName(this.name));
 
-    this.sourceFile = null;
+    this.sourceFile = "";
     this.superClass = classloader.lookupAndPend(FyConst.FY_BASE_OBJECT);
   } else if (this.name.charAt(0) === "<") {
     this.type = FyConst.TYPE_PRIMITIVE;
@@ -107,7 +107,7 @@ function FyClass(classloader, name, classDef, global) {
     this.pType = FyContext.mapPrimitivesRev[this.name];
     this.contentClass = null;
 
-    this.sourceFile = null;
+    this.sourceFile = "";
     this.superClass = classloader.lookupAndPend(FyConst.FY_BASE_OBJECT);
   } else {
     this.type = FyConst.TYPE_OBJECT;
@@ -116,10 +116,10 @@ function FyClass(classloader, name, classDef, global) {
 
     this.accessFlags = classDef["accessFlags"] | 0;
     this.arrayType = 0 | 0;
-    this.pType = null;
+    this.pType = "";
     this.contentClass = null;
 
-    this.sourceFile = null;
+    this.sourceFile = "";
     if ("sourceFile" in classDef && classDef["sourceFile"] !== 0) {
       this.sourceFile = global.strings[classDef["sourceFile"]];
     }
@@ -184,11 +184,11 @@ function FyClass(classloader, name, classDef, global) {
 
   /* BEGIN GC Only */
   /**
-   * @type {Array.<FyField|undefined>}
+   * @type {Array.<FyField>}
    */
   this.fieldStatic = new Array();
   /**
-   * @type {Array.<FyField|undefined>}
+   * @type {Array.<FyField>}
    */
   this.fieldAbs = new Array();
   /* END GC Only */

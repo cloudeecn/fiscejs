@@ -28,35 +28,101 @@
  *            threadId
  */
 function FyThread(context, threadId) {
+	/**
+	 * @type {FyContext}
+	 */
 	this.context = context;
+	/**
+	 * @type {FyConfig}
+	 */
 	this.config = context.config;
+	/**
+	 * @type {number}
+	 */
 	this.threadId = threadId;
+	/**
+	 * @type {Int32Array}
+	 */
 	this.stack = context.heap.heap;
+	/**
+	 * @type {Float32Array}
+	 */
 	this.floatStack = context.heap.heapFloat;
+	/**
+	 * @type {number}
+	 */
 	this.bottom = context.heap.allocateStack(threadId) + 16;
+	/**
+	 * @type {number}
+	 */
 	this.top = (this.bottom + this.config.stackSize - 16) | 0;
 
+	/**
+	 * @type {number}
+	 */
 	this.framePos = this.top;
+	/**
+	 * @type {boolean}
+	 */
 	this.yield = false;
+	/**
+	 * @type {number}
+	 */
 	this.handle = 0;
 
+	/**
+	 * @type {number}
+	 */
 	this.currentThrowable = 0;
+	/**
+	 * @type {number}
+	 */
 	this.status = 0;
+	/**
+	 * @type {number}
+	 */
 	this.priority = 0;
 
+	/**
+	 * @type {number}
+	 */
 	this.waitForLockId = 0;
+	/**
+	 * @type {number}
+	 */
 	this.waitForNotifyId = 0;
+	/**
+	 * @type {number}
+	 */
 	this.pendingLockCount = 0;
+	/**
+	 * @type {number}
+	 */
 	this.nextWakeTime = 0;
+	/**
+	 * @type {boolean}
+	 */
 	this.interrupted = false;
+	/**
+	 * @type {boolean}
+	 */
 	this.daemon = false;
+	/**
+	 * @type {boolean}
+	 */
 	this.destroyPending = false;
 
+	/**
+	 * @type {FyMethod}
+	 */
 	this.pendingNative = null;
+	/**
+	 * @type {number}
+	 */
 	this.pendingNativeSP = 0;
 
 	/**
-	 * @returns {__FyLongOps}
+	 * @type {__FyLongOps}
 	 */
 	this.longOps = FyPortable.getLongOps(context.heap.heap, this.bottom - 16);
 };
@@ -384,7 +450,7 @@ FyThread.prototype.getExceptionHandlerIp = function(handle, ip) {
 		if (ip >= start && ip < end) {
 			if (classId > 0) {
 				/**
-				 * @returns {FyClass}
+				 * @type {FyClass}
 				 */
 				var handlerClass = this.context.classes.get(classId);
 				if (this.context.classLoader.canCast(heap
@@ -462,7 +528,7 @@ FyThread.prototype.fillStackTrace = function(handle, excludeThis) {
 	this.walkFrames(function(frameId, methodId, sb, ip, lip) {
 		var lineNumber = -1;
 		if (frameId > topFrameId) {
-			return false;
+			return true;
 		}
 		/**
 		 * @returns {FyMethod}
@@ -478,6 +544,7 @@ FyThread.prototype.fillStackTrace = function(handle, excludeThis) {
 
 		lineNumber = method.getLineNumber(lip);
 		heap.putFieldInt(steHandle, lineNumberField.posAbs, lineNumber);
+		return false;
 	});
 };
 
@@ -525,7 +592,7 @@ FyThread.prototype.clinit = function(clazz) {
  */
 FyThread.prototype.initWithMethod = function(threadHandle, method) {
 	if (method.fullName !== FyConst.FY_METHODF_MAIN || !(method.accessFlags & FyConst.FY_ACC_STATIC)) {
-		throw new FyException(
+		throw new FyException(null,
 			"The boot method must be static void main(String[] )");
 	}
 	this.context.lookupClass("[L" + FyConst.FY_BASE_STRING + ";");
@@ -548,7 +615,7 @@ FyThread.prototype.initWithRun = function(threadHandle) {
 	var handlerClass = this.context.heap.getObjectClass(threadHandle);
 	if (!this.context.classLoader.canCast(handlerClass, this.context
 		.lookupClass(FyConst.FY_BASE_THREAD))) {
-		throw new FyException("The create(int) is used to start a " + FyConst.FY_BASE_THREAD + "!");
+		throw new FyException(null, "The create(int) is used to start a " + FyConst.FY_BASE_THREAD + "!");
 	}
 	var runner = this.context.lookupMethodVirtual(handlerClass,
 		FyConst.FY_METHODF_RUN);
@@ -569,8 +636,8 @@ FyThread.prototype.destroy = function() {
 	this.destroyPending = false;
 	for (var handle = 1; handle < this.config.maxObjects; handle++) {
 		if (heap.objectExists(this.handle) && heap.getObjectMonitorOwnerId(this.handle) === this.threadId) {
-			heap.setObjectMonitorOwnerId(0);
-			heap.setObjectMonitorOwnerTimes(0);
+			heap.setObjectMonitorOwnerId(this.handle, 0);
+			heap.setObjectMonitorOwnerTimes(this.handle, 0);
 		}
 	}
 };
@@ -636,7 +703,7 @@ FyThread.prototype.runEx = function(message, ops) {
 							this.context.log(2, data[idx]);
 						}
 						// message.type = FyMessage.message_thread_dead;
-						this.context.panic("Uncaught exception occored: \n\t" + data.join("\n\t"));
+						this.context.panic("Uncaught exception occored: \n\t" + data.join("\n\t"), null);
 						return;
 					}
 				}
@@ -646,7 +713,7 @@ FyThread.prototype.runEx = function(message, ops) {
 			.invoke(this.context, this, this.getCurrentStackBase(), ops);
 		if (this.pendingNative) {
 			message.type = FyMessage.message_invoke_native;
-			message.nativeMethod = this.pendingNative;
+			message.nativeMethod = this.pendingNative.uniqueName;
 			message.sp = this.pendingNativeSP;
 			message.thread = this;
 			this.pendingNative = null;
@@ -797,5 +864,6 @@ FyThread.prototype.scanRef = function(from) {
 					}
 				}
 			}
+			return false;
 		});
 };

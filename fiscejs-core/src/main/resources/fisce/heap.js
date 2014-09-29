@@ -2784,7 +2784,7 @@ FyHeap.prototype.unwrapCharTo = function(handle, pos) {
  */
 FyHeap.prototype.wrapCharFrom = function(pos) {
   var clazz = this.context.lookupClass(FyConst.FY_BASE_CHAR);
-  var field = this.context.getField(FyConst.FY_VALUE_CHAR);
+  var field = this.context.getField(FyConst.FY_VALUE_CHARACTER);
   var ret = this.allocate(clazz);
   this.putFieldRaw32From(ret, field.posAbs, pos);
   return ret;
