@@ -49,6 +49,7 @@ function FyThread(context, threadId) {
    */
   this.floatStack = context.heap.heapFloat;
   /**
+   * @private
    * @type {number}
    */
   this.bottom = context.heap.allocateStack(threadId) + 16;
@@ -75,6 +76,7 @@ function FyThread(context, threadId) {
    */
   this.currentThrowable = 0;
   /**
+   * @private
    * @type {number}
    */
   this.status = 0;
@@ -174,7 +176,7 @@ FyThread.prototype.getCurrentStackBase = function() {
 };
 
 /**
- *
+ * @export
  * @returns {number}
  */
 FyThread.prototype.getCurrentIp = function() {
@@ -190,6 +192,22 @@ FyThread.prototype.getCurrentLastIp = function() {
 };
 
 /**
+ * @export
+ * @return {number}
+ */
+FyThread.prototype.getThreadId = function() {
+  return this.threadId;
+}
+
+/**
+ * @export
+ * @param {number} handle
+ */
+FyThread.prototype.setCurrentThrowable = function(handle){
+  this.currentThrowable = handle;
+}
+
+/**
  *
  */
 FyThread.prototype.rollbackCurrentIp = function() {
@@ -197,7 +215,7 @@ FyThread.prototype.rollbackCurrentIp = function() {
 };
 
 /**
- *
+ * @export
  */
 FyThread.prototype.forwardCurrentLIp = function() {
   this.stack[this.framePos + 3] = this.stack[this.framePos + 2];
@@ -237,7 +255,7 @@ FyThread.prototype.getFramesCount = function() {
 };
 
 /**
- *
+ * @export
  * @param {number}
  *            lip
  * @param {number}
@@ -251,7 +269,7 @@ FyThread.prototype.localToFrame = function(lip, ip) {
 };
 
 /**
- *
+ * @export
  * @param {FyMethod}
  *            method
  * @param {number} sp
@@ -277,6 +295,7 @@ FyThread.prototype.pushFrame = function(method, sp) {
 /**
  * similar with pushFrame, but consider locks
  *
+ * @export
  * @param {FyMethod}
  *            method
  * @param {number} sp
@@ -288,9 +307,9 @@ FyThread.prototype.pushMethod = function(method, sp, ops) {
     throw new FyException(null, "Illegal ops");
   }
   var ret = this.pushFrame(method, sp);
-  if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
+  if (method.accessFlags & FyConstAcc.SYNCHRONIZED) {
     this
-      .monitorEnter((method.accessFlags & FyConst.FY_ACC_STATIC) ? this.context
+      .monitorEnter((method.accessFlags & FyConstAcc.STATIC) ? this.context
         .getClassObjectHandle(method.owner) : this.stack[this.stack[ret + 1]]);
   }
   return this.yield ? 0 : ops;
@@ -305,7 +324,7 @@ FyThread.prototype.pushMethod = function(method, sp, ops) {
  * @return {number} ops left
  */
 FyThread.prototype.invokeStatic = function(method, sp, ops) {
-  if (!(method.accessFlags & FyConst.FY_ACC_STATIC)) {
+  if (!(method.accessFlags & FyConstAcc.STATIC)) {
     throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
       method.uniqueName + " is not static");
   }
@@ -328,7 +347,7 @@ FyThread.prototype.invokeStatic = function(method, sp, ops) {
   }
 
   sp -= method.paramStackUsage;
-  if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
+  if (method.accessFlags & FyConstAcc.NATIVE) {
     if (method.invoke) {
       this.context.heap.beginProtect();
       ops = method.invoke(this.context, this, sp, ops);
@@ -366,7 +385,7 @@ FyThread.prototype.invokeStatic = function(method, sp, ops) {
  * @return ops left
  */
 FyThread.prototype.invokeVirtual = function(method, sp, ops) {
-  if ((method.accessFlags & FyConst.FY_ACC_STATIC)) {
+  if ((method.accessFlags & FyConstAcc.STATIC)) {
     throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
       method.uniqueName + " is static");
   }
@@ -379,12 +398,12 @@ FyThread.prototype.invokeVirtual = function(method, sp, ops) {
   if (!this.context.heap.getObjectClass(this.stack[sp])) {
     throw new FyException(null, "#Bug! Object #" + this.stack[sp] + " is gabage collected");
   }
-  if (!(method.accessFlags & FyConst.FY_ACC_FINAL)) {
+  if (!(method.accessFlags & FyConstAcc.FINAL)) {
     // Virtual lookup
     method = this.context.lookupMethodVirtualByMethod(this.context.heap
       .getObjectClass(this.stack[sp]), method);
   }
-  if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
+  if (method.accessFlags & FyConstAcc.NATIVE) {
     if (method.invoke) {
       this.context.heap.beginProtect();
       ops = method.invoke(this.context, this, sp, ops);
@@ -413,6 +432,7 @@ FyThread.prototype.invokeVirtual = function(method, sp, ops) {
 };
 
 /**
+ * @export
  * @param  {number} pushes
  * @return {number}
  */
@@ -551,6 +571,7 @@ FyThread.prototype.fillStackTrace = function(handle, excludeThis) {
 /**
  * check whether access for a class need to be clinit ed
  *
+ * @export
  * @param {FyClass}
  *            clazz to check
  * @returns {FyClass} class to be clinited or null for no need to clinit
@@ -591,7 +612,7 @@ FyThread.prototype.clinit = function(clazz) {
  *            method method
  */
 FyThread.prototype.initWithMethod = function(threadHandle, method) {
-  if (method.fullName !== FyConst.FY_METHODF_MAIN || !(method.accessFlags & FyConst.FY_ACC_STATIC)) {
+  if (method.fullName !== FyConst.FY_METHODF_MAIN || !(method.accessFlags & FyConstAcc.STATIC)) {
     throw new FyException(null,
       "The boot method must be static void main(String[] )");
   }
@@ -660,7 +681,7 @@ FyThread.prototype.runEx = function(message, ops) {
       return;
     }
     method = this.getCurrentMethod();
-    if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
+    if (method.accessFlags & FyConstAcc.NATIVE) {
       throw new FyException(null, "Native method pushed");
     }
     if (!method.invoke) {
@@ -681,8 +702,8 @@ FyThread.prototype.runEx = function(message, ops) {
           this.currentThrowable = 0;
           break;
         } else {
-          if (method.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
-            if (method.accessFlags & FyConst.FY_ACC_STATIC) {
+          if (method.accessFlags & FyConstAcc.SYNCHRONIZED) {
+            if (method.accessFlags & FyConstAcc.STATIC) {
               this.monitorExit(this.context
                 .getClassObjectHandle(method.owner));
             } else {
@@ -690,7 +711,7 @@ FyThread.prototype.runEx = function(message, ops) {
                 .getCurrentStackBase()]);
             }
           }
-          if (method.accessFlags & FyConst.FY_ACC_CLINIT) {
+          if (method.accessFlags & FyConstAcc.CLINIT) {
             method.owner.clinitThreadId = -1;
           }
           this.popFrame(0);
@@ -709,8 +730,7 @@ FyThread.prototype.runEx = function(message, ops) {
         }
       }
     }
-    ops = method
-      .invoke(this.context, this, this.getCurrentStackBase(), ops);
+    ops = method.invoke(this.context, this, this.getCurrentStackBase(), ops);
     if (this.pendingNative) {
       message.type = FyMessage.message_invoke_native;
       message.nativeMethod = this.pendingNative.uniqueName;
@@ -785,7 +805,7 @@ FyThread.prototype.nativeReturnLong = function(sp, container, ofs) {
 };
 
 /**
- *
+ * @export
  * @param {number}
  *            handle
  */
@@ -794,7 +814,7 @@ FyThread.prototype.monitorEnter = function(handle) {
 };
 
 /**
- *
+ * @export
  * @param {number}
  *            handle
  */

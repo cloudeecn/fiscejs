@@ -22,7 +22,7 @@ var LZString = {
   _keyStr: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
   /**
    * @private
-   * @type {function(...number):string}
+   * @type {function(...[number]):string}
    */
   _f: String.fromCharCode,
   /**
@@ -310,7 +310,9 @@ var LZString = {
    * @returns {string}
    */
   compress: function(uncompressed) {
-    if (uncompressed == null) return "";
+    if(!uncompressed){
+      throw new Error("Illegal uncompressed string");
+    }
     var i, value,
       context_dictionary = {},
       context_dictionaryToCreate = {},
@@ -527,11 +529,12 @@ var LZString = {
   },
   /**
    * @param  {string} compressed
-   * @returns {string|null}
+   * @returns {string}
    */
   decompress: function(compressed) {
-    if (compressed == null) return "";
-    if (compressed == "") return null;
+    if(!compressed){
+      throw new Error("Illegal compressed string");
+    }
     var dictionary = [],
       next,
       enlargeIn = 4,
@@ -679,7 +682,7 @@ var LZString = {
         if (c === dictSize) {
           entry = w + w.charAt(0);
         } else {
-          return null;
+          throw new Error("Illegal compressed string");
         }
       }
       result += entry;

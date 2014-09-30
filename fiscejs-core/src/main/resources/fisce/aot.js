@@ -261,7 +261,9 @@ var $$ACMD = [];
 })();
 
 /**
+ * @class
  * @constructor
+ * @export
  * @param {{ops :
  *            Object, macros: Object}} template
  */
@@ -318,6 +320,7 @@ __FyAOTUtil.prototype.replaceAll = function(code, ip, oprand1, oprand2, spofs,
 };
 
 /**
+ * @export
  * @param {FyThread}
  *            thread
  * @param {FyMethod}
@@ -453,7 +456,7 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
         "thread.threadId+', " +
         "\"'+ _m_.uniqueName+'\", " +
         ip +
-        ((method.accessFlags & FyConst.FY_ACC_STATIC) ?
+        ((method.accessFlags & FyConstAcc.STATIC) ?
           " , S, '+" : " , '+stack[sb]+', '+"
         ) +
         "sb + ', " +
@@ -473,7 +476,7 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
     if (ip === 0 && method.name === FyConst.FY_METHOD_CLINIT) {
       code.push(this.replaceAll(macros["CLINIT"], ip, oprand1, oprand2,
         stackSize, {
-          "clazz": "clazz.superClass"
+          "clazz": "clazz.getSuperClass()"
         }));
     }
     if (opsCheck) {
@@ -486,13 +489,14 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
       case 0xB2 /* $.GETSTATIC */ :
         var tmpField = context.lookupFieldVirtualFromConstant(global,
           clazz.constants[oprand1]);
-        if (!(tmpField.accessFlags & FyConst.FY_ACC_STATIC)) {
+        if (!(tmpField.accessFlags & FyConstAcc.STATIC)) {
           throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
             "Field " + tmpField.uniqueName + " is not static");
         }
         if (thread.clinit(tmpField.owner)) {
           needCase = true;
-          code.push("lip=" + ip + ";tmpClass=context.classes.get(" + tmpField.owner.classId + ");");
+          code.push("lip=" + ip + ";");
+          code.push("tmpClass=context.getClassById(" + tmpField.owner.classId + ");");
           code.push(this.replaceAll(macros["CLINIT"], ip, oprand1,
             oprand2, stackSize, {
               "clazz": "tmpClass"
@@ -511,19 +515,19 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
       case 0xB3 /* $.PUTSTATIC */ :
         var tmpField = context.lookupFieldVirtualFromConstant(global,
           clazz.constants[oprand1]);
-        if (!(tmpField.accessFlags & FyConst.FY_ACC_STATIC)) {
+        if (!(tmpField.accessFlags & FyConstAcc.STATIC)) {
           throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
             "Field " + tmpField.uniqueName + " is not static");
         }
         /*
-         * if ((tmpField.accessFlags & FyConst.FY_ACC_FINAL) && (this.owner !=
+         * if ((tmpField.accessFlags & FyConstAcc.FINAL) && (this.owner !=
          * tmpField.owner)) { throw new
          * FyException(FyConst.FY_EXCEPTION_ACCESS, "Field " +
          * tmpField.uniqueName + " is final"); }
          */
         if (thread.clinit(tmpField.owner)) {
           needCase = true;
-          code.push("lip=" + ip + ";tmpClass=context.classes.get(" + tmpField.owner.classId + ");");
+          code.push("lip=" + ip + ";tmpClass=context.getClassById(" + tmpField.owner.classId + ");");
           code.push(this.replaceAll(macros["CLINIT"], ip, oprand1,
             oprand2, stackSize, {
               "clazz": "tmpClass"
@@ -542,7 +546,7 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
       case 0xB4 /* $.GETFIELD */ :
         var tmpField = context.lookupFieldVirtualFromConstant(global,
           clazz.constants[oprand1]);
-        if (tmpField.accessFlags & FyConst.FY_ACC_STATIC) {
+        if (tmpField.accessFlags & FyConstAcc.STATIC) {
           throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
             "Field " + tmpField.uniqueName + " is static");
         }
@@ -563,7 +567,7 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
       case 0xB5 /* $.PUTFIELD */ :
         var tmpField = context.lookupFieldVirtualFromConstant(global,
           clazz.constants[oprand1]);
-        if (tmpField.accessFlags & FyConst.FY_ACC_STATIC) {
+        if (tmpField.accessFlags & FyConstAcc.STATIC) {
           throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
             "Field " + tmpField.uniqueName + " is static");
         }
@@ -587,25 +591,28 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
         nextNeedCase = true;
         var tmpMethod = context.lookupMethodVirtualFromConstant(global,
           clazz.constants[oprand1]);
-        if ((tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
+        if ((tmpMethod.accessFlags & FyConstAcc.STATIC)) {
           throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
             tmpMethod.uniqueName + " is static");
         }
 
         // code.push("FyUtils.breakpoint();");
 
-        code.push("tmpMethod=context.methods.get(" + tmpMethod.methodId + ");");
+        code.push("tmpMethod=context.getMethodById(" + tmpMethod.methodId + ");\n");
         code
-          .push("if(stack[sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + "]===0){thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);throw new FyException(FyConst.FY_EXCEPTION_NPT,\"\");}");
-        if (tmpMethod.accessFlags & FyConst.FY_ACC_FINAL) {
+          .push("if(stack[sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + "]===0){\n");
+        code.push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);\n");
+        code.push("throw new FyException(FyConst.FY_EXCEPTION_NPT,\"\");}\n");
+        if (tmpMethod.accessFlags & FyConstAcc.FINAL) {
           // generate static code
-          if (tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE) {
+          if (tmpMethod.accessFlags & FyConstAcc.NATIVE) {
             var fun = context.nativeAOT[tmpMethod.uniqueName];
             if (fun) {
               code.push(fun(thread, method, ip, (stackSize - tmpMethod.paramStackUsage - 1)));
             } else if (tmpMethod.invoke) {
-              code
-                .push("heap.beginProtect();thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);ops=tmpMethod.invoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);heap.endProtect();if(ops<=0){return 0;}");
+              code.push("heap.beginProtect();thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);\n");
+              code.push("ops=tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);\n");
+              code.push("heap.endProtect();if(ops<=0){return 0;}");
             } else {
               code
                 .push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ";return 0;");
@@ -613,10 +620,10 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
           } else {
             code.push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);\n");
             code
-              .push("if(tmpMethod.invoke===null){FyAOTUtil.aot(thread,tmpMethod);}\n");
+              .push("if(!tmpMethod.invokeReady()){FyAOTUtil.aot(thread,tmpMethod);}\n");
             code.push("ops = thread.pushMethod(tmpMethod,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);\n");
             code.push("if(ops<=0){return 0;}\n");
-            code.push("ops = tmpMethod.invoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);\n");
+            code.push("ops = tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);\n");
             code.push("if(ops<=0){return 0;}\n");
           }
 
@@ -626,20 +633,20 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
           code
             .push("tmpMethod = context.lookupMethodVirtualByMethod(heap.getObjectClass(stack[sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + "]), tmpMethod);\n");
           code
-            .push("if(tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE){\n");
-          code.push("if(tmpMethod.invoke){\n");
+            .push("if(tmpMethod.hasAccessFlag(FyConstAcc.NATIVE)){\n");
+          code.push("if(tmpMethod.invokeReady()){\n");
           code
-            .push("heap.beginProtect();ops=tmpMethod.invoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);heap.endProtect();if(ops<=0) {return 0;}\n");
+            .push("heap.beginProtect();ops=tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);heap.endProtect();if(ops<=0) {return 0;}\n");
           code.push("}else{\n");
           code
             .push("thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ";return 0;\n");
           code.push("}\n");
           code.push("}else{\n");
           code
-            .push("if(tmpMethod.invoke===null){FyAOTUtil.aot(thread,tmpMethod);}\n");
+            .push("if(!tmpMethod.invokeReady()){FyAOTUtil.aot(thread,tmpMethod);}\n");
           code.push("ops = thread.pushMethod(tmpMethod,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);\n");
           code.push("if(ops<=0) {return 0;}\n");
-          code.push("ops = tmpMethod.invoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);");
+          code.push("ops = tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);");
           code.push("if(ops<=0) {return 0;}\n");
           code.push("}\n");
         }
@@ -649,12 +656,12 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
         nextNeedCase = true;
         var tmpMethod = context.lookupMethodVirtualFromConstant(global,
           clazz.constants[oprand1]);
-        if ((tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
+        if ((tmpMethod.accessFlags & FyConstAcc.STATIC)) {
           throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
             tmpMethod.uniqueName + " is static");
         }
         var tmpClass = tmpMethod.owner;
-        if ((clazz.accessFlags & FyConst.FY_ACC_SUPER) && context.classLoader.isSuperClassOf(tmpClass, clazz) && tmpMethod.name === FyConst.FY_METHOD_INIT) {
+        if ((clazz.accessFlags & FyConstAcc.SUPER) && context.classLoader.isSuperClassOf(tmpClass, clazz) && tmpMethod.name === FyConst.FY_METHOD_INIT) {
           tmpMethod = context.lookupMethodVirtualByMethod(
             clazz.superClass, tmpMethod);
         }
@@ -668,30 +675,30 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
           throw new FyException(FyConst.FY_EXCEPTION_NO_METHOD,
             tmpMethod.uniqueName);
         }
-        if (tmpMethod.accessFlags & FyConst.FY_ACC_STATIC) {
+        if (tmpMethod.accessFlags & FyConstAcc.STATIC) {
           throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
             tmpMethod.uniqueName);
         }
-        if (tmpMethod.accessFlags & FyConst.FY_ACC_ABSTRACT) {
+        if (tmpMethod.accessFlags & FyConstAcc.ABSTRACT) {
           throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,
             tmpMethod.uniqueName);
         }
-        code.push("tmpMethod=context.methods.get(" + tmpMethod.methodId + ");");
+        code.push("tmpMethod=context.getMethodById(" + tmpMethod.methodId + ");");
         code
           .push("if(stack[sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + "]===0){throw new FyException(FyConst.FY_EXCEPTION_NPT,'');}");
-        if (tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE) {
+        if (tmpMethod.accessFlags & FyConstAcc.NATIVE) {
           var fun = context.nativeAOT[tmpMethod.uniqueName];
           if (fun) {
             code.push(fun(thread, method, ip, (stackSize - tmpMethod.paramStackUsage - 1)));
           } else if (tmpMethod.invoke) {
-            code.push("heap.beginProtect();thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);ops=tmpMethod.invoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);heap.endProtect();if(ops<=0){return 0;}");
+            code.push("heap.beginProtect();thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);ops=tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);heap.endProtect();if(ops<=0){return 0;}");
           } else {
             code
               .push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ";return 0;");
           }
         } else {
           code
-            .push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);if(tmpMethod.invoke===null){FyAOTUtil.aot(thread,tmpMethod);} ops = thread.pushMethod(tmpMethod,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);if(ops<=0) {return 0;}ops = tmpMethod.invoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);if(ops<=0) {return 0;}");
+            .push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);if(!tmpMethod.invokeReady()){FyAOTUtil.aot(thread,tmpMethod);} ops = thread.pushMethod(tmpMethod,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);if(ops<=0) {return 0;}ops = tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);if(ops<=0) {return 0;}");
         }
         break;
       case 0xB8 /* $.INVOKESTATIC */ :
@@ -699,31 +706,31 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
         nextNeedCase = true;
         var tmpMethod = context.lookupMethodVirtualFromConstant(global,
           clazz.constants[oprand1]);
-        if (!(tmpMethod.accessFlags & FyConst.FY_ACC_STATIC)) {
+        if (!(tmpMethod.accessFlags & FyConstAcc.STATIC)) {
           throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
             tmpMethod.uniqueName + " is not static");
         }
         var tmpClass = tmpMethod.owner;
-        code.push("tmpMethod=context.methods.get(" + tmpMethod.methodId + ");");
+        code.push("tmpMethod=context.getMethodById(" + tmpMethod.methodId + ");");
         if (context.getMethod(tmpClass.name + "." + FyConst.FY_METHOD_CLINIT + ".()V")) {
           code.push(this.replaceAll(macros["CLINIT"], ip, oprand1,
             oprand2, stackSize, {
               "clazz": "tmpMethod.owner"
             }));
         }
-        if (tmpMethod.accessFlags & FyConst.FY_ACC_NATIVE) {
+        if (tmpMethod.accessFlags & FyConstAcc.NATIVE) {
           var fun = context.nativeAOT[tmpMethod.uniqueName];
           if (fun) {
             code.push(fun(thread, method, ip, (stackSize - tmpMethod.paramStackUsage)));
           } else if (tmpMethod.invoke) {
-            code.push("heap.beginProtect();thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);ops=tmpMethod.invoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage) + ",ops);heap.endProtect();if(ops<=0) {return 0;}");
+            code.push("heap.beginProtect();thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);ops=tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage) + ",ops);heap.endProtect();if(ops<=0) {return 0;}");
           } else {
             code
               .push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+" + (stackSize - tmpMethod.paramStackUsage) + ";return 0;");
           }
         } else {
           code
-            .push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);if(tmpMethod.invoke===null){FyAOTUtil.aot(thread,tmpMethod);} ops = thread.pushMethod(tmpMethod,sb+" + (stackSize - tmpMethod.paramStackUsage) + ",ops);if(ops<=0) {return 0;}ops = tmpMethod.invoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage) + ",ops);if(ops<=0) {return 0;}");
+            .push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);if(!tmpMethod.invokeReady()){FyAOTUtil.aot(thread,tmpMethod);} ops = thread.pushMethod(tmpMethod,sb+" + (stackSize - tmpMethod.paramStackUsage) + ",ops);if(ops<=0) {return 0;}ops = tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage) + ",ops);if(ops<=0) {return 0;}");
         }
         break;
       case 0x12 /* $.LDC */ :

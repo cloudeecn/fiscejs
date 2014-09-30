@@ -16,10 +16,9 @@
  */
 
 /**
+ * @class
  * @constructor
- * @param {Object.<string, string>} classes
- * @param {Array.<string>} strings
- * @param {Int32Array} constants
+ * @struct
  */
 function FyClassDef() {
   /**
@@ -45,7 +44,6 @@ function FyClassDef() {
 
 /**
  * @param  {string} str
- * @return
  */
 FyClassDef.prototype.addStrings = function(str) {
   if (this.strings) {
@@ -72,6 +70,9 @@ FyClassDef.prototype.addStrings = function(str) {
   console.log("String decode " + (performance.now() - t0) + "ms");
 };
 
+/**
+ * @param  {string} str
+ */
 FyClassDef.prototype.addConstants = function(str) {
   if (this.constants) {
     throw new FyException(null, "Illegal status: constants already parsed");
@@ -89,10 +90,18 @@ FyClassDef.prototype.addConstants = function(str) {
   console.log("Constants decode " + (performance.now() - t0) + "ms");
 }
 
+/**
+ * @param  {string} name
+ * @param  {string} def
+ */
 FyClassDef.prototype.addClassDef = function(name, def) {
   this.classes[name] = def;
 }
 
+/**
+ * @param  {string} name
+ * @param  {string} content
+ */
 FyClassDef.prototype.addFile = function(name, content) {
   this.files[name] = content;
 }
@@ -139,7 +148,7 @@ function walkInterfaces(clazz, fun, $this, walked) {
     }
   }
 
-  if (((clazz.accessFlags & FyConst.FY_ACC_INTERFACE) === 0) && (clazz.superClass)) {
+  if (((clazz.accessFlags & FyConstAcc.INTERFACE) === 0) && (clazz.superClass)) {
     ret = walkInterfaces(clazz.superClass, fun, $this, walked);
     if (ret !== null) {
       return ret;
@@ -371,16 +380,16 @@ FyContext.prototype.addClassDef = function(data) {
   /**
    * @type {string}
    */
-  var line;
+  var line = "";
   /**
    * @type {string}
    */
-  var key;
+  var key = "";
   /**
    * @type {string}
    */
-  var value;
-  while (pos < len) {
+  var value = "";
+  loop: while (pos < len) {
     idx = data.indexOf("\n", pos);
     if (idx < 0) {
       idx = pos.len;
@@ -424,6 +433,8 @@ FyContext.prototype.addClassDef = function(data) {
         }
         def.addFile(key, value);
         break;
+      default:
+        break loop;
     }
   }
   this.classDefs.push(def);
@@ -583,6 +594,16 @@ FyContext.prototype.getMethod = function(uniqueName) {
 };
 
 /**
+ * get method by id
+ * @export
+ * @param  {number} methodId
+ * @return {FyMethod}
+ */
+FyContext.prototype.getMethodById = function(methodId){
+  return this.methods.get(methodId);
+}
+
+/**
  *
  * Lookup method from specific class and it's super classes
  *
@@ -635,6 +656,7 @@ FyContext.prototype.lookupMethodVirtual = function(clazz, fullName) {
 /**
  * Lookup method virtually
  *
+ * @export
  * @param {FyClass}
  *            clazz
  * @param {FyMethod}
@@ -649,10 +671,10 @@ FyContext.prototype.lookupMethodVirtualByMethod = function(clazz, method) {
   var ret = clazz.virtualTable.get(mid);
   if (ret === -1) {
     var m = this.lookupMethodVirtual(clazz, method.fullName);
-    if (!m || (m.accessFlags & FyConst.FY_ACC_ABSTRACT)) {
+    if (!m || (m.accessFlags & FyConstAcc.ABSTRACT)) {
       throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT, clazz.name + method.fullName);
     }
-    if (m.accessFlags & FyConst.FY_ACC_STATIC) {
+    if (m.accessFlags & FyConstAcc.STATIC) {
       throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
         "Method " + clazz.name + method.fullName + " changed to static");
     }
@@ -741,6 +763,15 @@ FyContext.prototype.getClass = function(name) {
 };
 
 /**
+ * @export
+ * @param  {number} classId
+ * @return {FyClass}
+ */
+FyContext.prototype.getClassById = function(classId) {
+  return this.classes.get(classId);
+}
+
+/**
  * @param name
  *            {string}
  * @returns {FyClass}
@@ -762,6 +793,7 @@ FyContext.prototype.lookupClassPhase1 = function(name) {
 /**
  * Get or load class with class name
  *
+ * @export
  * @param {string}
  *            name
  * @returns {FyClass} class to return
@@ -776,6 +808,7 @@ FyContext.prototype.lookupClass = function(name) {
 /**
  * Get a class as clazz[]
  *
+ * @export
  * @param {FyClass}
  *            clazz
  * @returns {FyClass}
@@ -826,6 +859,7 @@ FyContext.prototype.lookupClassFromConstantPhase1 = function(global, constant) {
 /**
  * Lookup class from constant
  *
+ * @export
  * @param constant
  *            the constant entry
  * @returns {FyClass}
@@ -852,6 +886,7 @@ FyContext.prototype.lookupClassFromConstant = function(global, constant) {
 };
 
 /**
+ * @export
  * @param {FyClass} clazz
  * @returns {number} handle of this class's class object handle
  */
@@ -865,6 +900,16 @@ FyContext.prototype.getClassObjectHandle = function(clazz) {
     this.mapClassIdToHandle.put(clazz.classId, handle);
   }
   return handle;
+};
+
+/**
+ * @export
+ * @param  {FyClass} from
+ * @param  {FyClass} to
+ * @return {boolean}
+ */
+FyContext.prototype.canCast = function(from, to) {
+  return this.classLoader.canCast(from, to);
 };
 
 /**
@@ -888,7 +933,7 @@ FyContext.prototype.getMethodObjectHandle = function(method) {
   var handle = this.mapMethodIdToHandle.get(method.methodId);
   if (handle === 0) {
     this.heap.beginProtect();
-    if (method.accessFlags & FyConst.FY_ACC_CONSTRUCTOR) {
+    if (method.accessFlags & FyConstAcc.CONSTRUCTOR) {
       handle = this.heap.allocate(this
         .lookupClass(FyConst.FY_REFLECT_CONSTRUCTOR));
     } else {
@@ -1234,7 +1279,7 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
           iframe.style.left = "0";
           iframe.style.top = "0";
           iframe.style.overflow = "hidden";
-          iframe.style.border="none";
+          iframe.style.border = "none";
           iframe.addEventListener("error", function() {
             failed = true;
             if ("error" in callbacks) {

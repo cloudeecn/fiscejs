@@ -88,7 +88,7 @@ function FyClass(classloader, name, classDef, global) {
   if (this.name.charAt(0) === "[") {
     this.type = FyConst.TYPE_ARRAY;
 
-    this.accessFlags = (FyConst.FY_ACC_PUBLIC & FyConst.FY_ACC_FINAL) | 0;
+    this.accessFlags = (FyConstAcc.PUBLIC & FyConstAcc.FINAL) | 0;
     this.arrayType = FyClassLoader.getArrayContentType(this.name);
     this.pType = "";
     this.contentClass = classloader.lookupAndPend(FyClassLoader
@@ -99,7 +99,7 @@ function FyClass(classloader, name, classDef, global) {
   } else if (this.name.charAt(0) === "<") {
     this.type = FyConst.TYPE_PRIMITIVE;
 
-    this.accessFlags = (FyConst.FY_ACC_PUBLIC & FyConst.FY_ACC_FINAL) | 0;
+    this.accessFlags = (FyConstAcc.PUBLIC & FyConstAcc.FINAL) | 0;
     this.arrayType = 0 | 0;
     if (!(this.name in FyContext.mapPrimitivesRev)) {
       throw new FyException(null, "Illegal class name " + this.name);
@@ -202,7 +202,7 @@ function FyClass(classloader, name, classDef, global) {
  * @return {FyClassDef}
  */
 FyClass.prototype.getGlobal = function() {
-    return this.global;
+  return this.global;
 }
 
 /**
@@ -214,12 +214,69 @@ FyClass.prototype.getConstants = function() {
 }
 
 /**
+ * @export
+ * @return {number}
+ */
+FyClass.prototype.getClinitThreadId = function() {
+  return this.clinitThreadId;
+}
+
+/**
+ * @export
+ * @param {number} threadId
+ */
+FyClass.prototype.setClinitThreadId = function(threadId) {
+  this.clinitThreadId = threadId;
+}
+
+/**
  * @param {FyMethod}
  *            clinitMethod
  */
 FyClass.prototype.setClinitMethod = function(clinitMethod) {
   this.clinit = clinitMethod;
 };
+
+/**
+ * @export
+ * @return {FyMethod}
+ */
+FyClass.prototype.getClinitMethod = function() {
+  return this.clinit;
+}
+
+/**
+ * @export
+ * @return {FyClass}
+ */
+FyClass.prototype.getSuperClass = function() {
+  return this.superClass;
+}
+
+/**
+ * @export
+ * @return {FyClass}
+ */
+FyClass.prototype.getContentClass = function(){
+  return this.contentClass;
+}
+
+/**
+ * @export
+ * @return {string}
+ */
+FyClass.prototype.getName = function(){
+  return this.name;
+}
+
+/**
+ * @export
+ * @param  {number} flag
+ * @return {number}
+ */
+FyClass.prototype.hasAccessFlag = function(flag) {
+  return this.accessFlags & flag;
+}
 
 /**
  *

@@ -50,6 +50,7 @@ public class AOTPlugin extends AbstractMojo {
 			try {
 				osw.write("/**\n");
 				osw.write(" * AOT Template\n");
+				osw.write(" * @export\n");
 				osw.write(" */\n");
 				osw.write("var FyAOTUtil = new __FyAOTUtil(");
 				osw.write(sb.toString());

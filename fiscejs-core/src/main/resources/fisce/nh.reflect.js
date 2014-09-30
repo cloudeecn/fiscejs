@@ -47,7 +47,7 @@ function fyRegisterNativeReflects(context) {
       throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
         "Method not found!");
     }
-    thread.nativeReturnInt(sp, (FyConst.FY_ACC_BRIDGE & method.accessFlags) ? 1 : 0);
+    thread.nativeReturnInt(sp, (FyConstAcc.BRIDGE & method.accessFlags) ? 1 : 0);
     return ops - 1;
   }
 
@@ -67,7 +67,7 @@ function fyRegisterNativeReflects(context) {
       throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
         "Method not found!");
     }
-    thread.nativeReturnInt(sp, (FyConst.FY_ACC_VARARGS & method.accessFlags) ? 1 : 0);
+    thread.nativeReturnInt(sp, (FyConstAcc.VARARGS & method.accessFlags) ? 1 : 0);
     return ops - 1;
   }
 
@@ -87,7 +87,7 @@ function fyRegisterNativeReflects(context) {
       throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
         "Method not found!");
     }
-    thread.nativeReturnInt(sp, (FyConst.FY_ACC_SYNTHETIC & method.accessFlags) ? 1 : 0);
+    thread.nativeReturnInt(sp, (FyConstAcc.SYNTHETIC & method.accessFlags) ? 1 : 0);
     return ops - 1;
   }
 
@@ -263,7 +263,7 @@ function fyRegisterNativeReflects(context) {
     }
     // FIXME: stack overflow check
     // TODO optimize / cache class lookup
-    if (method.accessFlags & FyConst.FY_ACC_STATIC) {
+    if (method.accessFlags & FyConstAcc.STATIC) {
       var clinitClass = thread.clinit(method.owner);
       if (clinitClass ) {
         // invoke clinit
@@ -326,7 +326,7 @@ function fyRegisterNativeReflects(context) {
         stack[sp++] = paramHandle;
       }
     }
-    if (method.accessFlags & FyConst.FY_ACC_STATIC) {
+    if (method.accessFlags & FyConstAcc.STATIC) {
       return thread.invokeStatic(method, sp, ops - 1);
     } else {
       return thread.invokeVirtual(method, sp, ops - 1);
@@ -403,7 +403,7 @@ function fyRegisterNativeReflects(context) {
       throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
         "Method not found!");
     }
-    if (method.accessFlags & FyConst.FY_ACC_STATIC) {
+    if (method.accessFlags & FyConstAcc.STATIC) {
       throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
         "Method is not a constructor");
     }
@@ -511,7 +511,7 @@ function fyRegisterNativeReflects(context) {
       throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
         "Field not found!");
     }
-    thread.nativeReturnInt(sp, (field.accessFlags & FyConst.FY_ACC_SYNTHETIC) ? 1 : 0);
+    thread.nativeReturnInt(sp, (field.accessFlags & FyConstAcc.SYNTHETIC) ? 1 : 0);
     return ops - 1;
   }
 
@@ -531,7 +531,7 @@ function fyRegisterNativeReflects(context) {
       throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
         "Field not found!");
     }
-    thread.nativeReturnInt(sp, (field.accessFlags & FyConst.FY_ACC_ENUM) ? 1 : 0);
+    thread.nativeReturnInt(sp, (field.accessFlags & FyConstAcc.ENUM) ? 1 : 0);
     return ops - 1;
   }
 
@@ -555,8 +555,8 @@ function fyRegisterNativeReflects(context) {
     if (field.type.type === FyConst.TYPE_PRIMITIVE) {
       throw new FyException(FyConst.FY_EXCEPTION_ARGU, "Field " + field.uniqueName + " is not an object or array");
     }
-    if (field.accessFlags & FyConst.FY_ACC_STATIC) {
-      if ((field.accessFlags & FyConst.FY_ACC_FINAL) && field.constantValueData) {
+    if (field.accessFlags & FyConstAcc.STATIC) {
+      if ((field.accessFlags & FyConstAcc.FINAL) && field.constantValueData) {
         // static final Field value in constant must be string
         thread.nativeReturnInt(sp, heap.literalWithConstant(
           field.owner.global, field.constantValueData));
@@ -601,7 +601,7 @@ function fyRegisterNativeReflects(context) {
     if (field.type.type !== FyConst.TYPE_PRIMITIVE || field.type.pType !== type) {
       throw new FyException(FyConst.FY_EXCEPTION_ARGU, "Field " + field.uniqueName + " is not " + name + " typed");
     }
-    if (field.accessFlags & FyConst.FY_ACC_STATIC) {
+    if (field.accessFlags & FyConstAcc.STATIC) {
       heap.getStaticRaw32To(field.owner, field.posAbs, sp);
     } else {
       paramType = heap.getObjectClass(stack[sp + 1]);
@@ -641,7 +641,7 @@ function fyRegisterNativeReflects(context) {
     if (field.type.type !== FyConst.TYPE_PRIMITIVE || field.type.pType !== type) {
       throw new FyException(FyConst.FY_EXCEPTION_ARGU, "Field " + field.uniqueName + " is not " + name + " typed");
     }
-    if (field.accessFlags & FyConst.FY_ACC_STATIC) {
+    if (field.accessFlags & FyConstAcc.STATIC) {
       heap.getStaticRaw64To(field.owner, field.posAbs, sp);
 
     } else {
@@ -767,7 +767,7 @@ function fyRegisterNativeReflects(context) {
       throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
         "Field " + field.uniqueName + " is primitive");
     }
-    if (field.accessFlags & FyConst.FY_ACC_STATIC) {
+    if (field.accessFlags & FyConstAcc.STATIC) {
       heap.putStaticInt(field.type, field.posAbs, stack[sp + 2]);
     } else {
       heap.putFieldInt(stack[sp + 1], field.posAbs, stack[sp + 2]);
@@ -796,7 +796,7 @@ function fyRegisterNativeReflects(context) {
       throw new FyException(FyConst.FY_EXCEPTION_INCOMPAT_CHANGE,
         "Field " + field.uniqueName + " is primitive");
     }
-    if (field.accessFlags & FyConst.FY_ACC_STATIC) {
+    if (field.accessFlags & FyConstAcc.STATIC) {
       heap.putStaticRaw32From(field.owner, field.posAbs, sp + 2);
     } else {
       heap.putFieldRaw32From(stack[sp + 1], field.posAbs, sp + 2);
@@ -826,7 +826,7 @@ function fyRegisterNativeReflects(context) {
         "Field " + field.uniqueName + " is primitive");
     }
 
-    if (field.accessFlags & FyConst.FY_ACC_STATIC) {
+    if (field.accessFlags & FyConstAcc.STATIC) {
       heap.putStaticRaw64From(field.owner, field.posAbs, sp + 2);
     } else {
       heap.putFieldRaw64From(stack[sp + 1], field.posAbs, sp + 2);
@@ -1093,7 +1093,7 @@ function fyRegisterNativeReflects(context) {
     var stack = thread.stack;
 
     var clazz = context.getClassFromClassObject(stack[sp]);
-    thread.nativeReturnInt(sp, (clazz.accessFlags & FyConst.FY_ACC_INTERFACE) ? 1 : 0);
+    thread.nativeReturnInt(sp, (clazz.accessFlags & FyConstAcc.INTERFACE) ? 1 : 0);
     return ops - 1;
   }
 
@@ -1184,7 +1184,7 @@ function fyRegisterNativeReflects(context) {
     var stack = thread.stack;
 
     var clazz = context.getClassFromClassObject(stack[sp]);
-    thread.nativeReturnInt(sp, (clazz.accessFlags & FyConst.FY_ACC_ENUM) ? 1 : 0);
+    thread.nativeReturnInt(sp, (clazz.accessFlags & FyConstAcc.ENUM) ? 1 : 0);
     return ops - 1;
   }
 

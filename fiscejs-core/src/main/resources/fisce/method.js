@@ -73,9 +73,9 @@ function FyMethod(owner, methodDef, strings) {
   this.accessFlags = methodDef["accessFlags"] | 0;
 
   if (this.name === FyConst.FY_METHOD_CLINIT) {
-    this.accessFlags |= FyConst.FY_ACC_CLINIT | 0;
+    this.accessFlags |= FyConstAcc.CLINIT | 0;
   } else if (this.name === FyConst.FY_METHOD_INIT) {
-    this.accessFlags |= FyConst.FY_ACC_CONSTRUCTOR | 0;
+    this.accessFlags |= FyConstAcc.CONSTRUCTOR | 0;
   }
 
   /**
@@ -182,18 +182,37 @@ function FyMethod(owner, methodDef, strings) {
 };
 
 /**
+ * @export
+ * @param  {FyContext} context [description]
+ * @param  {FyThread} thread  [description]
+ * @param  {number} sb      [description]
+ * @param  {number} ops     [description]
+ * @return {number} ops left
+ */
+FyMethod.prototype.doInvoke = function(context, thread, sb, ops) {
+  return this.invoke(context, thread, sb, ops);
+}
+
+/**
  * @param {number} mid
  */
 FyMethod.prototype.setMethodId = function(mid) {
   this.methodId = mid | 0;
 };
+/**
+ * @export
+ * @return {string}
+ */
+FyMethod.prototype.getName = function() {
+  return this.name;
+}
 
 /**
  * @param  {number} ip
  * @return {number}
  */
 FyMethod.prototype.getLineNumber = function(ip) {
-  if (this.accessFlags & FyConst.FY_ACC_NATIVE) {
+  if (this.accessFlags & FyConstAcc.NATIVE) {
     return -1;
   } else if (this.lineNumberTable) {
     for (var j = this.lineNumberTable.length - 2; j >= 0; j--) {
@@ -208,6 +227,16 @@ FyMethod.prototype.getLineNumber = function(ip) {
 };
 
 /**
+ * @export
+ * @param  {number} flag
+ * @return {number}
+ */
+FyMethod.prototype.hasAccessFlag = function(flag) {
+  return this.accessFlags & flag;
+}
+
+/**
+ * @export
  * @return {FyClass}
  */
 FyMethod.prototype.getOwner = function() {
@@ -222,6 +251,55 @@ FyMethod.prototype.getSpOfs = function(ip) {
   return this.stackOfs[ip];
 };
 
+/**
+ * @return {string}
+ */
 FyMethod.prototype.toString = function() {
   return "{Method}" + this.uniqueName;
+};
+
+/**
+ * @export
+ * @return {boolean}
+ */
+FyMethod.prototype.invokeReady = function() {
+  return this.invoke != null;
+};
+
+/**
+ * @export
+ * @param  {number} switchId
+ * @param  {number} value
+ * @return {number}
+ */
+FyMethod.prototype.getLookupSwitchTarget = function(switchId, value) {
+  /**
+   * @type {FyLookupSwitchTarget}
+   */
+  var lookupSwitchTarget = this.lookupSwitchTargets[switchId];
+  var ret = lookupSwitchTarget.targets.get(value);
+  if (ret === -1) {
+    ret = lookupSwitchTarget.dflt;
+  }
+  return ret;
+};
+
+/**
+ * @export
+ * @param  {number} switchId
+ * @param  {number} value
+ * @return {number}
+ */
+FyMethod.prototype.getTableSwitchTarget = function(switchId, value) {
+  /**
+   * @type {FyTableSwitchTarget}
+   */
+  var tableSwitchTarget = this.tableSwitchTargets[switchId];
+  var ret = 0;
+  if (value < tableSwitchTarget.min || value > tableSwitchTarget.max) {
+    ret = tableSwitchTarget.dflt;
+  } else {
+    ret = tableSwitchTarget.targets[value - tableSwitchTarget.min];
+  }
+  return ret;
 };

@@ -1,4 +1,6 @@
-module.exports=["../fisce/lzstring.js",
+module.exports=[
+"../fisce/polyfill.js",
+"../fisce/lzstring.js",
 "../fisce/aot.js",
 "../fisce/portable.js",
 "../fisce/long.asm.js",

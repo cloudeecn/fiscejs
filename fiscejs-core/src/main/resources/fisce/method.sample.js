@@ -99,18 +99,18 @@
       __fy_inner: switch (ip) {
         // ###
         case 0:
-          if (_m_.name == FyConst.FY_METHOD_CLINIT) {
+          if (_m_.getName() == FyConst.FY_METHOD_CLINIT) {
             // ##MACRO-CLINIT
             // !CLINIT
             clinitClass = thread.clinit($clazz);
             if (clinitClass) {
               // invoke clinit
-              if (clinitClass.clinitThreadId == 0) {
+              if (clinitClass.getClinitThreadId() == 0) {
                 // no thread is running it, so let this run
-                clinitClass.clinitThreadId = thread.threadId;
+                clinitClass.setClinitThreadId(thread.getThreadId());
                 // Local to frame
                 thread.localToFrame($ip | 0, $ip | 0);
-                thread.pushFrame(clinitClass.clinit, sb + $spo);
+                thread.pushFrame(clinitClass.getClinitMethod(), sb + $spo);
                 return 0;
               } else {
                 // wait for other thread clinit
@@ -696,30 +696,13 @@
           // ###
         case 9100:
           // ##OP-LOOKUPSWITCH -1 0
-          {
-            var lookupSwitchTarget = _m_.lookupSwitchTargets[$1];
-            tmpInt1 = lookupSwitchTarget.targets.get(stack[sb + $spo - 1]);
-            if (tmpInt1 === -1) {
-              ip = lookupSwitchTarget.dflt;
-              break __fy_inner;
-            } else {
-              ip = tmpInt1;
-              break __fy_inner;
-            }
-          }
+          ip = _m_.getLookupSwitchTarget($1, stack[sb + $spo - 1]);
+          break __fy_inner;
           // ###
         case 9101:
           // ##OP-TABLESWITCH -1 0
-          {
-            var tableSwitchTarget = _m_.tableSwitchTargets[$1];
-            if (stack[sb + $spo - 1] < tableSwitchTarget.min || stack[sb + $spo - 1] > tableSwitchTarget.max) {
-              ip = tableSwitchTarget.dflt;
-              break __fy_inner;
-            } else {
-              ip = tableSwitchTarget.targets[stack[sb + $spo - 1] - tableSwitchTarget.min];
-              break __fy_inner;
-            }
-          }
+          ip = _m_.getTableSwitchTarget($1, stack[sb + $spo - 1]);
+          break __fy_inner;
           // ###
           // CAT. ARRAY
         case 2000:
@@ -752,11 +735,13 @@
           // ##OP-AASTORE -3 0
           thread.localToFrame($ip | 0, ($ip + 1) | 0);
           // 2[1]=0
-          if (stack[sb + $spo - 1] !== 0 && (!context.classLoader
-            .canCast(heap.getObjectClass(stack[sb + $spo - 1]), heap.getObjectClass(stack[sb + $spo - 3]).contentClass))) {
+          if (stack[sb + $spo - 1] !== 0 &&
+            (!context.canCast(
+              heap.getObjectClass(stack[sb + $spo - 1]),
+              heap.getObjectClass(stack[sb + $spo - 3]).getContentClass()))) {
             throw new FyException(
               FyConst.FY_EXCEPTION_STORE,
-              "Can't store " + heap.getObjectClass(stack[sb + $spo - 1]).name + " to " + heap.getObjectClass(stack[sb + $spo - 3]).name);
+              "Can't store " + heap.getObjectClass(stack[sb + $spo - 1]).getName() + " to " + heap.getObjectClass(stack[sb + $spo - 3]).getName());
           }
           heap.putArrayRaw32FromHeap(stack[sb + $spo - 3], stack[sb + $spo - 2], sb + $spo - 1);
           // ###
@@ -852,16 +837,16 @@
           // CAT. RETURN
         case 3000:
           // ##OP-RETURN 0 0
-          if (_m_.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
+          if (_m_.hasAccessFlag(FyConstAcc.SYNCHRONIZED)) {
             thread.localToFrame($ip | 0, ($ip + 1) | 0);
-            if (_m_.accessFlags & FyConst.FY_ACC_STATIC) {
+            if (_m_.hasAccessFlag(FyConstAcc.STATIC)) {
               thread.monitorExit(context.getClassObjectHandle(clazz));
             } else {
               thread.monitorExit(stack[sb]);
             }
           }
-          if (_m_.accessFlags & FyConst.FY_ACC_CLINIT) {
-            clazz.clinitThreadId = -1;
+          if (_m_.hasAccessFlag(FyConstAcc.CLINIT)) {
+            clazz.setClinitThreadId(-1);
           }
           thread.popFrame(0);
           thread.forwardCurrentLIp();
@@ -869,9 +854,9 @@
           // ###
         case 3001:
           // ##OP-IRETURN|FRETURN|ARETURN -1 0
-          if (_m_.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
+          if (_m_.hasAccessFlag(FyConstAcc.SYNCHRONIZED)) {
             thread.localToFrame($ip | 0, ($ip + 1) | 0);
-            if (_m_.accessFlags & FyConst.FY_ACC_STATIC) {
+            if (_m_.hasAccessFlag(FyConstAcc.STATIC)) {
               thread.monitorExit(context.getClassObjectHandle(clazz));
             } else {
               thread.monitorExit(stack[sb]);
@@ -887,9 +872,9 @@
           // ###
         case 3002:
           // ##OP-DRETURN|LRETURN -2 0
-          if (_m_.accessFlags & FyConst.FY_ACC_SYNCHRONIZED) {
+          if (_m_.hasAccessFlag(FyConstAcc.SYNCHRONIZED)) {
             thread.localToFrame($ip | 0, ($ip + 1) | 0);
-            if (_m_.accessFlags & FyConst.FY_ACC_STATIC) {
+            if (_m_.hasAccessFlag(FyConstAcc.STATIC)) {
               thread.monitorExit(context.getClassObjectHandle(clazz));
             } else {
               thread.monitorExit(stack[sb]);
@@ -904,7 +889,7 @@
           // CAT. THROW
         case 4000:
           // ##OP-ATHROW -1 0
-          thread.currentThrowable = stack[sb + $spo - 1];
+          thread.setCurrentThrowable(stack[sb + $spo - 1]);
           thread.localToFrame($ip | 0, $ip | 0);
           return 0;
           // ###
@@ -951,21 +936,21 @@
           thread.localToFrame($ip | 0, ($ip + 1) | 0);
           tmpClass = context.lookupClassFromConstant(global,
             constants[$1]);
-          if (tmpClass.accessFlags & (FyConst.FY_ACC_INTERFACE | FyConst.FY_ACC_ABSTRACT)) {
+          if (tmpClass.hasAccessFlag((FyConstAcc.INTERFACE | FyConstAcc.ABSTRACT))) {
             throw new FyException(FyConst.FY_EXCEPTION_ABSTRACT,
-              tmpClass.name);
+              tmpClass.getName());
           }
 
           // !CLINIT
           clinitClass = thread.clinit(tmpClass);
           if (clinitClass) {
             // invoke clinit
-            if (clinitClass.clinitThreadId == 0) {
+            if (clinitClass.getClinitThreadId() == 0) {
               // no thread is running it, so let this run
-              clinitClass.clinitThreadId = thread.threadId;
+              clinitClass.setClinitThreadId(thread.getThreadId());
               // Local to frame
               thread.localToFrame($ip | 0, $ip | 0);
-              thread.pushFrame(clinitClass.clinit, sb + $spo);
+              thread.pushFrame(clinitClass.getClinitMethod(), sb + $spo);
               return 0;
             } else {
               // wait for other thread clinit
@@ -997,13 +982,13 @@
         case 8000:
           // ##OP-CHECKCAST -1 0
           if (stack[sb + $spo - 1] !== 0) {
-            if (!context.classLoader.canCast(heap
+            if (!context.canCast(heap
               .getObjectClass(stack[sb + $spo - 1]), context
               .lookupClassFromConstant(global, constants[$1]))) {
               thread.localToFrame($ip | 0, ($ip + 1) | 0);
               throw new FyException(FyConst.FY_EXCEPTION_CAST,
-                "Can't case " + heap.getObjectClass(stack[sb + $spo - 1]).name + " to " + context.lookupClassFromConstant(
-                  global, constants[$1]).name);
+                "Can't case " + heap.getObjectClass(stack[sb + $spo - 1]).getName() + " to " + context.lookupClassFromConstant(
+                  global, constants[$1]).getName());
             }
           }
           // ###
@@ -1011,7 +996,7 @@
           // ##OP-INSTANCEOF -1 1
           if (stack[sb + $spo - 1] !== 0) {
             thread.localToFrame($ip | 0, ($ip + 1) | 0);
-            stack[sb + $spo - 1] = context.classLoader.canCast(heap
+            stack[sb + $spo - 1] = context.canCast(heap
               .getObjectClass(stack[sb + $spo - 1]), context
               .lookupClassFromConstant(global, constants[$1]));
           }

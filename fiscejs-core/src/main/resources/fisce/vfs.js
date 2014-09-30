@@ -6,8 +6,6 @@
  *            filename
  * @param {string}
  *            string
- * @param {number}
- *            pos
  */
 function VFSEntry(filename, string) {
   var content = LZString.decompressFromUTF16(string);

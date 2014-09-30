@@ -218,10 +218,10 @@ FyClassLoader.prototype._locAddMethod = function(clazz, methodDef, strings) {
    */
   var method = new FyMethod(clazz, methodDef, strings);
   var name = method.uniqueName;
-  if (method.accessFlags & FyConst.FY_ACC_CLINIT) {
+  if (method.accessFlags & FyConstAcc.CLINIT) {
     clazz.setClinitMethod(method);
   }
-  if (method.accessFlags & FyConst.FY_ACC_NATIVE) {
+  if (method.accessFlags & FyConstAcc.NATIVE) {
     if (method.uniqueName in this.context.nativeHandlers) {
       method.invoke = this.context.nativeHandlers[method.uniqueName];
     }
@@ -268,7 +268,7 @@ FyClassLoader.prototype._locAddField = function(clazz, fieldDef, strings,
   var field = new FyField(clazz, fieldDef, strings);
   // init static fields for reflection
   if (field.constantValueData !== 0) {
-    if ((field.accessFlags & FyConst.FY_ACC_STATIC) && (field.accessFlags & FyConst.FY_ACC_FINAL)) {
+    if ((field.accessFlags & FyConstAcc.STATIC) && (field.accessFlags & FyConstAcc.FINAL)) {
       switch (field.descriptor.charAt(0)) {
         case "Z" /* FyConst.Z */ :
         case "B" /* FyConst.B */ :
@@ -443,7 +443,7 @@ FyClassLoader.prototype.phase2 = function(clazz) {
          * @returns {FyField}
          */
         field = fields[i];
-        if ((field.accessFlags & FyConst.FY_ACC_STATIC) === 0) {
+        if ((field.accessFlags & FyConstAcc.STATIC) === 0) {
           field.posAbs += parentSize;
         }
         // console.log("field "+field+" posAbs="+field.posAbs+"
@@ -459,25 +459,25 @@ FyClassLoader.prototype.phase2 = function(clazz) {
       if (finalizeMethod && finalizeMethod.code.length > 3) {
         // console.log("Class " + clazz.name + " requires
         // finalize");
-        clazz.accessFlags |= FyConst.FY_ACC_NEED_FINALIZE;
+        clazz.accessFlags |= FyConstAcc.NEED_FINALIZE;
       }
     }
 
     if (this.canCastWithNull(clazz, this.context.TOP_ANNOTATION)) {
       // console.log(clazz.name + " is annotation");
-      clazz.accessFlags |= FyConst.FY_ACC_ANNOTATION;
+      clazz.accessFlags |= FyConstAcc.ANNOTATION;
     } else if (this.canCastWithNull(clazz, this.context.TOP_ENUM)) {
       // console.log(clazz.name + " is enum");
-      clazz.accessFlags |= FyConst.FY_ACC_ENUM;
+      clazz.accessFlags |= FyConstAcc.ENUM;
     } else if (this.canCastWithNull(clazz, this.context.TOP_PHANTOM_REF)) {
       // console.log(clazz.name + " is phantom ref");
-      clazz.accessFlags |= FyConst.FY_ACC_PHANTOM_REF;
+      clazz.accessFlags |= FyConstAcc.PHANTOM_REF;
     } else if (this.canCastWithNull(clazz, this.context.TOP_WEAK_REF)) {
       // console.log(clazz.name + " is weak ref");
-      clazz.accessFlags |= FyConst.FY_ACC_WEAK_REF;
+      clazz.accessFlags |= FyConstAcc.WEAK_REF;
     } else if (this.canCastWithNull(clazz, this.context.TOP_SOFT_REF)) {
       // console.log(clazz.name + " is soft ref");
-      clazz.accessFlags |= FyConst.FY_ACC_SOFT_REF;
+      clazz.accessFlags |= FyConstAcc.SOFT_REF;
     }
 
     { // method data with types
@@ -622,7 +622,7 @@ FyClassLoader.prototype.phase3 = function(clazz) {
      */
     field = fields[i];
     pos = field.posAbs;
-    if (field.accessFlags & FyConst.FY_ACC_STATIC) {
+    if (field.accessFlags & FyConstAcc.STATIC) {
       if (pos >= clazz.fieldStatic.length) {
         maxj = pos - clazz.fieldStatic.length;
         for (j = 0; j < maxj; j++) {
@@ -671,7 +671,7 @@ FyClassLoader.prototype.canCast = function(from, to) {
     return true;
   }
   if (from.type === FyConst.TYPE_OBJECT) {
-    if (to.accessFlags & FyConst.FY_ACC_INTERFACE) {
+    if (to.accessFlags & FyConstAcc.INTERFACE) {
       for (var i = 0, max = from.interfaces.length; i < max; i++) {
         /**
          * @type {FyClass}

@@ -355,14 +355,14 @@ FyHeap.prototype.memset32 = function(pos, size, value) {
 };
 
 /**
- *
+ * @export
  */
 FyHeap.prototype.beginProtect = function() {
   this.protectMode = true;
 };
 
 /**
- *
+ * @export
  */
 FyHeap.prototype.endProtect = function() {
   this.protectMode = false;
@@ -453,6 +453,7 @@ FyHeap.prototype.setObjectClassId = function(handle, classId) {
 };
 
 /**
+ * @export
  * @param {number} handle
  * @returns {FyClass}
  */
@@ -761,7 +762,7 @@ FyHeap.prototype.allocateInternal = function(size, clazz, multiUsageData,
   }
   this.setObjectMultiUsageData(handle, multiUsageData | 0);
   this.setObjectClassId(handle, clazz.classId);
-  if (clazz.accessFlags & FyConst.FY_ACC_NEED_FINALIZE) {
+  if (clazz.accessFlags & FyConstAcc.NEED_FINALIZE) {
     this.finalizeScanNeed.put(handle, 1);
   }
   if (this.protectMode) {
@@ -941,7 +942,7 @@ function markSoftReference(reference, referent, heap) {
   if (!referenceClass) {
     throw new FyException(null, "Can't get class for reference #" + reference);
   }
-  if (referenceClass.accessFlags & FyConst.FY_ACC_SOFT_REF) {
+  if (referenceClass.accessFlags & FyConstAcc.SOFT_REF) {
     // console.log("reference #" + reference + "(" +
     // referent
     // + ") is added as soft ref");
@@ -1084,7 +1085,7 @@ FyHeap.prototype.scanRef = function() {
    * @type {number}
    */
   var handle;
-  while (this.from.length>0) {
+  while (this.from.length > 0) {
     handle = this.from.pop()
     if (this.marks.contains(handle)) {
       continue;
@@ -1193,10 +1194,10 @@ FyHeap.prototype.release = function(handle) {
   // + _getObjectClass(handle).name + ")");
   // }
   var access = this.getObjectClass(handle).accessFlags;
-  if (access & FyConst.FY_ACC_REF) {
+  if (access & FyConstAcc.REF) {
     this.references.remove(handle);
   }
-  if (access & FyConst.FY_ACC_NEED_FINALIZE) {
+  if (access & FyConstAcc.NEED_FINALIZE) {
     this.finalizeScanNeed.remove(handle);
   }
   this.heap[handle] = 0;
@@ -1287,7 +1288,7 @@ FyHeap.prototype.gcEnqueueFinalize = function() {
  */
 function enqueueReferencePhase1(reference, referent, heap) {
   if (!heap.objectExists(referent) || (!heap.marks.contains(referent) && ((heap
-    .getObjectClass(reference).accessFlags & FyConst.FY_ACC_PHANTOM_REF) === 0))) {
+    .getObjectClass(reference).accessFlags & FyConstAcc.PHANTOM_REF) === 0))) {
     heap.from.push(reference);
     heap.cleanAndEnqueue(reference);
   }
@@ -1582,6 +1583,7 @@ FyHeap.prototype.getReferencesToEnqueue = function() {
 /**
  * Get array's length
  *
+ * @export
  * @param {number} handle
  *            handle of the array
  * @return {number} length
@@ -1767,7 +1769,7 @@ FyHeap.prototype.getArrayDouble = function(handle, index) {
 };
 
 /**
- *
+ * @export
  * @param  {number} handle
  * @param  {number} index
  * @param  {number} pos
@@ -1780,7 +1782,7 @@ FyHeap.prototype.putArrayRaw32FromHeap = function(handle, index, pos) {
 };
 
 /**
- *
+ * @export
  * @param  {number} handle
  * @param  {number} index
  * @param  {number} pos
@@ -1791,7 +1793,7 @@ FyHeap.prototype.putArrayRaw16FromHeap = function(handle, index, pos) {
 };
 
 /**
- *
+ * @export
  * @param  {number} handle
  * @param  {number} index
  * @param  {number} pos
@@ -1802,7 +1804,7 @@ FyHeap.prototype.putArrayRaw8FromHeap = function(handle, index, pos) {
 };
 
 /**
- *
+ * @export
  * @param  {number} handle
  * @param  {number} index
  * @param  {number} pos
@@ -1814,7 +1816,7 @@ FyHeap.prototype.putArrayRaw64FromHeap = function(handle, index, pos) {
 };
 
 /**
- *
+ * @export
  * @param  {number} handle
  * @param  {number} index
  * @param  {boolean} value
@@ -1825,7 +1827,7 @@ FyHeap.prototype.putArrayBoolean = function(handle, index, value) {
 };
 
 /**
- *
+ * @export
  * @param  {number} handle
  * @param  {number} index
  * @param  {number} value
@@ -1836,7 +1838,7 @@ FyHeap.prototype.putArrayByte = function(handle, index, value) {
 };
 
 /**
- *
+ * @export
  * @param  {number} handle
  * @param  {number} index
  * @param  {number} value
@@ -1847,7 +1849,7 @@ FyHeap.prototype.putArrayShort = function(handle, index, value) {
 };
 
 /**
- *
+ * @export
  * @param  {number} handle
  * @param  {number} index
  * @param  {number} value
@@ -1858,7 +1860,7 @@ FyHeap.prototype.putArrayChar = function(handle, index, value) {
 };
 
 /**
- *
+ * @export
  * @param  {number} handle
  * @param  {number} index
  * @param  {number} value
@@ -1869,7 +1871,7 @@ FyHeap.prototype.putArrayInt = function(handle, index, value) {
 };
 
 /**
- *
+ * @export
  * @param  {number} handle
  * @param  {number} index
  * @param  {number} value
@@ -1880,7 +1882,7 @@ FyHeap.prototype.putArrayFloat = function(handle, index, value) {
 };
 
 /**
- *
+ * @export
  * @param  {number} handle
  * @param  {number} index
  * @param  {Array.<number>|Int32Array} varray
@@ -1893,7 +1895,7 @@ FyHeap.prototype.putArrayLongFrom = function(handle, index, varray, vindex) {
 };
 
 /**
- *
+ * @export
  * @param  {number} handle
  * @param  {number} index
  * @param  {number} value
@@ -1914,6 +1916,7 @@ FyHeap.prototype.putArrayDouble = function(handle, index, value) {
  *
  */
 /**
+ *  @export
  * @param {number} handle
  * @param {number} posAbs
  * @param {number} pos
@@ -1925,6 +1928,7 @@ FyHeap.prototype.getFieldRaw32To = function(handle, posAbs, pos) {
   this.heap[pos] = this.heap[this.heap[handle] + OBJ_META.META_SIZE + posAbs];
 };
 /**
+ *  @export
  * @param {number} handle
  * @param {number} posAbs
  * @param {number} pos
@@ -1937,6 +1941,7 @@ FyHeap.prototype.getFieldRaw64To = function(handle, posAbs, pos) {
   this.heap[pos + 1] = this.heap[this.heap[handle] + OBJ_META.META_SIZE + (posAbs + 1)];
 };
 /**
+ *  @export
  * @param {number} handle
  * @param {number} posAbs
  * @return {boolean}
@@ -1949,6 +1954,7 @@ FyHeap.prototype.getFieldBoolean = function(handle, posAbs) {
 };
 
 /**
+ * @export
  * @param {number} handle
  * @param {number} posAbs
  * @return {number}
@@ -1961,6 +1967,7 @@ FyHeap.prototype.getFieldByte = function(handle, posAbs) {
   return (ret >>> 7) ? ((ret - 256) | 0) : ret;
 };
 /**
+ * @export
  * @param {number} handle
  * @param {number} posAbs
  * @return {number}
@@ -1973,6 +1980,7 @@ FyHeap.prototype.getFieldShort = function(handle, posAbs) {
   return (ret >>> 15) ? ((ret - 65536) | 0) : ret;
 };
 /**
+ * @export
  * @param {number} handle
  * @param {number} posAbs
  * @return {number}
@@ -1984,6 +1992,7 @@ FyHeap.prototype.getFieldChar = function(handle, posAbs) {
   return this.heap[this.heap[handle] + OBJ_META.META_SIZE + posAbs] & 0xffff;
 };
 /**
+ * @export
  * @param {number} handle
  * @param {number} posAbs
  * @return {number}
@@ -1995,6 +2004,7 @@ FyHeap.prototype.getFieldInt = function(handle, posAbs) {
   return this.heap[this.heap[handle] + OBJ_META.META_SIZE + posAbs];
 };
 /**
+ * @export
  * @param {number} handle
  * @param {number} posAbs
  * @return {number}
@@ -2006,6 +2016,7 @@ FyHeap.prototype.getFieldFloat = function(handle, posAbs) {
   return this.heapFloat[this.heap[handle] + OBJ_META.META_SIZE + posAbs];
 };
 /**
+ * @export
  * @param {number} handle
  * @param {number} posAbs
  * @param {Array.<number>|Int32Array} tarray
@@ -2020,6 +2031,7 @@ FyHeap.prototype.getFieldLongTo = function(handle, posAbs, tarray, tindex) {
   return tarray;
 };
 /**
+ * @export
  * @param {number} handle
  * @param {number} posAbs
  * @return {number}
@@ -2032,6 +2044,7 @@ FyHeap.prototype.getFieldDouble = function(handle, posAbs) {
 };
 
 /**
+ * @export
  * @param  {number} handle
  * @param  {number} posAbs
  * @param  {number} pos
@@ -2044,6 +2057,7 @@ FyHeap.prototype.putFieldRaw32From = function(handle, posAbs, pos) {
 };
 
 /**
+ * @export
  * @param  {number} handle
  * @param  {number} posAbs
  * @param  {number} pos
@@ -2057,6 +2071,7 @@ FyHeap.prototype.putFieldRaw64From = function(handle, posAbs, pos) {
 };
 
 /**
+ * @export
  * @param  {number} handle
  * @param  {number} posAbs
  * @param  {boolean} value
@@ -2069,6 +2084,7 @@ FyHeap.prototype.putFieldBoolean = function(handle, posAbs, value) {
 };
 
 /**
+ * @export
  * @param  {number} handle
  * @param  {number} posAbs
  * @param  {number} value
@@ -2081,6 +2097,7 @@ FyHeap.prototype.putFieldByte = function(handle, posAbs, value) {
 };
 
 /**
+ * @export
  * @param  {number} handle
  * @param  {number} posAbs
  * @param  {number} value
@@ -2093,6 +2110,7 @@ FyHeap.prototype.putFieldShort = function(handle, posAbs, value) {
 };
 
 /**
+ * @export
  * @param  {number} handle
  * @param  {number} posAbs
  * @param  {number} value
@@ -2105,6 +2123,7 @@ FyHeap.prototype.putFieldChar = function(handle, posAbs, value) {
 };
 
 /**
+ * @export
  * @param  {number} handle
  * @param  {number} posAbs
  * @param  {number} value
@@ -2117,6 +2136,7 @@ FyHeap.prototype.putFieldInt = function(handle, posAbs, value) {
 };
 
 /**
+ * @export
  * @param  {number} handle
  * @param  {number} posAbs
  * @param  {number} value
@@ -2129,6 +2149,7 @@ FyHeap.prototype.putFieldFloat = function(handle, posAbs, value) {
 };
 
 /**
+ * @export
  * @param  {number} handle
  * @param  {number} posAbs
  * @param  {Array.<number>|Int32Array} tarray
@@ -2143,6 +2164,7 @@ FyHeap.prototype.putFieldLongFrom = function(handle, posAbs, tarray, tindex) {
 };
 
 /**
+ * @export
  * @param  {number} handle
  * @param  {number} posAbs
  * @param  {number} value
@@ -2164,6 +2186,7 @@ FyHeap.prototype.putFieldDouble = function(handle, posAbs, value) {
  *
  */
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @param  {number} pos
@@ -2173,6 +2196,7 @@ FyHeap.prototype.getStaticRaw32To = function(clazz, posAbs, pos) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @param  {number} pos
@@ -2183,6 +2207,7 @@ FyHeap.prototype.getStaticRaw64To = function(clazz, posAbs, pos) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @return  {boolean}
@@ -2192,6 +2217,7 @@ FyHeap.prototype.getStaticBoolean = function(clazz, posAbs) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @return  {number}
@@ -2202,6 +2228,7 @@ FyHeap.prototype.getStaticByte = function(clazz, posAbs) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @return  {number}
@@ -2212,6 +2239,7 @@ FyHeap.prototype.getStaticShort = function(clazz, posAbs) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @return  {number}
@@ -2221,6 +2249,7 @@ FyHeap.prototype.getStaticChar = function(clazz, posAbs) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @return  {number}
@@ -2230,6 +2259,7 @@ FyHeap.prototype.getStaticInt = function(clazz, posAbs) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @return  {number}
@@ -2239,6 +2269,7 @@ FyHeap.prototype.getStaticFloat = function(clazz, posAbs) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @param  {Array.<number>|Int32Array} tarray
@@ -2251,6 +2282,7 @@ FyHeap.prototype.getStaticLongTo = function(clazz, posAbs, tarray, tindex) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @return  {number}
@@ -2260,6 +2292,7 @@ FyHeap.prototype.getStaticDouble = function(clazz, posAbs) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @param  {number} pos
@@ -2271,6 +2304,7 @@ FyHeap.prototype.putStaticRaw32From = function(clazz, posAbs, pos) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @param  {number} pos
@@ -2281,6 +2315,7 @@ FyHeap.prototype.putStaticRaw64From = function(clazz, posAbs, pos) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @param  {boolean} value
@@ -2291,6 +2326,7 @@ FyHeap.prototype.putStaticBoolean = function(clazz, posAbs, value) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @param  {number} value
@@ -2301,6 +2337,7 @@ FyHeap.prototype.putStaticByte = function(clazz, posAbs, value) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @param  {number} value
@@ -2311,6 +2348,7 @@ FyHeap.prototype.putStaticChar = function(clazz, posAbs, value) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @param  {number} value
@@ -2321,6 +2359,7 @@ FyHeap.prototype.putStaticShort = function(clazz, posAbs, value) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @param  {number} value
@@ -2331,6 +2370,7 @@ FyHeap.prototype.putStaticInt = function(clazz, posAbs, value) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @param  {number} value
@@ -2341,6 +2381,7 @@ FyHeap.prototype.putStaticFloat = function(clazz, posAbs, value) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @param  {Array.<number>|Int32Array} varray
@@ -2352,6 +2393,7 @@ FyHeap.prototype.putStaticLongFrom = function(clazz, posAbs, varray, vindex) {
 };
 
 /**
+ * @export
  * @param  {FyClass} clazz
  * @param  {number} posAbs
  * @param  {number} value
@@ -2370,7 +2412,7 @@ FyHeap.prototype.putStaticDouble = function(clazz, posAbs, value) {
 
 /**
  * Get a javascript String from java String
- *
+ *@export
  * @param {number}
  *            handle object handle
  * @returns {string}
@@ -2424,6 +2466,7 @@ FyHeap.prototype.getString = function(handle) {
 };
 
 /**
+ * @export
  * @param {number}
  *            stringHandle
  * @param {string}
@@ -2467,7 +2510,7 @@ FyHeap.prototype.fillString = function(stringHandle, str) {
 };
 
 /**
- *
+ * @export
  * @param {string}
  *            str
  * @returns {number} handle
@@ -2495,6 +2538,7 @@ FyHeap.prototype.literal = function(str) {
 };
 
 /**
+ * @export
  * @param  {FyClassDef} global
  * @param  {number} constant
  * @return {number}
@@ -2518,6 +2562,7 @@ FyHeap.prototype.literalWithConstant = function(global, constant) {
 };
 
 /**
+ * @export
  * @param  {number} handle
  * @param  {number} pos
  * @param  {string} str
@@ -2571,6 +2616,7 @@ FyHeap.prototype.memcpy32 = function(from, to, len) {
   this.heap.set(src, to);
 };
 /**
+ * @export
  * @param {number} sHandle
  * @param {number} sPos
  * @param {number} dHandle
@@ -2636,6 +2682,7 @@ FyHeap.prototype.arrayCopy = function(sHandle, sPos, dHandle, dPos, len) {
 };
 
 /**
+ * @export
  * @param  {number} src
  * @return {number}
  */

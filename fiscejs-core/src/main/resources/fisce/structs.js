@@ -325,880 +325,977 @@ __FyUtils.prototype.unbase64 = (function() {
     return container;
   }
 })();
+
 var FyUtils = new __FyUtils();
 
 /**
- * @constructor
+ * @export
+ * @enum {number}
+ */
+var FyConstAcc = {};
+
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.ABSTRACT = 1024 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.FINAL = 16 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.INTERFACE = 512 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.NATIVE = 256 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.PRIVATE = 2 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.PROTECTED = 4 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.PUBLIC = 1 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.STATIC = 8 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.STRICT = 2048 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.SUPER = 32 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.SYNCHRONIZED = 32 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.TRANSIENT = 128 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.VOLATILE = 64 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.VARARGS = 128 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.BRIDGE = 64 | 0;
+
+/* Extended access flags */
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.SYNTHETIC = 0x00001000 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.ANNOTATION = 0x00002000 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.ENUM = 0x00004000 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.SOFT_REF = 0x00008000 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.WEAK_REF = 0x00010000 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.PHANTOM_REF = 0x00020000 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.REF = FyConstAcc.SOFT_REF | FyConstAcc.WEAK_REF | FyConstAcc.PHANTOM_REF;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.NEED_FINALIZE = 0x00040000 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.CONSTRUCTOR = 0x00100000 | 0;
+/**
+ * @export
+ * @const
+ */
+FyConstAcc.CLINIT = 0x00200000 | 0;
+
+/**
+ * @export
+ * @enum {number}
+ */
+var FyConst = {};
+/**
+ * @const
+ * @export
+ */
+FyConst.TYPE_OBJECT = 0 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.TYPE_PRIMITIVE = 1 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.TYPE_ARRAY = 2 | 0;
+
+/**
+ * @const
+ * @export
+ */
+FyConst.ARRAY_TYPE_BYTE = 0 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.ARRAY_TYPE_SHORT = 1 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.ARRAY_TYPE_INT = 2 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.ARRAY_TYPE_LONG = 3 | 0;
+/* Access flags */
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TM_STATE_NEW = 0 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TM_STATE_BOOT_PENDING = 1 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TM_STATE_STOP = 2 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TM_STATE_RUN_PENDING = 3 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TM_STATE_RUNNING = 4 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TM_STATE_STOP_PENDING = 5 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TM_STATE_DEAD_PENDING = 6 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TM_STATE_DEAD = 7 | 0;
+
+/* Array types */
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_AT_BYTE = 0 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_AT_SHORT = 1 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_AT_INT = 2 | 0;
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_AT_LONG = 3 | 0;
+
+/* Prm types */
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_BYTE = 'B';
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_CHAR = 'C';
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_DOUBLE = 'D';
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_FLOAT = 'F';
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_LONG = 'J';
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_SHORT = 'S';
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_BOOLEAN = 'Z';
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_ARRAY = '[';
+
+/* Below are shared by thread and context */
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_INT = 'I';
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_HANDLE = 'L';
+/* Below are used only by thread */
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_WIDE = 'W';
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_RETURN = 'R';
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_WIDE2 = '_';
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_UNKNOWN = 'X';
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_TYPE_VOID = 'V';
+
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_ATT_CODE = "Code";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_ATT_LINENUM = "LineNumberTable";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_ATT_SYNTH = "Synthetic";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_ATT_SOURCE_FILE = "SourceFile";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_ATT_CONSTANT_VALIE = "ConstantValue";
+
+/* Core classes */
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_STRING = "java/lang/String";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_VM = "com/cirnoworks/fisce/privat/FiScEVM";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_ENUM = "java/lang/Enum";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_ANNOTATION = "java/lang/annotation/Annotation";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_STRING_BUILDER = "java/lang/StringBuilder";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_OBJECT = "java/lang/Object";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_CLASS = "java/lang/Class";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_CLASSLOADER = "java/lang/ClassLoader";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_THROWABLE = "java/lang/Throwable";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_THREAD = "java/lang/Thread";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_SYSTEM = "java/lang/System";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_RUNTIME = "java/lang/Runtime";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_BOOLEAN = "java/lang/Boolean";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_BYTE = "java/lang/Byte";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_CHAR = "java/lang/Character";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_SHORT = "java/lang/Short";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_INT = "java/lang/Integer";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_LONG = "java/lang/Long";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_FLOAT = "java/lang/Float";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_DOUBLE = "java/lang/Double";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_MATH = "java/lang/Math";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_FINALIZER = "java/lang/Finalizer";
+
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_PRIM_BOOLEAN = "<boolean";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_PRIM_BYTE = "<byte";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_PRIM_SHORT = "<short";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_PRIM_CHAR = "<char";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_PRIM_INT = "<int";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_PRIM_FLOAT = "<float";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_PRIM_LONG = "<long";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_PRIM_DOUBLE = "<double";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_PRIM_VOID = "<void";
+
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_IO_INPUTSTREAM = "java/io/InputStream";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_IO_PRINTSTREAM = "java/io/PrintStream";
+
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_REFLECT_ARRAY = "java/lang/reflect/Array";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_REFLECT_CONSTRUCTOR = "java/lang/reflect/Constructor";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_REFLECT_FIELD = "java/lang/reflect/Field";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_REFLECT_METHOD = "java/lang/reflect/Method";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_REFLECT_PROXY = "java/lang/reflect/Proxy";
+
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_REF_SOFT = "java/lang/ref/SoftReference";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_REF_WEAK = "java/lang/ref/WeakReference";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_REF_PHANTOM = "java/lang/ref/PhantomReference";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_REF = "java/lang/ref/Reference";
+
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BASE_STACKTHREADELEMENT = "java/lang/StackTraceElement";
+
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BOX_BOOLEAN = FyConst.FY_BASE_BOOLEAN + ".valueOf.(Z).L" + FyConst.FY_BASE_BOOLEAN + ";";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BOX_BYTE = FyConst.FY_BASE_BYTE + ".valueOf.(B).L" + FyConst.FY_BASE_BYTE + ";";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BOX_SHORT = FyConst.FY_BASE_SHORT + ".valueOf.(S).L" + FyConst.FY_BASE_SHORT + ";";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BOX_CHARACTER = FyConst.FY_BASE_CHAR + ".valueOf.(C).L" + FyConst.FY_BASE_CHAR + ";";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BOX_INTEGER = FyConst.FY_BASE_INT + ".valueOf.(I).L" + FyConst.FY_BASE_INT + ";";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BOX_FLOAT = FyConst.FY_BASE_FLOAT + ".valueOf.(F).L" + FyConst.FY_BASE_FLOAT + ";";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BOX_LONG = FyConst.FY_BASE_LONG + ".valueOf.(J).L" + FyConst.FY_BASE_LONG + ";";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_BOX_DOUBLE = FyConst.FY_BASE_DOUBLE + ".valueOf.(D).L" + FyConst.FY_BASE_DOUBLE + ";";
+
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_UNBOX_BOOLEAN = FyConst.FY_BASE_BOOLEAN + ".booleanValue.()Z";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_UNBOX_BYTE = FyConst.FY_BASE_BYTE + ".byteValue.()B";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_UNBOX_SHORT = FyConst.FY_BASE_SHORT + ".shortValue.()S";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_UNBOX_CHARACTER = FyConst.FY_BASE_CHAR + ".charValue.()C";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_UNBOX_INTEGER = FyConst.FY_BASE_INT + ".intValue.()I";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_UNBOX_FLOAT = FyConst.FY_BASE_FLOAT + ".floatValue.()F";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_UNBOX_LONG = FyConst.FY_BASE_LONG + ".longValue.()J";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_UNBOX_DOUBLE = FyConst.FY_BASE_DOUBLE + ".doubleValue.()D";
+
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_VALUE_BOOLEAN = FyConst.FY_BASE_BOOLEAN + ".value.Z";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_VALUE_BYTE = FyConst.FY_BASE_BYTE + ".value.B";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_VALUE_SHORT = FyConst.FY_BASE_SHORT + ".value.S";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_VALUE_CHARACTER = FyConst.FY_BASE_CHAR + ".value.C";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_VALUE_INTEGER = FyConst.FY_BASE_INT + ".value.I";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_VALUE_FLOAT = FyConst.FY_BASE_FLOAT + ".value.F";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_VALUE_LONG = FyConst.FY_BASE_LONG + ".value.J";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_VALUE_DOUBLE = FyConst.FY_BASE_DOUBLE + ".value.D";
+
+/* Methods */
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_METHOD_INIT = "<init>";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_METHOD_CLINIT = "<clinit>";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_METHODF_INIT = ".<init>.()V";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_METHODF_MAIN = ".main.([L" + FyConst.FY_BASE_STRING + ";)V";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_METHODF_RUN = ".run.()V";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_METHODF_FINALIZE = ".finalize.()V";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_FIELDF_PRIORITY = ".priority.I";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_FIELDF_NAME = ".name.[C";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_FIELDF_DAEMON = ".daemon.Z";
+
+/* Exceptions */
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_ITE = "java/lang/InvocationTargetException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_MONITOR = "java/lang/IllegalMonitorStateException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_NO_METHOD = "java/lang/NoSuchMethodError";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_NPT = "java/lang/NullPointerException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_ARITHMETIC = "java/lang/ArithmeticException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_INCOMPAT_CHANGE = "java/lang/IncompatibleClassChangeError";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_VM = "java/lang/VirtualMachineError";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_CAST = "java/lang/ClassCastException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_IO = "java/io/IOException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_FNF = "java/io/FileNotFoundException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_RT = "java/lang/RuntimeException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_IOOB = "java/lang/IndexOutOfBoundsException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_AIOOB = "java/lang/ArrayIndexOutOfBoundsException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_STORE = "java/lang/ArrayStoreException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_CLASSNOTFOUND = "java/lang/ClassNotFoundException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_ABSTRACT = "java/lang/AbstractMethodError";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_ACCESS = "java/lang/IllegalAccessError";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_NASE = "java/lang/NegativeArraySizeException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_INTR = "java/lang/InterruptedException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_IMSE = "java/lang/IllegalMonitorStateException";
+/**
+ * @const
+ * @export
+ */
+FyConst.FY_EXCEPTION_ARGU = "java/lang/IllegalArgumentException";
+
+/* Unique names */
+/**
+ * @const
+ * @export
+ */
+FyConst.stringArray = "[L" + FyConst.FY_BASE_STRING + ";";
+/**
+ * @const
+ * @export
+ */
+FyConst.throwablePrintStacktrace = FyConst.FY_BASE_THROWABLE + ".printStackTrace.()V";
+/**
+ * @const
+ * @export
+ */
+FyConst.throwableDetailMessage = FyConst.FY_BASE_THROWABLE + ".detailMessage.L" + FyConst.FY_BASE_STRING + ";";
+/**
+ * @const
+ * @export
+ */
+FyConst.throwableStackTrace = FyConst.FY_BASE_THROWABLE + ".stackTrace.[L" + FyConst.FY_BASE_STACKTHREADELEMENT + ";";
+
+/**
+ * @const
+ * @export
+ */
+FyConst.stringCount = FyConst.FY_BASE_STRING + ".count.I";
+/**
+ * @const
+ * @export
+ */
+FyConst.stringValue = FyConst.FY_BASE_STRING + ".value.[C";
+/**
+ * @const
+ * @export
+ */
+FyConst.stringOffset = FyConst.FY_BASE_STRING + ".offset.I";
+
+/**
+ * @const
+ * @export
+ */
+FyConst.stackTraceElementArray = "[L" + FyConst.FY_BASE_STACKTHREADELEMENT + ";";
+/**
+ * @const
+ * @export
+ */
+FyConst.stackTraceElementDeclaringClass = FyConst.FY_BASE_STACKTHREADELEMENT + ".declaringClass.L" + FyConst.FY_BASE_STRING + ";";
+/**
+ * @const
+ * @export
+ */
+FyConst.stackTraceElementMethodName = FyConst.FY_BASE_STACKTHREADELEMENT + ".methodName.L" + FyConst.FY_BASE_STRING + ";";
+/**
+ * @const
+ * @export
+ */
+FyConst.stackTraceElementFileName = FyConst.FY_BASE_STACKTHREADELEMENT + ".fileName.L" + FyConst.FY_BASE_STRING + ";";
+/**
+ * @const
+ * @export
+ */
+FyConst.stackTraceElementLineNumber = FyConst.FY_BASE_STACKTHREADELEMENT + ".lineNumber.I";
+
+/**
+ * @const
+ * @export
+ */
+FyConst.Z = "Z".charCodeAt(0);
+/**
+ * @const
+ * @export
+ */
+FyConst.B = "B".charCodeAt(0);
+/**
+ * @const
+ * @export
+ */
+FyConst.C = "C".charCodeAt(0);
+/**
+ * @const
+ * @export
+ */
+FyConst.S = "S".charCodeAt(0);
+/**
+ * @const
+ * @export
+ */
+FyConst.I = "I".charCodeAt(0);
+/**
+ * @const
+ * @export
+ */
+FyConst.F = "F".charCodeAt(0);
+/**
+ * @const
+ * @export
+ */
+FyConst.J = "J".charCodeAt(0);
+/**
+ * @const
+ * @export
+ */
+FyConst.D = "D".charCodeAt(0);
+/**
+ * @const
+ * @export
+ */
+FyConst.L = "L".charCodeAt(0);
+/**
+ * @const
+ * @export
+ */
+FyConst.V = "V".charCodeAt(0);
+/**
+ * @const
+ * @export
+ */
+FyConst.ARR = "[".charCodeAt(0);
+
+
+/**
+ * @class
  * @struct
- */
-function __FyConst() {
-  /**
-   * @const
-   *
-   */
-  this.TYPE_OBJECT = 0 | 0;
-  /**
-   * @const
-   *
-   */
-  this.TYPE_PRIMITIVE = 1 | 0;
-  /**
-   * @const
-   *
-   */
-  this.TYPE_ARRAY = 2 | 0;
-
-  /**
-   * @const
-   *
-   */
-  this.ARRAY_TYPE_BYTE = 0 | 0;
-  /**
-   * @const
-   *
-   */
-  this.ARRAY_TYPE_SHORT = 1 | 0;
-  /**
-   * @const
-   *
-   */
-  this.ARRAY_TYPE_INT = 2 | 0;
-  /**
-   * @const
-   *
-   */
-  this.ARRAY_TYPE_LONG = 3 | 0;
-  /* Access flags */
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_ABSTRACT = 1024 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_FINAL = 16 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_INTERFACE = 512 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_NATIVE = 256 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_PRIVATE = 2 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_PROTECTED = 4 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_PUBLIC = 1 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_STATIC = 8 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_STRICT = 2048 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_SUPER = 32 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_SYNCHRONIZED = 32 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_TRANSIENT = 128 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_VOLATILE = 64 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_VARARGS = 128 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_BRIDGE = 64 | 0;
-
-  /* Extended access flags */
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_SYNTHETIC = 0x00001000 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_ANNOTATION = 0x00002000 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_ENUM = 0x00004000 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_SOFT_REF = 0x00008000 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_WEAK_REF = 0x00010000 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_PHANTOM_REF = 0x00020000 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_REF = this.FY_ACC_SOFT_REF | this.FY_ACC_WEAK_REF | this.FY_ACC_PHANTOM_REF;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_NEED_FINALIZE = 0x00040000 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_CONSTRUCTOR = 0x00100000 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_ACC_CLINIT = 0x00200000 | 0;
-
-  /**
-   * @const
-   *
-   */
-  this.FY_TM_STATE_NEW = 0 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_TM_STATE_BOOT_PENDING = 1 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_TM_STATE_STOP = 2 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_TM_STATE_RUN_PENDING = 3 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_TM_STATE_RUNNING = 4 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_TM_STATE_STOP_PENDING = 5 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_TM_STATE_DEAD_PENDING = 6 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_TM_STATE_DEAD = 7 | 0;
-
-  /* Array types */
-  /**
-   * @const
-   *
-   */
-  this.FY_AT_BYTE = 0 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_AT_SHORT = 1 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_AT_INT = 2 | 0;
-  /**
-   * @const
-   *
-   */
-  this.FY_AT_LONG = 3 | 0;
-
-  /* Prm types */
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_BYTE = 'B';
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_CHAR = 'C';
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_DOUBLE = 'D';
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_FLOAT = 'F';
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_LONG = 'J';
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_SHORT = 'S';
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_BOOLEAN = 'Z';
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_ARRAY = '[';
-
-  /* Below are shared by thread and context */
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_INT = 'I';
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_HANDLE = 'L';
-  /* Below are used only by thread */
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_WIDE = 'W';
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_RETURN = 'R';
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_WIDE2 = '_';
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_UNKNOWN = 'X';
-  /**
-   * @const
-   *
-   */
-  this.FY_TYPE_VOID = 'V';
-
-  /**
-   * @const
-   *
-   */
-  this.FY_ATT_CODE = "Code";
-  /**
-   * @const
-   *
-   */
-  this.FY_ATT_LINENUM = "LineNumberTable";
-  /**
-   * @const
-   *
-   */
-  this.FY_ATT_SYNTH = "Synthetic";
-  /**
-   * @const
-   *
-   */
-  this.FY_ATT_SOURCE_FILE = "SourceFile";
-  /**
-   * @const
-   *
-   */
-  this.FY_ATT_CONSTANT_VALIE = "ConstantValue";
-
-  /* Core classes */
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_STRING = "java/lang/String";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_VM = "com/cirnoworks/fisce/privat/FiScEVM";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_ENUM = "java/lang/Enum";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_ANNOTATION = "java/lang/annotation/Annotation";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_STRING_BUILDER = "java/lang/StringBuilder";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_OBJECT = "java/lang/Object";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_CLASS = "java/lang/Class";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_CLASSLOADER = "java/lang/ClassLoader";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_THROWABLE = "java/lang/Throwable";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_THREAD = "java/lang/Thread";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_SYSTEM = "java/lang/System";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_RUNTIME = "java/lang/Runtime";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_BOOLEAN = "java/lang/Boolean";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_BYTE = "java/lang/Byte";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_CHAR = "java/lang/Character";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_SHORT = "java/lang/Short";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_INT = "java/lang/Integer";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_LONG = "java/lang/Long";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_FLOAT = "java/lang/Float";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_DOUBLE = "java/lang/Double";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_MATH = "java/lang/Math";
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_FINALIZER = "java/lang/Finalizer";
-
-  /**
-   * @const
-   *
-   */
-  this.FY_PRIM_BOOLEAN = "<boolean";
-  /**
-   * @const
-   *
-   */
-  this.FY_PRIM_BYTE = "<byte";
-  /**
-   * @const
-   *
-   */
-  this.FY_PRIM_SHORT = "<short";
-  /**
-   * @const
-   *
-   */
-  this.FY_PRIM_CHAR = "<char";
-  /**
-   * @const
-   *
-   */
-  this.FY_PRIM_INT = "<int";
-  /**
-   * @const
-   *
-   */
-  this.FY_PRIM_FLOAT = "<float";
-  /**
-   * @const
-   *
-   */
-  this.FY_PRIM_LONG = "<long";
-  /**
-   * @const
-   *
-   */
-  this.FY_PRIM_DOUBLE = "<double";
-  /**
-   * @const
-   *
-   */
-  this.FY_PRIM_VOID = "<void";
-
-  /**
-   * @const
-   *
-   */
-  this.FY_IO_INPUTSTREAM = "java/io/InputStream";
-  /**
-   * @const
-   *
-   */
-  this.FY_IO_PRINTSTREAM = "java/io/PrintStream";
-
-  /**
-   * @const
-   *
-   */
-  this.FY_REFLECT_ARRAY = "java/lang/reflect/Array";
-  /**
-   * @const
-   *
-   */
-  this.FY_REFLECT_CONSTRUCTOR = "java/lang/reflect/Constructor";
-  /**
-   * @const
-   *
-   */
-  this.FY_REFLECT_FIELD = "java/lang/reflect/Field";
-  /**
-   * @const
-   *
-   */
-  this.FY_REFLECT_METHOD = "java/lang/reflect/Method";
-  /**
-   * @const
-   *
-   */
-  this.FY_REFLECT_PROXY = "java/lang/reflect/Proxy";
-
-  /**
-   * @const
-   *
-   */
-  this.FY_REF_SOFT = "java/lang/ref/SoftReference";
-  /**
-   * @const
-   *
-   */
-  this.FY_REF_WEAK = "java/lang/ref/WeakReference";
-  /**
-   * @const
-   *
-   */
-  this.FY_REF_PHANTOM = "java/lang/ref/PhantomReference";
-  /**
-   * @const
-   *
-   */
-  this.FY_REF = "java/lang/ref/Reference";
-
-  /**
-   * @const
-   *
-   */
-  this.FY_BASE_STACKTHREADELEMENT = "java/lang/StackTraceElement";
-
-  /**
-   * @const
-   *
-   */
-  this.FY_BOX_BOOLEAN = this.FY_BASE_BOOLEAN + ".valueOf.(Z).L" + this.FY_BASE_BOOLEAN + ";", this.FY_BOX_BYTE = this.FY_BASE_BYTE + ".valueOf.(B).L" + this.FY_BASE_BYTE + ";";
-  /**
-   * @const
-   *
-   */
-  this.FY_BOX_SHORT = this.FY_BASE_SHORT + ".valueOf.(S).L" + this.FY_BASE_SHORT + ";";
-  /**
-   * @const
-   *
-   */
-  this.FY_BOX_CHARACTER = this.FY_BASE_CHAR + ".valueOf.(C).L" + this.FY_BASE_CHAR + ";";
-  /**
-   * @const
-   *
-   */
-  this.FY_BOX_INTEGER = this.FY_BASE_INT + ".valueOf.(I).L" + this.FY_BASE_INT + ";";
-  /**
-   * @const
-   *
-   */
-  this.FY_BOX_FLOAT = this.FY_BASE_FLOAT + ".valueOf.(F).L" + this.FY_BASE_FLOAT + ";";
-  /**
-   * @const
-   *
-   */
-  this.FY_BOX_LONG = this.FY_BASE_LONG + ".valueOf.(J).L" + this.FY_BASE_LONG + ";", this.FY_BOX_DOUBLE = this.FY_BASE_DOUBLE + ".valueOf.(D).L" + this.FY_BASE_DOUBLE + ";";
-
-  /**
-   * @const
-   *
-   */
-  this.FY_UNBOX_BOOLEAN = this.FY_BASE_BOOLEAN + ".booleanValue.()Z";
-  /**
-   * @const
-   *
-   */
-  this.FY_UNBOX_BYTE = this.FY_BASE_BYTE + ".byteValue.()B";
-  /**
-   * @const
-   *
-   */
-  this.FY_UNBOX_SHORT = this.FY_BASE_SHORT + ".shortValue.()S";
-  /**
-   * @const
-   *
-   */
-  this.FY_UNBOX_CHARACTER = this.FY_BASE_CHAR + ".charValue.()C";
-  /**
-   * @const
-   *
-   */
-  this.FY_UNBOX_INTEGER = this.FY_BASE_INT + ".intValue.()I";
-  /**
-   * @const
-   *
-   */
-  this.FY_UNBOX_FLOAT = this.FY_BASE_FLOAT + ".floatValue.()F";
-  /**
-   * @const
-   *
-   */
-  this.FY_UNBOX_LONG = this.FY_BASE_LONG + ".longValue.()J";
-  /**
-   * @const
-   *
-   */
-  this.FY_UNBOX_DOUBLE = this.FY_BASE_DOUBLE + ".doubleValue.()D";
-
-  /**
-   * @const
-   *
-   */
-  this.FY_VALUE_BOOLEAN = this.FY_BASE_BOOLEAN + ".value.Z";
-  /**
-   * @const
-   *
-   */
-  this.FY_VALUE_BYTE = this.FY_BASE_BYTE + ".value.B";
-  /**
-   * @const
-   *
-   */
-  this.FY_VALUE_SHORT = this.FY_BASE_SHORT + ".value.S";
-  /**
-   * @const
-   *
-   */
-  this.FY_VALUE_CHARACTER = this.FY_BASE_CHAR + ".value.C";
-  /**
-   * @const
-   *
-   */
-  this.FY_VALUE_INTEGER = this.FY_BASE_INT + ".value.I";
-  /**
-   * @const
-   *
-   */
-  this.FY_VALUE_FLOAT = this.FY_BASE_FLOAT + ".value.F";
-  /**
-   * @const
-   *
-   */
-  this.FY_VALUE_LONG = this.FY_BASE_LONG + ".value.J";
-  /**
-   * @const
-   *
-   */
-  this.FY_VALUE_DOUBLE = this.FY_BASE_DOUBLE + ".value.D";
-
-  /* Methods */
-  /**
-   * @const
-   *
-   */
-  this.FY_METHOD_INIT = "<init>";
-  /**
-   * @const
-   *
-   */
-  this.FY_METHOD_CLINIT = "<clinit>";
-  /**
-   * @const
-   *
-   */
-  this.FY_METHODF_INIT = ".<init>.()V";
-  /**
-   * @const
-   *
-   */
-  this.FY_METHODF_MAIN = ".main.([L" + this.FY_BASE_STRING + ";)V";
-  /**
-   * @const
-   *
-   */
-  this.FY_METHODF_RUN = ".run.()V";
-  /**
-   * @const
-   *
-   */
-  this.FY_METHODF_FINALIZE = ".finalize.()V";
-  /**
-   * @const
-   *
-   */
-  this.FY_FIELDF_PRIORITY = ".priority.I";
-  /**
-   * @const
-   *
-   */
-  this.FY_FIELDF_NAME = ".name.[C";
-  /**
-   * @const
-   *
-   */
-  this.FY_FIELDF_DAEMON = ".daemon.Z";
-
-  /* Exceptions */
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_ITE = "java/lang/InvocationTargetException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_MONITOR = "java/lang/IllegalMonitorStateException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_NO_METHOD = "java/lang/NoSuchMethodError";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_NPT = "java/lang/NullPointerException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_ARITHMETIC = "java/lang/ArithmeticException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_INCOMPAT_CHANGE = "java/lang/IncompatibleClassChangeError";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_VM = "java/lang/VirtualMachineError";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_CAST = "java/lang/ClassCastException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_IO = "java/io/IOException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_FNF = "java/io/FileNotFoundException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_RT = "java/lang/RuntimeException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_IOOB = "java/lang/IndexOutOfBoundsException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_AIOOB = "java/lang/ArrayIndexOutOfBoundsException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_STORE = "java/lang/ArrayStoreException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_CLASSNOTFOUND = "java/lang/ClassNotFoundException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_ABSTRACT = "java/lang/AbstractMethodError";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_ACCESS = "java/lang/IllegalAccessError";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_NASE = "java/lang/NegativeArraySizeException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_INTR = "java/lang/InterruptedException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_IMSE = "java/lang/IllegalMonitorStateException";
-  /**
-   * @const
-   *
-   */
-  this.FY_EXCEPTION_ARGU = "java/lang/IllegalArgumentException";
-
-  /* Unique names */
-  /**
-   * @const
-   *
-   */
-  this.stringArray = "[L" + this.FY_BASE_STRING + ";";
-  /**
-   * @const
-   *
-   */
-  this.throwablePrintStacktrace = this.FY_BASE_THROWABLE + ".printStackTrace.()V";
-  this.throwableDetailMessage = this.FY_BASE_THROWABLE + ".detailMessage.L" + this.FY_BASE_STRING + ";";
-  this.throwableStackTrace = this.FY_BASE_THROWABLE + ".stackTrace.[L" + this.FY_BASE_STACKTHREADELEMENT + ";";
-
-  this.stringCount = this.FY_BASE_STRING + ".count.I";
-  this.stringValue = this.FY_BASE_STRING + ".value.[C";
-  this.stringOffset = this.FY_BASE_STRING + ".offset.I";
-
-  this.stackTraceElementArray = "[L" + this.FY_BASE_STACKTHREADELEMENT + ";";
-  this.stackTraceElementDeclaringClass = this.FY_BASE_STACKTHREADELEMENT + ".declaringClass.L" + this.FY_BASE_STRING + ";";
-  this.stackTraceElementMethodName = this.FY_BASE_STACKTHREADELEMENT + ".methodName.L" + this.FY_BASE_STRING + ";";
-  this.stackTraceElementFileName = this.FY_BASE_STACKTHREADELEMENT + ".fileName.L" + this.FY_BASE_STRING + ";";
-  this.stackTraceElementLineNumber = this.FY_BASE_STACKTHREADELEMENT + ".lineNumber.I";
-
-  this.Z = "Z".charCodeAt(0);
-  this.B = "B".charCodeAt(0);
-  this.C = "C".charCodeAt(0);
-  this.S = "S".charCodeAt(0);
-  this.I = "I".charCodeAt(0);
-  this.F = "F".charCodeAt(0);
-  this.J = "J".charCodeAt(0);
-  this.D = "D".charCodeAt(0);
-  this.L = "L".charCodeAt(0);
-  this.V = "V".charCodeAt(0);
-  this.ARR = "[".charCodeAt(0);
-
-}
-
-/**
- * @type {__FyConst}
- */
-var FyConst = new __FyConst();
-
-/**
  * @constructor
  */
 function FyTableSwitchTarget(def) {
@@ -1228,6 +1325,8 @@ function FyTableSwitchTarget(def) {
 };
 
 /**
+ * @class
+ * @struct
  * @constructor
  */
 function FyLookupSwitchTarget(def) {

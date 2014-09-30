@@ -3,7 +3,7 @@
 <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>
 
 
-<script type="text/javascript" src="../fisce/gunzip.minjs"></script>
+<script type="text/javascript" src="../fisce/lzstring.js"></script>
 <script type="text/javascript" src="../fisce/aot.js"></script>
 <script type="text/javascript" src="../fisce/portable.js"></script>
 <script type="text/javascript" src="../fisce/long.asm.js"></script>
@@ -41,11 +41,11 @@
 			}
 			xmlhttp.onreadystatechange = function() {
 				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-					classDefs = JSON.parse(xmlhttp.responseText);
+					classDefs = xmlhttp.responseText;
 					startup();
 				}
 			}
-			xmlhttp.open("GET", "../rt.json", true);
+			xmlhttp.open("GET", "../rt.txt", true);
 			xmlhttp.send();
 		}
 	</script>
@@ -1135,10 +1135,8 @@
 			var rounds = 0;
 			function fun() {
 				if (i == 0) {
-					var defs = {};
-					FyUtils.shallowClone(classDefs, defs);
-					context = new FyContext("testcl");
-					context.addClassDef(defs);
+					context = new FyContext();
+					context.addClassDef(classDefs);
 				}
 				if (i < classes.length) {
 					context.lookupClass(classes[i]);

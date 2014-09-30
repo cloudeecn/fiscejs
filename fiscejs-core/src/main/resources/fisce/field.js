@@ -89,6 +89,15 @@ FyField.prototype.setFieldId = function(fid) {
 };
 
 /**
+ * @export
+ * @param  {number} flag
+ * @return {number}
+ */
+FyField.prototype.hasAccessFlag = function(flag) {
+  return this.accessFlags & flag;
+}
+
+/**
  * @param {number} cvd
  */
 FyField.prototype.setConstantValueData = function(cvd) {

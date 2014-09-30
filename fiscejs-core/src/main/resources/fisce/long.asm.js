@@ -24,16 +24,29 @@ function __FyLongOps(stack, tmpOps) {
   this.tmp5 = tmpOps + 10;
 }
 
+/**
+ * @export
+ * @param  {number} value1
+ * @param  {number} value2
+ */
 __FyLongOps.prototype.fmax = function(value1, value2) {
   return (value1 > value2) ? value1 : value2;
 };
 
+/**
+ * @export
+ * @param  {number} pos
+ */
 __FyLongOps.prototype.not = function(pos) {
   var stack = this.stack;
   stack[pos] = ~stack[pos];
   stack[pos + 1] = ~stack[pos + 1];
 };
 
+/**
+ * @export
+ * @param  {number} pos
+ */
 __FyLongOps.prototype.neg = function(pos) {
   var stack = this.stack;
   stack[pos] = ~stack[pos];
@@ -89,6 +102,11 @@ __FyLongOps.prototype.longFromNumber = function(pos, value) {
   }
 };
 
+/**
+ * @export
+ * @param  {number} pos1
+ * @param  {number} pos2
+ */
 __FyLongOps.prototype.compare = function(pos1, pos2) {
   var stack = this.stack;
   if (stack[pos1] > stack[pos2]) {
@@ -236,6 +254,11 @@ __FyLongOps.prototype.mul = function mul(pos1, pos2) {
   }
 };
 
+/**
+ * @export
+ * @param  {number} pos1
+ * @param  {number} pos2
+ */
 __FyLongOps.prototype.div = function(pos1, pos2) {
   var stack = this.stack;
   var neged = 0;
