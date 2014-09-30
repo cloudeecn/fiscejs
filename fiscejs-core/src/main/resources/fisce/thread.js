@@ -528,7 +528,7 @@ FyThread.prototype.fillStackTrace = function(handle, excludeThis) {
 	this.walkFrames(function(frameId, methodId, sb, ip, lip) {
 		var lineNumber = -1;
 		if (frameId > topFrameId) {
-			return true;
+			return false;
 		}
 		/**
 		 * @returns {FyMethod}

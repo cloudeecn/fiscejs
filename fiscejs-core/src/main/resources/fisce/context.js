@@ -153,12 +153,10 @@ function walkInterfaces(clazz, fun, $this, walked) {
  * @class
  * @export
  * @struct
- * @param {string}
- *            namespace
  * @param {FyConfig}
  *            config
  */
-function FyContext(namespace, config) {
+function FyContext(config) {
 	var levels = ["D", "I", "W", "E"];
 	if (!config) {
 		this.config = new FyConfig();
@@ -226,10 +224,7 @@ function FyContext(namespace, config) {
 	this.classLoader = new FyClassLoader(this);
 	this.heap = new FyHeap(this);
 	this.threadManager = new FyThreadManager(this);
-	if (!namespace) {
-		namespace = "default";
-	}
-	this.vfs = new FyVFS(namespace);
+	this.vfs = new FyVFS(this);
 
 	this.log = function(level, content) {
 		if (this.config.debugMode || level > 0) {
