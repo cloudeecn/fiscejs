@@ -28,73 +28,73 @@
  *            strings
  */
 function FyField(owner, fieldDef, strings) {
-	/**
-	 * @type {FyClass}
-	 */
-	this.owner = owner;
+  /**
+   * @type {FyClass}
+   */
+  this.owner = owner;
 
-	/**
-	 * @type {number}
-	 */
-	this.accessFlags = fieldDef["accessFlags"] | 0;
-	/**
-	 * @type {number}
-	 */
-	this.posRel = fieldDef["posRel"] | 0;
-	/**
-	 * @type {number}
-	 */
-	this.size = fieldDef["size"] | 0;
-	/**
-	 * @type {number}
-	 */
-	this.constantValueData = fieldDef["constantValueData"] | 0;
+  /**
+   * @type {number}
+   */
+  this.accessFlags = fieldDef["accessFlags"] | 0;
+  /**
+   * @type {number}
+   */
+  this.posRel = fieldDef["posRel"] | 0;
+  /**
+   * @type {number}
+   */
+  this.size = fieldDef["size"] | 0;
+  /**
+   * @type {number}
+   */
+  this.constantValueData = fieldDef["constantValueData"] | 0;
 
-	/**
-	 * @type {string}
-	 */
-	this.name = strings[fieldDef["name"] | 0];
-	/**
-	 * @type {string}
-	 */
-	this.descriptor = strings[fieldDef["descriptor"] | 0];
-	/**
-	 * @type {string}
-	 */
-	this.fullName = "." + this.name + "." + this.descriptor;
-	/**
-	 * @type {string}
-	 */
-	this.uniqueName = "" + owner.name + this.fullName;
+  /**
+   * @type {string}
+   */
+  this.name = strings[fieldDef["name"] | 0];
+  /**
+   * @type {string}
+   */
+  this.descriptor = strings[fieldDef["descriptor"] | 0];
+  /**
+   * @type {string}
+   */
+  this.fullName = "." + this.name + "." + this.descriptor;
+  /**
+   * @type {string}
+   */
+  this.uniqueName = "" + owner.name + this.fullName;
 
-	/**
-	 * @type {number}
-	 */
-	this.posAbs = this.posRel;
-	/**
-	 * @type {number}
-	 */
-	this.fieldId = 0 | 0;
-	/**
-	 * @type {FyClass}
-	 */
-	this.type = null;
+  /**
+   * @type {number}
+   */
+  this.posAbs = this.posRel;
+  /**
+   * @type {number}
+   */
+  this.fieldId = 0 | 0;
+  /**
+   * @type {FyClass}
+   */
+  this.type = null;
 }
 
 /**
  * @param {number} fid
  */
 FyField.prototype.setFieldId = function(fid) {
-	this.fieldId = fid | 0;
+  this.fieldId = fid | 0;
 };
 
 /**
  * @param {number} cvd
  */
 FyField.prototype.setConstantValueData = function(cvd) {
-	this.constantValueData = cvd | 0;
+  this.constantValueData = cvd | 0;
 }
 
 FyField.prototype.toString = function() {
-	return "{Field}" + this.uniqueName;
+  return "{Field}" + this.uniqueName;
 };

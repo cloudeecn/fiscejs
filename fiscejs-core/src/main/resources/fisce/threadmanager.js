@@ -22,30 +22,30 @@
  * @returns {FyThreadManager}
  */
 function FyThreadManager(context) {
-	this.context = context;
-	this.config = context.config;
-	this.pricmds = [0, 1000, 2500, 5000, 10000, 20000, 40000, 80000, 160000,
-		320000, 640000
-	];
-	this.threads = new Array();
-	for (var i = 0, max = this.config.maxThreads; i < max; i++) {
-		this.threads.push(null);
-	}
-	this.currentThread = null;
-	this.runningThreads = [];
-	this.runningThreadPos = 0;
-	this.nonDaemonRunned = false;
-	this.state = 0;
-	this.nextWakeUpTimeTotal = 0;
-	this.nextThreadId = 1;
-	/**
-	 * @type {FyException}
-	 */
-	this.exitException = null;
-	this.exitCode = 0;
-	this.nextGCTime = 0;
-	this.nextForceGCTime = 0;
-	this.lastThreadId = 0;
+  this.context = context;
+  this.config = context.config;
+  this.pricmds = [0, 1000, 2500, 5000, 10000, 20000, 40000, 80000, 160000,
+    320000, 640000
+  ];
+  this.threads = new Array();
+  for (var i = 0, max = this.config.maxThreads; i < max; i++) {
+    this.threads.push(null);
+  }
+  this.currentThread = null;
+  this.runningThreads = [];
+  this.runningThreadPos = 0;
+  this.nonDaemonRunned = false;
+  this.state = 0;
+  this.nextWakeUpTimeTotal = 0;
+  this.nextThreadId = 1;
+  /**
+   * @type {FyException}
+   */
+  this.exitException = null;
+  this.exitCode = 0;
+  this.nextGCTime = 0;
+  this.nextForceGCTime = 0;
+  this.lastThreadId = 0;
 };
 
 /**
@@ -54,11 +54,11 @@ function FyThreadManager(context) {
  * @returns {FyThread}
  */
 FyThreadManager.prototype._getThreadByHandle = function(handle) {
-	var threadId = this.context.heap.getObjectMultiUsageData(handle);
-	if (threadId === 0) {
-		return null;
-	}
-	return this.threads[threadId];
+  var threadId = this.context.heap.getObjectMultiUsageData(handle);
+  if (threadId === 0) {
+    return null;
+  }
+  return this.threads[threadId];
 };
 
 /**
@@ -70,32 +70,32 @@ FyThreadManager.prototype._getThreadByHandle = function(handle) {
  *            times
  */
 FyThreadManager.prototype._monitorEnter = function(thread, monitorId, times) {
-	var heap = this.context.heap;
-	var owner = heap.getObjectMonitorOwnerId(monitorId);
-	var threadId = thread.threadId;
-	// console.log("Monitor enter at " +
-	// thread.getCurrentMethod().uniqueName);
-	if (owner === threadId) {
-		// owned by this thread, add times and go on
-		heap.setObjectMonitorOwnerTimes(monitorId, heap
-			.getObjectMonitorOwnerTimes(monitorId) + times);
-		// console.log([ "enter/add", threadId, monitorId, times,
-		// monitor.monitorOwnerTimes ]);
-	} else if (owner <= 0) {
-		// no owner, get ownership and go on
-		heap.setObjectMonitorOwnerId(monitorId, threadId);
-		heap.setObjectMonitorOwnerTimes(monitorId, times);
-		// console.log([ "enter/grant", threadId, monitorId, times,
-		// monitor.monitorOwnerTimes ]);
-	} else {
-		// owned by other thread, register wait and yield
-		thread.waitForLockId = monitorId;
-		thread.pendingLockCount = 1;
-		thread.yield = true;
-		// console.log([ "enter/yield", threadId, monitorId, times,
-		// monitor.monitorOwnerTimes ]);
-	}
-	return times;
+  var heap = this.context.heap;
+  var owner = heap.getObjectMonitorOwnerId(monitorId);
+  var threadId = thread.threadId;
+  // console.log("Monitor enter at " +
+  // thread.getCurrentMethod().uniqueName);
+  if (owner === threadId) {
+    // owned by this thread, add times and go on
+    heap.setObjectMonitorOwnerTimes(monitorId, heap
+      .getObjectMonitorOwnerTimes(monitorId) + times);
+    // console.log([ "enter/add", threadId, monitorId, times,
+    // monitor.monitorOwnerTimes ]);
+  } else if (owner <= 0) {
+    // no owner, get ownership and go on
+    heap.setObjectMonitorOwnerId(monitorId, threadId);
+    heap.setObjectMonitorOwnerTimes(monitorId, times);
+    // console.log([ "enter/grant", threadId, monitorId, times,
+    // monitor.monitorOwnerTimes ]);
+  } else {
+    // owned by other thread, register wait and yield
+    thread.waitForLockId = monitorId;
+    thread.pendingLockCount = 1;
+    thread.yield = true;
+    // console.log([ "enter/yield", threadId, monitorId, times,
+    // monitor.monitorOwnerTimes ]);
+  }
+  return times;
 };
 
 /**
@@ -107,28 +107,28 @@ FyThreadManager.prototype._monitorEnter = function(thread, monitorId, times) {
  *            times
  */
 FyThreadManager.prototype._monitorExit = function(thread, monitorId, times) {
-	var heap = this.context.heap;
-	var threadId = thread.threadId;
-	var owner = heap.getObjectMonitorOwnerId(monitorId);
-	// console.log("Monitor exit at " +
-	// thread.getCurrentMethod().uniqueName);
+  var heap = this.context.heap;
+  var threadId = thread.threadId;
+  var owner = heap.getObjectMonitorOwnerId(monitorId);
+  // console.log("Monitor exit at " +
+  // thread.getCurrentMethod().uniqueName);
 
-	if (owner !== threadId) {
-		// console.log(new Error().stack);
-		throw new FyException(null, "Thread #" + threadId + ": tries to exit monitor " + monitorId + " owned by #" + owner);
-	}
-	heap.setObjectMonitorOwnerTimes(monitorId, heap
-		.getObjectMonitorOwnerTimes(monitorId) - times);
-	// console.log([ "exit", threadId, monitorId, times,
-	// monitor.monitorOwnerTimes ]);
-	if (heap.getObjectMonitorOwnerTimes(monitorId) === 0) {
-		// console.log([ "exit/release", threadId, monitorId ]);
-		heap.setObjectMonitorOwnerId(monitorId, 0);
-		thread.yield = true;
-	} else if (heap.getObjectMonitorOwnerTimes(monitorId) < 0) {
-		throw new FyException(null, "Thread #" + threadId + ": Too many monitors released!(" + times + "/" + (heap.getObjectMonitorOwnerTimes(monitorId) + times) + ")");
-	}
-	return times;
+  if (owner !== threadId) {
+    // console.log(new Error().stack);
+    throw new FyException(null, "Thread #" + threadId + ": tries to exit monitor " + monitorId + " owned by #" + owner);
+  }
+  heap.setObjectMonitorOwnerTimes(monitorId, heap
+    .getObjectMonitorOwnerTimes(monitorId) - times);
+  // console.log([ "exit", threadId, monitorId, times,
+  // monitor.monitorOwnerTimes ]);
+  if (heap.getObjectMonitorOwnerTimes(monitorId) === 0) {
+    // console.log([ "exit/release", threadId, monitorId ]);
+    heap.setObjectMonitorOwnerId(monitorId, 0);
+    thread.yield = true;
+  } else if (heap.getObjectMonitorOwnerTimes(monitorId) < 0) {
+    throw new FyException(null, "Thread #" + threadId + ": Too many monitors released!(" + times + "/" + (heap.getObjectMonitorOwnerTimes(monitorId) + times) + ")");
+  }
+  return times;
 };
 
 /**
@@ -138,29 +138,29 @@ FyThreadManager.prototype._monitorExit = function(thread, monitorId, times) {
  *            monitorId
  */
 FyThreadManager.prototype._releaseMonitor = function(thread, monitorId) {
-	var threadId = thread.threadId;
-	var heap = this.context.heap;
-	var owner = heap.getObjectMonitorOwnerId(monitorId);
-	if (owner !== threadId) {
-		throw new FyException(FyConst.FY_EXCEPTION_MONITOR, "Thread #" + threadId + ": tries to release monitor owned by #" + owner);
-	}
-	return this._monitorExit(thread, monitorId, heap
-		.getObjectMonitorOwnerTimes(monitorId));
+  var threadId = thread.threadId;
+  var heap = this.context.heap;
+  var owner = heap.getObjectMonitorOwnerId(monitorId);
+  if (owner !== threadId) {
+    throw new FyException(FyConst.FY_EXCEPTION_MONITOR, "Thread #" + threadId + ": tries to release monitor owned by #" + owner);
+  }
+  return this._monitorExit(thread, monitorId, heap
+    .getObjectMonitorOwnerTimes(monitorId));
 };
 
 FyThreadManager.prototype._fetchNextThreadId = function() {
-	var h = this.nextThreadId;
-	while (this.threads[h]) {
-		h++;
-		if (h === this.config.maxThreads) {
-			h = 1;
-		}
-		if (h === this.nextThreadId) {
-			throw new FyException(null, "Threads used up!");
-		}
-	}
-	this.nextThreadId = (h % (this.config.maxThreads - 1) + 1);
-	return h;
+  var h = this.nextThreadId;
+  while (this.threads[h]) {
+    h++;
+    if (h === this.config.maxThreads) {
+      h = 1;
+    }
+    if (h === this.nextThreadId) {
+      throw new FyException(null, "Threads used up!");
+    }
+  }
+  this.nextThreadId = (h % (this.config.maxThreads - 1) + 1);
+  return h;
 };
 
 /**
@@ -170,27 +170,27 @@ FyThreadManager.prototype._fetchNextThreadId = function() {
  *            e
  */
 FyThreadManager.prototype.pushThrowable = function(thread, e) {
-	var context = this.context;
-	var heap = context.heap;
-	if (!thread || !e.clazz) {
-		context.panic("Fatal error occored: " + e.message, e);
-	}
-	heap.beginProtect();
-	try {
-		var exceptionClass = context.lookupClass(e.clazz || "");
-		if (!context.classLoader.canCast(exceptionClass, context.TOP_THROWABLE)) {
-			throw new FyException(null, "Exception " + e.clazz + " is not a " + context.TOP_THROWABLE);
-		}
-		var detailMessageField = context.getField(FyConst.FY_BASE_THROWABLE + ".detailMessage.L" + FyConst.FY_BASE_STRING + ";");
-		thread.currentThrowable = heap.allocate(context.lookupClass(e.clazz || ""));
-		if (!!e.message) {
-			heap.putFieldString(thread.currentThrowable,
-				detailMessageField.posAbs, e.message);
-		}
-		thread.fillStackTrace(thread.currentThrowable, false);
-	} catch (ee) {
-		context.panic("Exception occored while processing exception: " + e, ee);
-	}
+  var context = this.context;
+  var heap = context.heap;
+  if (!thread || !e.clazz) {
+    context.panic("Fatal error occored: " + e.message, e);
+  }
+  heap.beginProtect();
+  try {
+    var exceptionClass = context.lookupClass(e.clazz || "");
+    if (!context.classLoader.canCast(exceptionClass, context.TOP_THROWABLE)) {
+      throw new FyException(null, "Exception " + e.clazz + " is not a " + context.TOP_THROWABLE);
+    }
+    var detailMessageField = context.getField(FyConst.FY_BASE_THROWABLE + ".detailMessage.L" + FyConst.FY_BASE_STRING + ";");
+    thread.currentThrowable = heap.allocate(context.lookupClass(e.clazz || ""));
+    if (!!e.message) {
+      heap.putFieldString(thread.currentThrowable,
+        detailMessageField.posAbs, e.message);
+    }
+    thread.fillStackTrace(thread.currentThrowable, false);
+  } catch (ee) {
+    context.panic("Exception occored while processing exception: " + e, ee);
+  }
 };
 
 /**
@@ -200,7 +200,7 @@ FyThreadManager.prototype.pushThrowable = function(thread, e) {
  *            monitorId
  */
 FyThreadManager.prototype.monitorEnter = function(thread, monitorId) {
-	this._monitorEnter(thread, monitorId, 1);
+  this._monitorEnter(thread, monitorId, 1);
 };
 
 /**
@@ -210,7 +210,7 @@ FyThreadManager.prototype.monitorEnter = function(thread, monitorId) {
  *            monitorId
  */
 FyThreadManager.prototype.monitorExit = function(thread, monitorId) {
-	this._monitorExit(thread, monitorId, 1);
+  this._monitorExit(thread, monitorId, 1);
 };
 /**
  *
@@ -220,10 +220,10 @@ FyThreadManager.prototype.monitorExit = function(thread, monitorId) {
  *            time
  */
 FyThreadManager.prototype.sleep = function(thread, time) {
-	thread.nextWakeTime = Date.now() + time;
-	thread.yield = true;
-	// console.log(thread.threadId + ": Sleep " + time + " => "
-	// + thread.nextWakeTime + "/" + Date.now());
+  thread.nextWakeTime = Date.now() + time;
+  thread.yield = true;
+  // console.log(thread.threadId + ": Sleep " + time + " => "
+  // + thread.nextWakeTime + "/" + Date.now());
 };
 
 /**
@@ -232,17 +232,17 @@ FyThreadManager.prototype.sleep = function(thread, time) {
  *            targetHandle
  */
 FyThreadManager.prototype.interrupt = function(targetHandle) {
-	var target = this._getThreadByHandle(targetHandle);
-	if (!target) {
-		return;
-	}
-	if (target.nextWakeTime > 0) {
-		this.context.heap.beginProtect();
-		this.pushThrowable(target, new FyException(FyConst.FY_EXCEPTION_INTR,
-			"interrupted/" + target.nextWakeTime));
-		target.nextWakeTime = 0;
-	}
-	target.interrupted = true;
+  var target = this._getThreadByHandle(targetHandle);
+  if (!target) {
+    return;
+  }
+  if (target.nextWakeTime > 0) {
+    this.context.heap.beginProtect();
+    this.pushThrowable(target, new FyException(FyConst.FY_EXCEPTION_INTR,
+      "interrupted/" + target.nextWakeTime));
+    target.nextWakeTime = 0;
+  }
+  target.interrupted = true;
 };
 
 /**
@@ -253,15 +253,15 @@ FyThreadManager.prototype.interrupt = function(targetHandle) {
  * @returns {boolean}
  */
 FyThreadManager.prototype.isInterrupted = function(targetHandle, clear) {
-	var target = this._getThreadByHandle(targetHandle);
-	if (!target) {
-		return false;
-	}
-	var ret = target.interrupted;
-	if (clear) {
-		target.interrupted = false;
-	}
-	return ret;
+  var target = this._getThreadByHandle(targetHandle);
+  if (!target) {
+    return false;
+  }
+  var ret = target.interrupted;
+  if (clear) {
+    target.interrupted = false;
+  }
+  return ret;
 };
 
 /**
@@ -274,19 +274,19 @@ FyThreadManager.prototype.isInterrupted = function(targetHandle, clear) {
  *            time
  */
 FyThreadManager.prototype.wait = function(thread, monitorId, time) {
-	var heap = this.context.heap;
-	if (heap.getObjectMonitorOwnerId(monitorId) !== thread.threadId) {
-		throw new FyException(FyConst.FY_EXCEPTION_IMSE, thread.threadId + "/" + heap.getObjectMonitorOwnerId(monitorId));
-	}
-	// console.log([ "wait", thread.threadId, monitorId, time ]);
-	thread.waitForNotifyId = monitorId;
-	thread.pendingLockCount = this._releaseMonitor(thread, monitorId);
-	if (time <= 0) {
-		thread.nextWakeTime = 0x7fffffffffff;
-	} else {
-		thread.nextWakeTime = Date.now() + time;
-	}
-	thread.yield = true;
+  var heap = this.context.heap;
+  if (heap.getObjectMonitorOwnerId(monitorId) !== thread.threadId) {
+    throw new FyException(FyConst.FY_EXCEPTION_IMSE, thread.threadId + "/" + heap.getObjectMonitorOwnerId(monitorId));
+  }
+  // console.log([ "wait", thread.threadId, monitorId, time ]);
+  thread.waitForNotifyId = monitorId;
+  thread.pendingLockCount = this._releaseMonitor(thread, monitorId);
+  if (time <= 0) {
+    thread.nextWakeTime = 0x7fffffffffff;
+  } else {
+    thread.nextWakeTime = Date.now() + time;
+  }
+  thread.yield = true;
 };
 
 /**
@@ -299,27 +299,27 @@ FyThreadManager.prototype.wait = function(thread, monitorId, time) {
  *            all
  */
 FyThreadManager.prototype.notify = function(thread, monitorId, all) {
-	/**
-	 * @returns {FyThread}
-	 */
-	var target;
-	var heap = this.context.heap;
-	if (heap.getObjectMonitorOwnerId(monitorId) !== thread.threadId) {
-		throw new FyException(FyConst.FY_EXCEPTION_IMSE, thread.threadId + "/" + heap.getObjectMonitorOwnerId(monitorId));
-	}
-	// console.log([ "notify", thread.threadId, monitorId, all,
-	// monitor.monitorOwnerTimes ]);
-	for (var i = this.runningThreads.length - 1; i >= 0; i--) {
-		target = this.runningThreads[i];
-		if (target && target.waitForNotifyId === monitorId) {
-			target.waitForNotifyId = 0;
-			target.waitForLockId = monitorId;
-			target.nextWakeTime = 0;
-			if (!all) {
-				break;
-			}
-		}
-	}
+  /**
+   * @returns {FyThread}
+   */
+  var target;
+  var heap = this.context.heap;
+  if (heap.getObjectMonitorOwnerId(monitorId) !== thread.threadId) {
+    throw new FyException(FyConst.FY_EXCEPTION_IMSE, thread.threadId + "/" + heap.getObjectMonitorOwnerId(monitorId));
+  }
+  // console.log([ "notify", thread.threadId, monitorId, all,
+  // monitor.monitorOwnerTimes ]);
+  for (var i = this.runningThreads.length - 1; i >= 0; i--) {
+    target = this.runningThreads[i];
+    if (target && target.waitForNotifyId === monitorId) {
+      target.waitForNotifyId = 0;
+      target.waitForLockId = monitorId;
+      target.nextWakeTime = 0;
+      if (!all) {
+        break;
+      }
+    }
+  }
 };
 
 /**
@@ -328,7 +328,7 @@ FyThreadManager.prototype.notify = function(thread, monitorId, all) {
  * @returns {boolean}
  */
 FyThreadManager.prototype.isAlive = function(threadHandle) {
-	return Boolean(this._getThreadByHandle(threadHandle));
+  return Boolean(this._getThreadByHandle(threadHandle));
 };
 
 /**
@@ -337,7 +337,7 @@ FyThreadManager.prototype.isAlive = function(threadHandle) {
  *            thread
  */
 FyThreadManager.prototype.destroyThread = function(thread) {
-	thread.destroyPending = true;
+  thread.destroyPending = true;
 };
 
 /**
@@ -346,54 +346,54 @@ FyThreadManager.prototype.destroyThread = function(thread) {
  *            clazz class which has main method
  */
 FyThreadManager.prototype.bootFromMain = function(clazz) {
-	var context = this.context;
-	var heap = context.heap;
-	var charArrayClass;
-	var threadClass;
-	var threadNameField;
-	var threadNameHandle;
-	var threadPriorityField;
-	var mainMethod;
-	var threadId;
-	var thread;
-	var threadHandle;
-	if (this.state !== FyConst.FY_TM_STATE_NEW) {
-		throw new FyException(null, "Status is not new while booting! (" + this.state + ")");
-	}
-	charArrayClass = context.lookupClass(FyClassLoader
-		.getArrayName(FyConst.FY_PRIM_CHAR));
-	threadNameHandle = heap
-		.allocateArray(charArrayClass, clazz.name.length + 5);
-	heap.putArrayChar(threadNameHandle, 0, "M".charCodeAt(0));
-	heap.putArrayChar(threadNameHandle, 1, "a".charCodeAt(0));
-	heap.putArrayChar(threadNameHandle, 2, "i".charCodeAt(0));
-	heap.putArrayChar(threadNameHandle, 3, "n".charCodeAt(0));
-	heap.putArrayChar(threadNameHandle, 4, ".".charCodeAt(0));
-	for (var i = 0; i < clazz.name.length; i++) {
-		heap.putArrayChar(threadNameHandle, i + 5, clazz.name.charCodeAt(i));
-	}
-	threadClass = context.lookupClass(FyConst.FY_BASE_THREAD);
-	threadNameField = context.lookupFieldVirtual(threadClass,
-		FyConst.FY_FIELDF_NAME);
-	threadPriorityField = context.lookupFieldVirtual(threadClass,
-		FyConst.FY_FIELDF_PRIORITY);
-	mainMethod = context.lookupMethodVirtual(clazz, FyConst.FY_METHODF_MAIN);
-	if (!mainMethod) {
-		throw new FyException(FyConst.FY_EXCEPTION_NO_METHOD, "Class " + clazz.name + " contains no main method");
-	}
-	threadId = this._fetchNextThreadId();
-	thread = new FyThread(context, threadId);
-	threadHandle = heap.allocate(threadClass);
-	heap.putFieldInt(threadHandle, threadNameField.posAbs, threadNameHandle);
-	heap.putFieldInt(threadHandle, threadPriorityField.posAbs, 5);
-	// console.log("main thread id=" + threadId);
-	this.threads[threadId] = thread;
-	thread.priority = 5;
-	thread.initWithMethod(threadHandle, mainMethod);
-	this.runningThreads.push(thread);
-	this.state = FyConst.FY_TM_STATE_RUN_PENDING;
-	this.nextGCTime = Date.now() + this.config.gcIdv;
-	this.nextForceGCTime = Date.now() + this.config.gcForceIdv;
+  var context = this.context;
+  var heap = context.heap;
+  var charArrayClass;
+  var threadClass;
+  var threadNameField;
+  var threadNameHandle;
+  var threadPriorityField;
+  var mainMethod;
+  var threadId;
+  var thread;
+  var threadHandle;
+  if (this.state !== FyConst.FY_TM_STATE_NEW) {
+    throw new FyException(null, "Status is not new while booting! (" + this.state + ")");
+  }
+  charArrayClass = context.lookupClass(FyClassLoader
+    .getArrayName(FyConst.FY_PRIM_CHAR));
+  threadNameHandle = heap
+    .allocateArray(charArrayClass, clazz.name.length + 5);
+  heap.putArrayChar(threadNameHandle, 0, "M".charCodeAt(0));
+  heap.putArrayChar(threadNameHandle, 1, "a".charCodeAt(0));
+  heap.putArrayChar(threadNameHandle, 2, "i".charCodeAt(0));
+  heap.putArrayChar(threadNameHandle, 3, "n".charCodeAt(0));
+  heap.putArrayChar(threadNameHandle, 4, ".".charCodeAt(0));
+  for (var i = 0; i < clazz.name.length; i++) {
+    heap.putArrayChar(threadNameHandle, i + 5, clazz.name.charCodeAt(i));
+  }
+  threadClass = context.lookupClass(FyConst.FY_BASE_THREAD);
+  threadNameField = context.lookupFieldVirtual(threadClass,
+    FyConst.FY_FIELDF_NAME);
+  threadPriorityField = context.lookupFieldVirtual(threadClass,
+    FyConst.FY_FIELDF_PRIORITY);
+  mainMethod = context.lookupMethodVirtual(clazz, FyConst.FY_METHODF_MAIN);
+  if (!mainMethod) {
+    throw new FyException(FyConst.FY_EXCEPTION_NO_METHOD, "Class " + clazz.name + " contains no main method");
+  }
+  threadId = this._fetchNextThreadId();
+  thread = new FyThread(context, threadId);
+  threadHandle = heap.allocate(threadClass);
+  heap.putFieldInt(threadHandle, threadNameField.posAbs, threadNameHandle);
+  heap.putFieldInt(threadHandle, threadPriorityField.posAbs, 5);
+  // console.log("main thread id=" + threadId);
+  this.threads[threadId] = thread;
+  thread.priority = 5;
+  thread.initWithMethod(threadHandle, mainMethod);
+  this.runningThreads.push(thread);
+  this.state = FyConst.FY_TM_STATE_RUN_PENDING;
+  this.nextGCTime = Date.now() + this.config.gcIdv;
+  this.nextForceGCTime = Date.now() + this.config.gcForceIdv;
 };
 
 /**
@@ -402,46 +402,46 @@ FyThreadManager.prototype.bootFromMain = function(clazz) {
  *            threadHandle
  */
 FyThreadManager.prototype.pushThread = function(threadHandle) {
-	var context = this.context;
-	var heap = context.heap;
-	var thread;
-	var threadId;
-	var priority;
-	var daemon;
-	/**
-	 * @type {FyClass}
-	 */
-	var threadClass;
-	/**
-	 * @type {FyField}
-	 */
-	var threadDaemonField;
-	/**
-	 * @type {FyField}
-	 */
-	var threadPriorityField;
-	/**
-	 * @type {FyField}
-	 */
-	var threadNameField;
-	if (this.state !== FyConst.FY_TM_STATE_RUNNING && this.state !== FyConst.FY_TM_STATE_STOP_PENDING) {
-		throw new FyException(null,
-			"Status is not RUNNING or STOP_PENDING while adding thread!(" + this.state + ")");
-	}
-	threadClass = context.lookupClass(FyConst.FY_BASE_THREAD);
-	threadDaemonField = context.lookupFieldVirtual(threadClass,
-		FyConst.FY_FIELDF_DAEMON);
-	threadPriorityField = context.lookupFieldVirtual(threadClass,
-		FyConst.FY_FIELDF_PRIORITY);
-	priority = heap.getFieldInt(threadHandle, threadPriorityField.posAbs);
-	daemon = heap.getFieldBoolean(threadHandle, threadDaemonField.posAbs);
-	threadId = this._fetchNextThreadId();
-	thread = new FyThread(context, threadId);
-	this.threads[threadId] = thread;
-	thread.priority = priority;
-	thread.daemon = daemon;
-	thread.initWithRun(threadHandle);
-	this.runningThreads.push(thread);
+  var context = this.context;
+  var heap = context.heap;
+  var thread;
+  var threadId;
+  var priority;
+  var daemon;
+  /**
+   * @type {FyClass}
+   */
+  var threadClass;
+  /**
+   * @type {FyField}
+   */
+  var threadDaemonField;
+  /**
+   * @type {FyField}
+   */
+  var threadPriorityField;
+  /**
+   * @type {FyField}
+   */
+  var threadNameField;
+  if (this.state !== FyConst.FY_TM_STATE_RUNNING && this.state !== FyConst.FY_TM_STATE_STOP_PENDING) {
+    throw new FyException(null,
+      "Status is not RUNNING or STOP_PENDING while adding thread!(" + this.state + ")");
+  }
+  threadClass = context.lookupClass(FyConst.FY_BASE_THREAD);
+  threadDaemonField = context.lookupFieldVirtual(threadClass,
+    FyConst.FY_FIELDF_DAEMON);
+  threadPriorityField = context.lookupFieldVirtual(threadClass,
+    FyConst.FY_FIELDF_PRIORITY);
+  priority = heap.getFieldInt(threadHandle, threadPriorityField.posAbs);
+  daemon = heap.getFieldBoolean(threadHandle, threadDaemonField.posAbs);
+  threadId = this._fetchNextThreadId();
+  thread = new FyThread(context, threadId);
+  this.threads[threadId] = thread;
+  thread.priority = priority;
+  thread.daemon = daemon;
+  thread.initWithRun(threadHandle);
+  this.runningThreads.push(thread);
 };
 
 /**
@@ -450,132 +450,132 @@ FyThreadManager.prototype.pushThread = function(threadHandle) {
  *            message
  */
 FyThreadManager.prototype.run = function(message) {
-	var heap = this.context.heap;
-	var stateLocal;
-	var running = this.runningThreads;
-	/**
-	 * @returns {FyThread}
-	 */
-	var thread;
-	var nextWakeUpTime, now, sleepTime;
-	var lockId;
-	if (this.state !== FyConst.FY_TM_STATE_RUN_PENDING && this.state !== FyConst.FY_TM_STATE_RUNNING && this.state !== FyConst.FY_TM_STATE_STOP_PENDING) {
-		throw new FyException(null, "Illegal VM status " + this.state);
-	}
-	this.state = FyConst.FY_TM_STATE_RUNNING;
-	while (true) {
-		message.type = FyMessage.message_none;
-		stateLocal = this.state | 0;
-		switch (stateLocal) {
-			case 4 /* FyConst.FY_TM_STATE_RUNNING */ :
-				{
-					if (running.length > 0) {
-						if (this.runningThreadPos < running.length) {
-							thread = running[this.runningThreadPos];
-							if (thread.destroyPending) {
-								var threadId = thread.threadId;
-								thread.destroy();
-								running.splice(this.runningThreadPos, 1);
-								this.threads[threadId] = null;
-								heap.releaseStack(threadId);
-								break;
-							}
-							this.runningThreadPos++;
-							if (!thread.daemon) {
-								this.nonDaemonRunned = true;
-							}
-							nextWakeUpTime = thread.nextWakeTime;
-							// console.log([ thread.threadId, nextWakeUpTime,
-							// performance.now(), thread.waitForLockId,
-							// thread.waitForNotifyId ]);
-							if (nextWakeUpTime > Date.now()) {
-								if (this.nextWakeUpTimeTotal > nextWakeUpTime) {
-									this.nextWakeUpTimeTotal = nextWakeUpTime;
-								}
-								break;
-							}
-							thread.nextWakeTime = 0;
-							this.nextWakeUpTimeTotal = 0;
-							lockId = thread.waitForLockId;
-							if (lockId > 0) {
-								if (heap.getObjectMonitorOwnerId(lockId) <= 0) {
-									heap.setObjectMonitorOwnerId(lockId,
-										thread.threadId);
-									heap.setObjectMonitorOwnerTimes(lockId,
-										thread.pendingLockCount);
-									thread.waitForLockId = 0;
-								} else {
-									if (heap.getObjectMonitorOwnerId(lockId) == thread.threadId) {
-										throw new FyException(null,
-											"Illegal monitorHolder for thread " + thread.threadId);
-									}
-									break;
-								}
-							}
-							this.lastThreadId = thread.threadId;
-							message.thread = thread;
-							thread.run(message, this.pricmds[thread.priority] | 0);
-							heap.endProtect();
-							switch (message.type | 0) {
-								case 0 /* FyMessage.message_continue */ :
-								case 6 /* FyMessage.message_vm_dead */ :
-								case 5 /* FyMessage.message_sleep */ :
-									// Illegal!
-									this.context.panic("Illegal message type " + message.type, null);
-								case 1 /* FyMessage.message_none */ :
-									break;
-								case 4 /* FyMessage.message_exception */ :
-									this.context.panic("Illegal message type " + message.type, null);
-								case 2 /* FyMessage.message_thread_dead */ :
-									thread.destroyPending = true;
-									break;
-								case 3 /* FyMessage.message_invoke_native */ :
-									return;
-								default:
-									this.context.panic("Illegal message type " + message.type, null);
-							}
-						} else {
-							if (!this.nonDaemonRunned) {
-								this.state = FyConst.FY_TM_STATE_DEAD;
-							} else {
-								now = Date.now();
-								sleepTime = this.nextWakeUpTimeTotal - now;
-								if ((sleepTime > 10 && now > this.nextGCTime) || now > this.nextForceGCTime) {
-									this.nextGCTime = now + this.config.gcIdv;
-									this.nextForceGCTime = this.nextGCTime + this.config.gcForceIdv;
-									this.context.log(0, "Call GC due to timeout");
-									heap.gc(0);
-									now = Date.now();
-									sleepTime = this.nextWakeUpTimeTotal - now;
-								}
-								this.nextWakeUpTimeTotal = 0x7fffffffffff;
-								this.runningThreadPos = 0;
-								this.nonDaemonRunned = false;
-								if (sleepTime > 0) {
-									message.type = FyMessage.message_sleep;
-									message.sleepTime = sleepTime;
-									return;
-								}
-							}
+  var heap = this.context.heap;
+  var stateLocal;
+  var running = this.runningThreads;
+  /**
+   * @returns {FyThread}
+   */
+  var thread;
+  var nextWakeUpTime, now, sleepTime;
+  var lockId;
+  if (this.state !== FyConst.FY_TM_STATE_RUN_PENDING && this.state !== FyConst.FY_TM_STATE_RUNNING && this.state !== FyConst.FY_TM_STATE_STOP_PENDING) {
+    throw new FyException(null, "Illegal VM status " + this.state);
+  }
+  this.state = FyConst.FY_TM_STATE_RUNNING;
+  while (true) {
+    message.type = FyMessage.message_none;
+    stateLocal = this.state | 0;
+    switch (stateLocal) {
+      case 4 /* FyConst.FY_TM_STATE_RUNNING */ :
+        {
+          if (running.length > 0) {
+            if (this.runningThreadPos < running.length) {
+              thread = running[this.runningThreadPos];
+              if (thread.destroyPending) {
+                var threadId = thread.threadId;
+                thread.destroy();
+                running.splice(this.runningThreadPos, 1);
+                this.threads[threadId] = null;
+                heap.releaseStack(threadId);
+                break;
+              }
+              this.runningThreadPos++;
+              if (!thread.daemon) {
+                this.nonDaemonRunned = true;
+              }
+              nextWakeUpTime = thread.nextWakeTime;
+              // console.log([ thread.threadId, nextWakeUpTime,
+              // performance.now(), thread.waitForLockId,
+              // thread.waitForNotifyId ]);
+              if (nextWakeUpTime > Date.now()) {
+                if (this.nextWakeUpTimeTotal > nextWakeUpTime) {
+                  this.nextWakeUpTimeTotal = nextWakeUpTime;
+                }
+                break;
+              }
+              thread.nextWakeTime = 0;
+              this.nextWakeUpTimeTotal = 0;
+              lockId = thread.waitForLockId;
+              if (lockId > 0) {
+                if (heap.getObjectMonitorOwnerId(lockId) <= 0) {
+                  heap.setObjectMonitorOwnerId(lockId,
+                    thread.threadId);
+                  heap.setObjectMonitorOwnerTimes(lockId,
+                    thread.pendingLockCount);
+                  thread.waitForLockId = 0;
+                } else {
+                  if (heap.getObjectMonitorOwnerId(lockId) == thread.threadId) {
+                    throw new FyException(null,
+                      "Illegal monitorHolder for thread " + thread.threadId);
+                  }
+                  break;
+                }
+              }
+              this.lastThreadId = thread.threadId;
+              message.thread = thread;
+              thread.run(message, this.pricmds[thread.priority] | 0);
+              heap.endProtect();
+              switch (message.type | 0) {
+                case 0 /* FyMessage.message_continue */ :
+                case 6 /* FyMessage.message_vm_dead */ :
+                case 5 /* FyMessage.message_sleep */ :
+                  // Illegal!
+                  this.context.panic("Illegal message type " + message.type, null);
+                case 1 /* FyMessage.message_none */ :
+                  break;
+                case 4 /* FyMessage.message_exception */ :
+                  this.context.panic("Illegal message type " + message.type, null);
+                case 2 /* FyMessage.message_thread_dead */ :
+                  thread.destroyPending = true;
+                  break;
+                case 3 /* FyMessage.message_invoke_native */ :
+                  return;
+                default:
+                  this.context.panic("Illegal message type " + message.type, null);
+              }
+            } else {
+              if (!this.nonDaemonRunned) {
+                this.state = FyConst.FY_TM_STATE_DEAD;
+              } else {
+                now = Date.now();
+                sleepTime = this.nextWakeUpTimeTotal - now;
+                if ((sleepTime > 10 && now > this.nextGCTime) || now > this.nextForceGCTime) {
+                  this.nextGCTime = now + this.config.gcIdv;
+                  this.nextForceGCTime = this.nextGCTime + this.config.gcForceIdv;
+                  this.context.log(0, "Call GC due to timeout");
+                  heap.gc(0);
+                  now = Date.now();
+                  sleepTime = this.nextWakeUpTimeTotal - now;
+                }
+                this.nextWakeUpTimeTotal = 0x7fffffffffff;
+                this.runningThreadPos = 0;
+                this.nonDaemonRunned = false;
+                if (sleepTime > 0) {
+                  message.type = FyMessage.message_sleep;
+                  message.sleepTime = sleepTime;
+                  return;
+                }
+              }
 
-						}
-					} else {
-						this.state = FyConst.FY_TM_STATE_DEAD;
-					}
-					break;
-				}
-			case 5 /* FyConst.FY_TM_STATE_STOP_PENDING */ :
-				this.runningThreadPos = 0;
-				this.state = FyConst.FY_TM_STATE_STOP;
-				break;
-			case 6 /* FyConst.FY_TM_STATE_DEAD_PENDING */ :
-				this.state = FyConst.FY_TM_STATE_DEAD;
-				break;
-			case 7 /* FyConst.FY_TM_STATE_DEAD */ :
-				message.type = FyMessage.message_vm_dead;
-				return;
-			default:
-				this.context.panic("Illegal vm state " + stateLocal, null);
-		}
-	}
+            }
+          } else {
+            this.state = FyConst.FY_TM_STATE_DEAD;
+          }
+          break;
+        }
+      case 5 /* FyConst.FY_TM_STATE_STOP_PENDING */ :
+        this.runningThreadPos = 0;
+        this.state = FyConst.FY_TM_STATE_STOP;
+        break;
+      case 6 /* FyConst.FY_TM_STATE_DEAD_PENDING */ :
+        this.state = FyConst.FY_TM_STATE_DEAD;
+        break;
+      case 7 /* FyConst.FY_TM_STATE_DEAD */ :
+        message.type = FyMessage.message_vm_dead;
+        return;
+      default:
+        this.context.panic("Illegal vm state " + stateLocal, null);
+    }
+  }
 };

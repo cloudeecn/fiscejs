@@ -18,88 +18,88 @@
 eval("try{window;}catch (e){window = global;}");
 
 if (!("now" in Date)) {
-	Date["now"] = function now() {
-		return Number(new Date());
-	};
+  Date["now"] = function now() {
+    return Number(new Date());
+  };
 }
 
 if (!("performance" in window)) {
-	window["performance"] = {};
+  window["performance"] = {};
 }
 if (typeof window["performance"]["now"] !== "function") {
-	console.log("Polyfill performance.now");
-	window["performance"]["now"] = (function() {
-		return window["performance"]["now"] || window["performance"]["mozNow"] || window["performance"]["msNow"] || window["performance"]["oNow"] || window["performance"]["webkitNow"] || Date["now"] || function() {
-			// Doh! Crap browser!
-			return new Date().getTime();
-		};
-	})();
+  console.log("Polyfill performance.now");
+  window["performance"]["now"] = (function() {
+    return window["performance"]["now"] || window["performance"]["mozNow"] || window["performance"]["msNow"] || window["performance"]["oNow"] || window["performance"]["webkitNow"] || Date["now"] || function() {
+      // Doh! Crap browser!
+      return new Date().getTime();
+    };
+  })();
 }
 
 if (typeof Math["imul"] !== "function") {
-	console.log("Polyfill Math.imul");
-	// @see
-	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/imul
-	Math["imul"] = function(a, b) {
-		var ah = (a >>> 16) & 0xffff;
-		var al = a & 0xffff;
-		var bh = (b >>> 16) & 0xffff;
-		var bl = b & 0xffff;
-		// the shift by 0 fixes the sign on the high part
-		// the final |0 converts the unsigned value into a signed value
-		return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
-	};
+  console.log("Polyfill Math.imul");
+  // @see
+  // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/imul
+  Math["imul"] = function(a, b) {
+    var ah = (a >>> 16) & 0xffff;
+    var al = a & 0xffff;
+    var bh = (b >>> 16) & 0xffff;
+    var bl = b & 0xffff;
+    // the shift by 0 fixes the sign on the high part
+    // the final |0 converts the unsigned value into a signed value
+    return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+  };
 }
 
 if (typeof String.prototype["startsWith"] !== 'function') {
-	console.log("Polyfill String.startsWith");
-	String.prototype["startsWith"] =
-	/**
-	 * @param {string}
-	 *            str
-	 */
-	function(str) {
-		return this.slice(0, str.length) == str;
-	};
+  console.log("Polyfill String.startsWith");
+  String.prototype["startsWith"] =
+  /**
+   * @param {string}
+   *            str
+   */
+  function(str) {
+    return this.slice(0, str.length) == str;
+  };
 }
 
 if (typeof String.prototype["endsWith"] !== 'function') {
-	console.log("Polyfill String.endsWith");
-	String.prototype["endsWith"] =
-	/**
-	 * @param {string}
-	 *            str
-	 */
-	function(str) {
-		return this.slice(-str.length) == str;
-	};
+  console.log("Polyfill String.endsWith");
+  String.prototype["endsWith"] =
+  /**
+   * @param {string}
+   *            str
+   */
+  function(str) {
+    return this.slice(-str.length) == str;
+  };
 }
 
 if (typeof Object["keys"] !== 'function') {
-	console.log("Polyfill Object.keys");
-	Object["keys"] = function(obj) {
-		/**
-		 * @type {Array.<?>}
-		 */
-		var ret = [];
-		for (var key in obj) {
-			ret.push(key);
-		}
-		return ret;
-	}
+  console.log("Polyfill Object.keys");
+  Object["keys"] = function(obj) {
+    /**
+     * @type {Array.<?>}
+     */
+    var ret = [];
+    for (var key in obj) {
+      ret.push(key);
+    }
+    return ret;
+  }
 }
 
 if (!("goog" in window)) {
-	window["goog"] = {};
+  window["goog"] = {};
 }
 
 if (!("exportSymbol" in goog)) {
-	goog.exportSymbol = function(name, value) {
-		console.log("Export symbol: " + name + " = " + value);
-		window[name] = value;
-	}
-	goog.exportProperty = function(object, key, value) {
-		console.log("Export symbol: " + object + "." + key + " = " + value);
-		object[key] = value;
-	}
+  goog.exportSymbol = function(name, value) {
+    console.log("Export symbol: " + name + " = " + value);
+    window[name] = value;
+  }
+  goog.exportProperty = function(object, key, value) {
+    console.log("Export symbol: " + object + "." + key + " = " + value);
+    object[key] = value;
+  }
 }
