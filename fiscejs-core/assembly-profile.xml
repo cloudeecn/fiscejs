@@ -14,18 +14,13 @@
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
-			<source>target/fiscejs-${project.version}.js</source>
+			<source>target/fiscejs-latest.min.js</source>
+			<destName>fisce.min.js</destName>
+			<outputDirectory>/</outputDirectory>
+		</file>
+		<file>
+			<source>target/fiscejs-latest.js</source>
 			<destName>fisce.js</destName>
-			<outputDirectory>/</outputDirectory>
-		</file>
-		<file>
-			<source>target/rt-${fiscevm.version}.txt</source>
-			<destName>rt.js</destName>
-			<outputDirectory>/</outputDirectory>
-		</file>
-		<file>
-			<source>target/jsonp/rt-vfs-${fiscevm.version}.js</source>
-			<destName>rt-vfs.js</destName>
 			<outputDirectory>/</outputDirectory>
 		</file>
 	</files>

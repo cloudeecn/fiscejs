@@ -71,7 +71,7 @@
     var floatStack = thread.getFloatStack();
     var ip = thread.getCurrentIp();
     var lip = 0;
-    ops = ops | 0;
+    // ops = ops | 0;
 
     /**
      * @returns {FyField}
@@ -92,8 +92,6 @@
      * @returns {FyMethod}
      */
     var tmpMethod;
-
-    var tmpInt1 = 0;
 
     while (true) {
       __fy_inner: switch (ip) {
@@ -120,6 +118,9 @@
             }
             // ###
           }
+          // ##MACRO-OPSN
+          ops -= $distance;
+          // ###
           // ##MACRO-OPS
           ops -= $distance;
           if (ops < 0) {
@@ -221,9 +222,9 @@
         case 1106:
           // ##OP-SWAP -2 2
           {
-            var tmpi = stack[sb + $spo - 1];
-            stack[sb + $spo - 1] = stack[sb + $spo - 2];
-            stack[sb + $spo - 2] = tmpi;
+            stack[sb + $spo - 1] ^= stack[sb + $spo - 2];
+            stack[sb + $spo - 2] ^= stack[sb + $spo - 1];
+            stack[sb + $spo - 1] ^= stack[sb + $spo - 2];
           }
           // ###
           // CATS. literal numbers

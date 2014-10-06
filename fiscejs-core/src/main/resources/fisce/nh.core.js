@@ -872,7 +872,7 @@ function fyRegisterNativeCore(context) {
     }
     var name = heap.getString(nameHandle);
     // console.log("#VFS bind #" + stack[sp] + " to " + name);
-    context.vfs.bind(stack[sp], name, pos);
+    context.vfs.bindHandle(stack[sp], name, pos);
     return ops - 1;
   }
 

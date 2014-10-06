@@ -5,8 +5,7 @@
 		obj["HL." + id + "." + clazz] = function(assert, context) {
 			console.log("##HL " + clazz + " begin");
 			context.bootup(clazz);
-			context
-					.run({
+			context.run({
 						panic : function(e) {
 							assert.ok(false, "Panic!: \n" + e.message);
 							QUnit.start();

@@ -353,6 +353,7 @@ FyContext.prototype.pool = function(string) {
 };
 
 /**
+ * @export
  * @param {string} data
  */
 FyContext.prototype.addClassDef = function(data) {
@@ -458,7 +459,7 @@ FyContext.prototype.registerField = function(field) {
 };
 /**
  * get field by name
- *
+ * @export
  * @param {string}
  *            uniqueName
  * @returns {FyField} field
@@ -474,6 +475,7 @@ FyContext.prototype.getField = function(uniqueName) {
 /**
  * Lookup field throw class and super classes
  *
+ * @export
  * @param {FyClass}
  *            clazz
  * @param {string}
@@ -599,7 +601,7 @@ FyContext.prototype.getMethod = function(uniqueName) {
  * @param  {number} methodId
  * @return {FyMethod}
  */
-FyContext.prototype.getMethodById = function(methodId){
+FyContext.prototype.getMethodById = function(methodId) {
   return this.methods.get(methodId);
 }
 
@@ -1070,7 +1072,8 @@ FyContext.prototype.dumpStackTrace = function(throwable) {
  * Panic the whole virtual machine and try to dump virtual machine data as much
  * as possible
  *
- * @param message
+ * @param {string} message
+ * @param {Error|undefined} e
  */
 FyContext.prototype.panic = function(message, e) {
   var data = [];
@@ -1140,12 +1143,17 @@ FyContext.prototype.panic = function(message, e) {
   }
 };
 
+/**
+ * @export
+ * @param  {string} name
+ * @param  {function(FyThread, FyMethod, number, number)} func
+ */
 FyContext.prototype.registerNativeAOT = function(name, func) {
   this.nativeAOT[name] = func;
 };
 
 /**
- *
+ * @export
  * @param  {string} name
  * @param  {function(this:FyMethod, FyContext, FyThread, number, number)} func
  */
@@ -1196,7 +1204,6 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
 
   if (window.document) {
     // browser
-    var iframe;
     var i;
     var failed = false;
     var count = urls.length;
@@ -1209,6 +1216,7 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
          *            url
          */
         function(context, url) {
+          var iframe;
           var lowerUrl = url.toLowerCase();
           var hash = "#" + Math.floor(Math.random() * (2147483647)).toString(16) + "-" + Math.floor(Math.random() * (2147483647)).toString(16);
 
@@ -1304,7 +1312,7 @@ FyContext.prototype.run = function(messageHandler) {
   var mainLoop = function(message) {
     var delay = 0.1;
     var target = 0.1;
-    while (true) {
+    main_loop: while (true) {
       this.threadManager.run(message);
       switch (message.type) {
         case 6: // FyMessage.message_vm_dead:
@@ -1328,7 +1336,14 @@ FyContext.prototype.run = function(messageHandler) {
           }
           break;
         case 3 /* FyMessage.message_invoke_native */ :
-          if ("handle" in messageHandler && messageHandler["handle"](message.nativeMethod, message.thread, message.sp)) {} else {
+          if ("handle" in messageHandler &&
+            (delay = messageHandler["handle"](
+              message.nativeMethod, message.thread, message.sp)) >= 0) {
+            if (delay > 0) {
+              setTimeout(fun, delay);
+              break main_loop;
+            }
+          } else {
             this
               .panic("Undefined native() in messageHandler, we need process: " + message.nativeMethod);
           }

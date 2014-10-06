@@ -118,7 +118,7 @@ function FyVFS(context) {
  * @param {string} name
  * @param {number} pos
  */
-FyVFS.prototype.bind = function(handle, name, pos) {
+FyVFS.prototype.bindHandle = function(handle, name, pos) {
   handle = handle | 0;
   if (handle === 0) {
     throw new FyException(FyConst.FY_EXCEPTION_NPT, "");

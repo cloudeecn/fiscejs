@@ -68,20 +68,6 @@
 							</descriptors>
 						</configuration>
 					</execution>
-					<execution>
-						<id>assembly-all</id>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-						<configuration>
-							<skipAssembly>true</skipAssembly>
-							<descriptors>
-								<descriptor>assembly-core-js.xml</descriptor>
-								<descriptor>assembly-profile.xml</descriptor>
-							</descriptors>
-						</configuration>
-					</execution>
 				</executions>
 			</plugin>
 			<plugin>
@@ -98,12 +84,6 @@
 						<configuration>
 							<outputDirectory>${basedir}/target/test</outputDirectory>
 							<resources>
-								<resource>
-									<directory>${basedir}/src/main/resources/fisce</directory>
-									<includes>
-										<include>lzstring.js</include>
-									</includes>
-								</resource>
 								<resource>
 									<directory>${basedir}/src/main/resources/test</directory>
 									<includes>
@@ -137,7 +117,8 @@
 						</goals>
 						<configuration>
 							<zipFile>${project.build.directory}/assembly-js.zip</zipFile>
-							<compiledFile>${project.build.directory}/fiscejs-${project.version}.js</compiledFile>
+							<compiledFile>${project.build.directory}/fiscejs-latest.js</compiledFile>
+							<minifyFile>${project.build.directory}/fiscejs-latest.min.js</minifyFile>
 							<externs>
 								<extern>${basedir}/src/main/resources/fisce/extern.js</extern>
 							</externs>
@@ -156,7 +137,7 @@
 								<jar>${com.cirnoworks.fisce:fiscejs-classloader:jar}</jar>
 								<jar>${com.cirnoworks.fisce:fiscejs-runtime:jar}</jar>
 							</jars>
-							<outputFilename>rt-${fiscevm.version}</outputFilename>
+							<outputFilename>rt-latest</outputFilename>
 						</configuration>
 					</execution>
 				</executions>

@@ -35,9 +35,14 @@ public class JSCompilerPlugin extends AbstractMojo {
 	private File zipFile;
 
 	/**
-	 * @parameter default-value="${project.build.directory}/compiled"
+	 * @parameter default-value="${project.build.directory}/compiled.js"
 	 */
 	private File compiledFile;
+
+	/**
+	 * @parameter default-value="${project.build.directory}/compiled.min.js"
+	 */
+	private File minifyFile;
 
 	/**
 	 * @parameter
@@ -61,6 +66,11 @@ public class JSCompilerPlugin extends AbstractMojo {
 			File outputDir = compiledFile.getParentFile();
 			if (!outputDir.exists()) {
 				outputDir.mkdirs();
+			}
+
+			File minifyDir = minifyFile.getParentFile();
+			if (!minifyDir.exists()) {
+				minifyDir.mkdirs();
 			}
 			ArrayList<SourceFile> inputs = new ArrayList<SourceFile>();
 			ZipInputStream zis = new ZipInputStream(
@@ -89,9 +99,10 @@ public class JSCompilerPlugin extends AbstractMojo {
 				ZipEntry entry;
 				while ((entry = zis.getNextEntry()) != null) {
 					if (entry.getName().endsWith(".js")) {
-						this.getLog().info("Adding extern " + entry.getName() + "...");
-						externSources.add(SourceFile.fromInputStream(entry.getName(),
-								zis));
+						this.getLog().info(
+								"Adding extern " + entry.getName() + "...");
+						externSources.add(SourceFile.fromInputStream(
+								entry.getName(), zis));
 						zis.closeEntry();
 					}
 				}
@@ -107,14 +118,17 @@ public class JSCompilerPlugin extends AbstractMojo {
 			CompilerOptions options = new CompilerOptions();
 			CompilationLevel.ADVANCED_OPTIMIZATIONS
 					.setOptionsForCompilationLevel(options);
+			CompilationLevel.ADVANCED_OPTIMIZATIONS
+					.setTypeBasedOptimizationOptions(options);
 			options.setLanguage(LanguageMode.ECMASCRIPT5);
-			WarningLevel.VERBOSE.setOptionsForWarningLevel(options);;
-//			options.setWarningLevel(DiagnosticGroups.CHECK_TYPES, CheckLevel.ERROR);
-//			options.setCheckDeterminism(true);
+			WarningLevel.VERBOSE.setOptionsForWarningLevel(options);
+			// options.setWarningLevel(DiagnosticGroups.CHECK_TYPES,
+			// CheckLevel.ERROR);
+			// options.setCheckDeterminism(true);
 			options.setGenerateExports(true);
 			options.setPrettyPrint(true);
 			options.setRenamePrefix("xw");
-			
+
 			if (externs != null) {
 				for (File extern : externs) {
 					externSources.add(SourceFile.fromFile(extern,
@@ -136,6 +150,47 @@ public class JSCompilerPlugin extends AbstractMojo {
 			}
 			String output = compiler.toSource();
 			FileOutputStream fos = new FileOutputStream(compiledFile);
+			try {
+				OutputStreamWriter writer;
+				writer = new OutputStreamWriter(fos, "utf-8");
+				writer.write(output);
+				if (extras != null) {
+					char[] cbuf = new char[65536];
+					int cread = 0;
+					for (File extra : extras) {
+						this.getLog().info("Adding extra files");
+						writer.write('\n');
+						InputStreamReader isr = new InputStreamReader(
+								new FileInputStream(extra), "utf-8");
+						try {
+							while ((cread = isr.read(cbuf)) >= 0) {
+								writer.write(cbuf, 0, cread);
+							}
+						} finally {
+							try {
+								isr.close();
+							} catch (Exception e) {
+							}
+						}
+					}
+				}
+				writer.close();
+			} finally {
+				try {
+					fos.close();
+				} catch (IOException e) {
+				}
+			}
+
+			compiler = new Compiler();
+			options = new CompilerOptions();
+			CompilationLevel.WHITESPACE_ONLY
+					.setOptionsForCompilationLevel(options);
+			inputs.clear();
+			inputs.add(SourceFile.fromCode(compiledFile.getName(), output));
+			compiler.compile(new ArrayList<SourceFile>(), inputs, options);
+			output = compiler.toSource();
+			fos = new FileOutputStream(minifyFile);
 			try {
 				OutputStreamWriter writer;
 				writer = new OutputStreamWriter(fos, "utf-8");

@@ -11,6 +11,8 @@ function fyRegisterNativeAOT(context) {
    *            thread
    * @param {FyMethod}
    *            method
+   * @param {number} ip
+   * @param {number} spo
    */
   function storeParamsToArray(thread, method, ip, spo) {
     var heap = thread.context.heap;

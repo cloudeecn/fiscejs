@@ -296,6 +296,9 @@ function __FyAOTUtil(template) {
  */
 __FyAOTUtil.prototype.replaceAll = function(code, ip, oprand1, oprand2, spofs,
   other) {
+  if (code == null) {
+    throw new FyException(null, "NPT");
+  }
   code = code
     .replace(/\$ip/g, String(ip))
     .replace(/\$1/g, String(oprand1))
@@ -327,21 +330,63 @@ __FyAOTUtil.prototype.replaceAll = function(code, ip, oprand1, oprand2, spofs,
  *            method
  */
 __FyAOTUtil.prototype.aot = function(thread, method) {
+  /**
+   * @type {FyContext}
+   */
   var context = thread.context;
+  /**
+   * @dict
+   * @type {Object.<string,string>}
+   */
   var macros = this.template["macros"];
+  /**
+   * @dict
+   * @type {Object.<string,Object.<string,string>>}
+   */
   var ops = this.template["ops"];
+  /**
+   *
+   * @type {number}
+   */
   var len = method.code.length / 3;
+  /**
+   *
+   * @type {Array.<number>}
+   */
   var code = [];
+  /**
+   * @type {string}
+   */
   var result;
+  /**
+   *
+   * @type {FyClass}
+   */
   var clazz = method.owner;
+  /**
+   *
+   * @type {FyClassDef}
+   */
   var global = clazz.global;
+  /**
+   *
+   * @type {boolean}
+   */
   var nextNeedCase = false;
   /**
-   * @returns {string}
+   * @type {string}
    */
   var opsCheckCode = macros["OPS"].toString();
+  /**
+   * @type {string}
+   */
+  var opsCheckNCode = macros["OPSN"].toString();
 
   this.mid++;
+  /**
+   *
+   * @type {Array.<number>}
+   */
   var stackOfs = method.stackOfs = Array(len);
 
   code.push(this.replaceAll(macros["HEADER"], -1, -1, -1, -1, {
@@ -373,11 +418,15 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
     /**
      * @type {number}
      */
-    var opsCheck = (op >>> 16) & 0x7fff;
+    var opsCheck = (op >> 16) & 0x7fff;
+    /**
+     * @type {boolean}
+     */
+    var opsCheckN = op < 0;
     /**
      * @type {number}
      */
-    var stackSize = oprand2 >>> 16;
+    var stackSize = (oprand2 >> 16) & 0xffff;
     /**
      * @type {boolean}
      */
@@ -416,7 +465,7 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
       nextNeedCase = false;
       needCase = true;
     }
-    if (isJumpIn || opsCheck) {
+    if (isJumpIn || (opsCheck && !opsCheckN)) {
       needCase = true;
     }
     if (op == 0xC2 // MONITORENTER
@@ -480,7 +529,7 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
         }));
     }
     if (opsCheck) {
-      code.push(this.replaceAll(opsCheckCode, ip, oprand1, oprand2,
+      code.push(this.replaceAll(opsCheckN ? opsCheckNCode : opsCheckCode, ip, oprand1, oprand2,
         stackSize, {
           "distance": opsCheck
         }));
@@ -610,17 +659,21 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
             if (fun) {
               code.push(fun(thread, method, ip, (stackSize - tmpMethod.paramStackUsage - 1)));
             } else if (tmpMethod.invoke) {
-              code.push("heap.beginProtect();thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);\n");
+              code.push("heap.beginProtect();\n");
+              code.push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);\n");
               code.push("ops=tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);\n");
-              code.push("heap.endProtect();if(ops<=0){return 0;}");
+              code.push("heap.endProtect();\n");
+              code.push("if(ops<=0){return 0;}\n");
             } else {
-              code
-                .push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ";return 0;");
+              code.push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);\n");
+              code.push("thread.pendNative(tmpMethod, sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ");\n");
+              code.push("return 0;\n");
             }
           } else {
             code.push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);\n");
-            code
-              .push("if(!tmpMethod.invokeReady()){FyAOTUtil.aot(thread,tmpMethod);}\n");
+            code.push("if(!tmpMethod.invokeReady()){\n");
+            code.push(" FyAOTUtil.aot(thread,tmpMethod);\n");
+            code.push("}\n");
             code.push("ops = thread.pushMethod(tmpMethod,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);\n");
             code.push("if(ops<=0){return 0;}\n");
             code.push("ops = tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);\n");
@@ -639,7 +692,7 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
             .push("heap.beginProtect();ops=tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);heap.endProtect();if(ops<=0) {return 0;}\n");
           code.push("}else{\n");
           code
-            .push("thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ";return 0;\n");
+            .push("thread.pendNative(tmpMethod, sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ");return 0;\n");
           code.push("}\n");
           code.push("}else{\n");
           code
@@ -694,11 +747,16 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
             code.push("heap.beginProtect();thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);ops=tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);heap.endProtect();if(ops<=0){return 0;}");
           } else {
             code
-              .push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ";return 0;");
+              .push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);thread.pendNative(tmpMethod, sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ");return 0;");
           }
         } else {
-          code
-            .push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);if(!tmpMethod.invokeReady()){FyAOTUtil.aot(thread,tmpMethod);} ops = thread.pushMethod(tmpMethod,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);if(ops<=0) {return 0;}ops = tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);if(ops<=0) {return 0;}");
+          code.push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);\n");
+          code.push("if(!tmpMethod.invokeReady()){\n");
+          code.push("FyAOTUtil.aot(thread,tmpMethod);\n");
+          code.push("} ops = thread.pushMethod(tmpMethod,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);\n");
+          code.push("if(ops<=0) {return 0;}\n");
+          code.push("ops = tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage - 1) + ",ops);\n");
+          code.push("if(ops<=0) {return 0;}\n");
         }
         break;
       case 0xB8 /* $.INVOKESTATIC */ :
@@ -715,7 +773,7 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
         if (context.getMethod(tmpClass.name + "." + FyConst.FY_METHOD_CLINIT + ".()V")) {
           code.push(this.replaceAll(macros["CLINIT"], ip, oprand1,
             oprand2, stackSize, {
-              "clazz": "tmpMethod.owner"
+              "clazz": "tmpMethod.getOwner()"
             }));
         }
         if (tmpMethod.accessFlags & FyConstAcc.NATIVE) {
@@ -726,7 +784,7 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
             code.push("heap.beginProtect();thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);ops=tmpMethod.doInvoke(context,thread,sb+" + (stackSize - tmpMethod.paramStackUsage) + ",ops);heap.endProtect();if(ops<=0) {return 0;}");
           } else {
             code
-              .push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);thread.pendingNative=tmpMethod;thread.pendingNativeSP=sb+" + (stackSize - tmpMethod.paramStackUsage) + ";return 0;");
+              .push("thread.localToFrame(" + ip + "|0," + (ip + 1) + "|0);thread.pendNative(tmpMethod, sb+" + (stackSize - tmpMethod.paramStackUsage) + ");return 0;");
           }
         } else {
           code

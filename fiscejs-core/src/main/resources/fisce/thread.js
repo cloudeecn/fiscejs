@@ -203,7 +203,7 @@ FyThread.prototype.getThreadId = function() {
  * @export
  * @param {number} handle
  */
-FyThread.prototype.setCurrentThrowable = function(handle){
+FyThread.prototype.setCurrentThrowable = function(handle) {
   this.currentThrowable = handle;
 }
 
@@ -316,6 +316,16 @@ FyThread.prototype.pushMethod = function(method, sp, ops) {
 };
 
 /**
+ * @export
+ * @param  {FyMethod} method
+ * @param  {number} sp
+ */
+FyThread.prototype.pendNative = function(method, sp) {
+  this.pendingNative = method;
+  this.pendingNativeSP = sp;
+}
+
+/**
  * @param {FyMethod}
  *            method
  * @param {number} sp
@@ -358,8 +368,7 @@ FyThread.prototype.invokeStatic = function(method, sp, ops) {
         return ops;
       }
     } else {
-      this.pendingNative = method;
-      this.pendingNativeSP = sp;
+      this.pendNative(method, sp);
       return 0;
     }
   } else {
@@ -414,8 +423,7 @@ FyThread.prototype.invokeVirtual = function(method, sp, ops) {
         return ops;
       }
     } else {
-      this.pendingNative = method;
-      this.pendingNativeSP = sp;
+      this.pendNative(method, sp);
       return 0;
     }
   } else {
@@ -664,6 +672,7 @@ FyThread.prototype.destroy = function() {
 };
 
 /**
+ * @export
  * @param {FyMessage}
  *            message
  * @param {number} ops
@@ -771,6 +780,7 @@ FyThread.prototype.run = function(message, ops) {
 };
 
 /**
+ * @export
  * @param  {number} sp
  * @param  {number} value
  */
@@ -779,6 +789,7 @@ FyThread.prototype.nativeReturnInt = function(sp, value) {
 };
 
 /**
+ * @export
  * @param  {number} sp
  * @param  {number} value
  */
@@ -787,6 +798,7 @@ FyThread.prototype.nativeReturnFloat = function(sp, value) {
 };
 
 /**
+ * @export
  * @param  {number} sp
  * @param  {number} value
  */
@@ -795,6 +807,7 @@ FyThread.prototype.nativeReturnDouble = function(sp, value) {
 };
 
 /**
+ * @export
  * @param  {number} sp
  * @param  {Array.<number>|Int32Array} container
  * @param  {number} ofs

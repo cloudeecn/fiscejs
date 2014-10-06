@@ -191,7 +191,7 @@ HashMapIObj.prototype.expand = function() {
 };
 
 /**
- *
+ * @export
  * @param {number}
  *            key
  * @param {T}
@@ -228,6 +228,7 @@ HashMapIObj.prototype.put = function(key, value) {
 };
 
 /**
+ * @export
  * @param  {number} key
  * @returns {T}
  */
@@ -251,6 +252,7 @@ HashMapIObj.prototype.get = function(key) {
 };
 
 /**
+ * @export
  * @param  {number} key
  * @returns {T}
  */
@@ -276,6 +278,7 @@ HashMapIObj.prototype.remove = function(key) {
 };
 
 /**
+ * @export
  * @param  {number} key
  * @returns {boolean}
  */
@@ -299,6 +302,7 @@ HashMapIObj.prototype.contains = function(key) {
 };
 
 /**
+ * @export
  * @param  {function(number, T, D):boolean} fun
  * @param {D} data
  * @returns {number}
@@ -329,6 +333,7 @@ HashMapIObj.prototype.iterate = function(fun, data) {
 };
 
 /**
+ * @export
  */
 HashMapIObj.prototype.clear = function() {
   this.currentSize = 0;
@@ -343,6 +348,7 @@ HashMapIObj.prototype.clear = function() {
 };
 
 /**
+ * @export
  * @returns {number}
  */
 HashMapIObj.prototype.size = function() {

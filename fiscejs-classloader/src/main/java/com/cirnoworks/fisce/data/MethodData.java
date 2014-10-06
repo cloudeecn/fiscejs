@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
@@ -326,13 +327,31 @@ public final class MethodData extends MethodNode {
 				for (ip = 0; ip < newLength; ip++) {
 					checkOps[ip] = -1;
 				}
+				boolean tmpIpLengthReset;
 				for (ip = 0; ip < newLength; ip++) {
+					tmpIpLengthReset = false;
 					AbstractInsnNode inst = rawInstructions[ip];
 					if (jumpIns.containsKey(ip + 1)
 					// || jumpOuts.containsKey(ip + 1)
 					) {
-						checkOps[ip] = tmpIpLength;
-						hintFrame[ip] = true;
+						checkOps[ip] = tmpIpLength | 0x8000;
+						tmpIpLengthReset = true;
+					}
+
+					Set<Integer> outs = jumpOuts.get(ip);
+					if (outs != null && outs.size() > 0) {
+						checkOps[ip] = tmpIpLength | 0x8000;
+						for (Integer out : outs) {
+							if (out < ip) {
+								checkOps[ip] = tmpIpLength;
+								hintFrame[ip] = true;
+								break;
+							}
+						}
+						tmpIpLengthReset = true;
+					}
+
+					if (tmpIpLengthReset) {
 						tmpIpLength = 0;
 					}
 
@@ -350,6 +369,11 @@ public final class MethodData extends MethodNode {
 						hintFrame[ip] = true;
 					}
 					tmpIpLength++;
+					if (tmpIpLength > 32767) {
+						throw new IllegalStateException("Method "
+								+ this.owner.name + "." + this.name + "."
+								+ this.desc + " too large");
+					}
 				}
 
 				if (tmpLineNumbers.size() > 0) {

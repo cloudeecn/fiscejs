@@ -104,6 +104,14 @@ FyField.prototype.setConstantValueData = function(cvd) {
   this.constantValueData = cvd | 0;
 }
 
+/**
+ * @export
+ * @return {number}
+ */
+FyField.prototype.pos = function(){
+  return this.posAbs;
+}
+
 FyField.prototype.toString = function() {
   return "{Field}" + this.uniqueName;
 };

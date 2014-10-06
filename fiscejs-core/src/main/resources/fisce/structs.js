@@ -72,7 +72,9 @@ function FyConfig() {
 FyConfig.verboseMode = false;
 
 /**
+ * @class
  * @constructor
+ * @export
  */
 function __FyUtils() {};
 
@@ -94,7 +96,7 @@ __FyUtils.prototype.cloneIntArray = function(src, dest) {
 };
 /**
  * copy all attributes from src into dest
- *
+ * @export
  * @param {?} src
  * @param {?} dest
  */
@@ -326,6 +328,10 @@ __FyUtils.prototype.unbase64 = (function() {
   }
 })();
 
+/**
+ * @export
+ * @type {__FyUtils}
+ */
 var FyUtils = new __FyUtils();
 
 /**
@@ -1424,6 +1430,10 @@ function FyPanicException(data, cause) {
 };
 
 FyPanicException.prototype = new Error("FyPanicException");
+
+FyPanicException.prototype.toString = function() {
+  return "Panic: " + this.message + (this.stack ? ("\n##Stack:\n" + this.stack) : "");
+}
 
 /**
  * Message method <-> thread <-> threadManager <-> outer

@@ -248,16 +248,6 @@ public class ClassConverter {
 													+ method.getDescriptor());
 								} else {
 									if (check[ip] >= 0) {
-										if (check[ip] > 32768) {
-											throw new IllegalArgumentException(
-													"Method "
-															+ name
-															+ "."
-															+ method.getName()
-															+ "."
-															+ method.getDescriptor()
-															+ " too large!");
-										}
 										code[j] |= (check[ip]) << 16;
 									}
 									if (method.isJumpIn(ip)) {

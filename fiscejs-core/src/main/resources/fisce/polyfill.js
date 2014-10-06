@@ -95,11 +95,9 @@ if (!("goog" in window)) {
 
 if (!("exportSymbol" in goog)) {
   goog.exportSymbol = function(name, value) {
-    console.log("Export symbol: " + name + " = " + value);
     window[name] = value;
   }
   goog.exportProperty = function(object, key, value) {
-    console.log("Export symbol: " + object + "." + key + " = " + value);
     object[key] = value;
   }
 }

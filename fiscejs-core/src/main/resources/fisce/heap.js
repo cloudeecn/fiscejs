@@ -269,6 +269,14 @@ FyHeap.prototype.getIntArray = function() {
 };
 
 /**
+ * @export
+ * @return {Float32Array}
+ */
+FyHeap.prototype.getFloatArray = function(){
+  return this.heapFloat;
+}
+
+/**
  * @type {number}
  * @export
  */
@@ -1599,6 +1607,7 @@ FyHeap.prototype.arrayLength = function(handle) {
 };
 
 /**
+ * @export
  * @param  {number} handle
  * @return {number}
  */
