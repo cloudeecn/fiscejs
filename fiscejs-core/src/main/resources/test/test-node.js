@@ -56,7 +56,7 @@ function fun() {
       throw new FyException(null, "Test failed: " + context.heap.getString(thread.stack[thread.sp]));
       return 0;
     });
-  context.bootup(classes[i]);
+  context.bootup(testClass);
   context.run({
     panic: function(e) {
       console.log("Panic!: \n" + e);

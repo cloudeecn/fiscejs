@@ -56,7 +56,7 @@
 				<executions>
 					<execution>
 						<id>assembly</id>
-						<phase>compile</phase>
+						<phase>process-sources</phase>
 						<goals>
 							<goal>single</goal>
 						</goals>
@@ -102,7 +102,7 @@
 				<executions>
 					<execution>
 						<id>aot</id>
-						<phase>process-resources</phase>
+						<phase>generate-sources</phase>
 						<goals>
 							<goal>aot</goal>
 						</goals>
@@ -111,7 +111,7 @@
 					</execution>
 					<execution>
 						<id>compile</id>
-						<phase>prepare-package</phase>
+						<phase>compile</phase>
 						<goals>
 							<goal>compile-zip</goal>
 						</goals>
@@ -127,7 +127,7 @@
 					</execution>
 					<execution>
 						<id>convert</id>
-						<phase>prepare-package</phase>
+						<phase>generate-resources</phase>
 						<goals>
 							<goal>convert</goal>
 						</goals>
@@ -138,6 +138,27 @@
 								<jar>${com.cirnoworks.fisce:fiscejs-runtime:jar}</jar>
 							</jars>
 							<outputFilename>rt-latest</outputFilename>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>test-nodejs</id>
+						<phase>test</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<tasks>
+								<exec executable="node" dir="${project.build.directory}"
+									failonerror="true">
+									<arg value="test/test-node.js" />
+								</exec>
+							</tasks>
 						</configuration>
 					</execution>
 				</executions>
