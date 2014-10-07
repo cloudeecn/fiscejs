@@ -1087,8 +1087,8 @@ FyContext.prototype.panic = function(message, e) {
         data.push("" + e);
       }
     }
-    data.push("#PANIC context:");
-    data.push(this);
+    // data.push("#PANIC context:");
+    // data.push(this);
     data.push("#PANIC Thread dump:");
 
     for (var i = 0; i < this.config.maxThreads; i++) {
