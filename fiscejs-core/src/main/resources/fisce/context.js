@@ -1223,11 +1223,10 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
   if (typeof urls == "string") {
     urls = [urls];
   }
-  var urlMap = {};
+
   var defPosBegin = this.classDefs.length;
   for (var i = 0; i < urls.length; i++) {
     this.classDefs.push(null);
-    urlMap[urls[i]] = i + defPosBegin;
   }
 
   if (window.document) {
@@ -1243,9 +1242,8 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
          * @param {string}
          *            url
          */
-        function(context, url) {
+        function(context, url, idx) {
           var iframe;
-          var lowerUrl = url.toLowerCase();
           var hash = "#" + Math.floor(Math.random() * (2147483647)).toString(16) + "-" + Math.floor(Math.random() * (2147483647)).toString(16);
 
           /**
@@ -1262,7 +1260,7 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
              */
             var data = event.data;
             // console.log(event.origin + ": " + data.op + " " + data.name + " // " + url + " " + data.hash);
-            if (event.origin.toLowerCase() === lowerUrl && !failed && data.hash === hash) {
+            if (!failed && data.hash === hash) {
               var name, value;
               if (data.op === "class") {
                 value = data.value;
@@ -1288,7 +1286,7 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
               } else if (data.op === "done") {
                 count--;
                 iframe.parentNode.removeChild(iframe);
-                context.classDefs[urlMap[url]] = def;
+                context.classDefs[idx] = def;
                 if ("done" in callbacks) {
                   callbacks["done"](url, count);
                 }
@@ -1326,7 +1324,7 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
             }
           });
           document.getElementsByTagName("body")[0].appendChild(iframe);
-        })(this, urls[i]);
+        })(this, urls[i], i + defPosBegin);
     }
   } else {
     // node
