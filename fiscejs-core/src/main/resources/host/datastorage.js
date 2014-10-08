@@ -21,7 +21,7 @@ function sendData(targetWindow, hash, namespace, baseUrl) {
 
   baseUrl = baseUrl || "";
 
-  if (localStorage.getItem("loaded") == "true") {
+  if (localStorage.getItem("loaded") == "true" && !window.location.hostname.substring(0, 7) == "latest.") {
     doSend(targetWindow);
   } else {
     request = new XMLHttpRequest();
