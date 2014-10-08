@@ -272,7 +272,7 @@ FyHeap.prototype.getIntArray = function() {
  * @export
  * @return {Float32Array}
  */
-FyHeap.prototype.getFloatArray = function(){
+FyHeap.prototype.getFloatArray = function() {
   return this.heapFloat;
 }
 
@@ -991,7 +991,7 @@ FyHeap.prototype.fillInitialHandles = function(processSoft) {
   }
   f2 = performance.now();
   /* Class static area */
-  imax = this.context.classes.size();
+  imax = this.context.classes.size() + 1;
   for (var i = 1; i < imax; i++) {
     /**
      * @type {FyClass}
