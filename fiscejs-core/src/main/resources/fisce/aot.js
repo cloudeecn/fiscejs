@@ -344,14 +344,19 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
    * @type {Object.<string,Object.<string,string>>}
    */
   var ops = this.template["ops"];
+  if (!method.code || method.code.length < 2) {
+    throw new FyException(null, "Can't recompile method: " + method.uniqueName);
+  }
+  var codeBegin = method.code[0];
+  var codeLen = method.code[1];
   /**
    *
    * @type {number}
    */
-  var len = method.code.length / 3;
+  var len = codeLen / 3;
   /**
    *
-   * @type {Array.<number>}
+   * @type {Array.<string>}
    */
   var code = [];
   /**
@@ -398,6 +403,7 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
     var handler = method.exceptionTable[i + 3];
     exceptionHandlers[handler] = true;
   }
+
   for (var ip = 0; ip < len; ip++) {
     /**
      * @type {number}
@@ -406,15 +412,15 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
     /**
      * @type {number}
      */
-    var op = method.code[base];
+    var op = global.code[codeBegin + base];
     /**
      * @type {number}
      */
-    var oprand1 = method.code[base + 1];
+    var oprand1 = global.code[codeBegin + base + 1];
     /**
      * @type {number}
      */
-    var oprand2 = method.code[base + 2];
+    var oprand2 = global.code[codeBegin + base + 2];
     /**
      * @type {number}
      */

@@ -7,6 +7,7 @@ import java.util.List;
 
 public class LZString {
 
+	private static final int UTF16_OFFSET = 0x2000;
 	static String keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 	static int[] codeMap = new int[128];
 	static {
@@ -471,64 +472,64 @@ public class LZString {
 			c = (int) input.charAt(i);
 			switch (status++) {
 			case 0:
-				out.append((char) ((c >> 1) + 32));
+				out.append((char) ((c >> 1) + UTF16_OFFSET));
 				current = (c & 1) << 14;
 				break;
 			case 1:
-				out.append((char) ((current + (c >> 2)) + 32));
+				out.append((char) ((current + (c >> 2)) + UTF16_OFFSET));
 				current = (c & 3) << 13;
 				break;
 			case 2:
-				out.append((char) ((current + (c >> 3)) + 32));
+				out.append((char) ((current + (c >> 3)) + UTF16_OFFSET));
 				current = (c & 7) << 12;
 				break;
 			case 3:
-				out.append((char) ((current + (c >> 4)) + 32));
+				out.append((char) ((current + (c >> 4)) + UTF16_OFFSET));
 				current = (c & 15) << 11;
 				break;
 			case 4:
-				out.append((char) ((current + (c >> 5)) + 32));
+				out.append((char) ((current + (c >> 5)) + UTF16_OFFSET));
 				current = (c & 31) << 10;
 				break;
 			case 5:
-				out.append((char) ((current + (c >> 6)) + 32));
+				out.append((char) ((current + (c >> 6)) + UTF16_OFFSET));
 				current = (c & 63) << 9;
 				break;
 			case 6:
-				out.append((char) ((current + (c >> 7)) + 32));
+				out.append((char) ((current + (c >> 7)) + UTF16_OFFSET));
 				current = (c & 127) << 8;
 				break;
 			case 7:
-				out.append((char) ((current + (c >> 8)) + 32));
+				out.append((char) ((current + (c >> 8)) + UTF16_OFFSET));
 				current = (c & 255) << 7;
 				break;
 			case 8:
-				out.append((char) ((current + (c >> 9)) + 32));
+				out.append((char) ((current + (c >> 9)) + UTF16_OFFSET));
 				current = (c & 511) << 6;
 				break;
 			case 9:
-				out.append((char) ((current + (c >> 10)) + 32));
+				out.append((char) ((current + (c >> 10)) + UTF16_OFFSET));
 				current = (c & 1023) << 5;
 				break;
 			case 10:
-				out.append((char) ((current + (c >> 11)) + 32));
+				out.append((char) ((current + (c >> 11)) + UTF16_OFFSET));
 				current = (c & 2047) << 4;
 				break;
 			case 11:
-				out.append((char) ((current + (c >> 12)) + 32));
+				out.append((char) ((current + (c >> 12)) + UTF16_OFFSET));
 				current = (c & 4095) << 3;
 				break;
 			case 12:
-				out.append((char) ((current + (c >> 13)) + 32));
+				out.append((char) ((current + (c >> 13)) + UTF16_OFFSET));
 				current = (c & 8191) << 2;
 				break;
 			case 13:
-				out.append((char) ((current + (c >> 14)) + 32));
+				out.append((char) ((current + (c >> 14)) + UTF16_OFFSET));
 				current = (c & 16383) << 1;
 				break;
 			case 14:
-				out.append((char) ((current + (c >> 15)) + 32));
-				out.append((char) ((c & 32767) + 32));
+				out.append((char) ((current + (c >> 15)) + UTF16_OFFSET));
+				out.append((char) ((c & 32767) + UTF16_OFFSET));
 				current = 0;
 				status = 0;
 				break;
@@ -536,7 +537,7 @@ public class LZString {
 		}
 
 		if (status != 0) {
-			out.append((char) (current + 32));
+			out.append((char) (current + UTF16_OFFSET));
 		}
 		return out;
 	}
@@ -561,7 +562,7 @@ public class LZString {
 		int i = 0, max = input.length();
 		int c;
 		while (i < max) {
-			c = (((int) input.charAt(i)) - 32);
+			c = (((int) input.charAt(i)) - UTF16_OFFSET);
 
 			switch (status++) {
 			case 0:

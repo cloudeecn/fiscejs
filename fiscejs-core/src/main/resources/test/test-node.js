@@ -5,7 +5,7 @@ var includeInThisContext = function(path) {
   vm.runInThisContext(code, path);
 }.bind(this);
 includeInThisContext("fiscejs-latest.js");
-var cdef = "" + fs.readFileSync("rt-latest.txt");
+var cdef = fs.readFileSync("rt-latest.txt", "utf8");
 var classes = [];
 var fails = 0;
 
@@ -53,7 +53,7 @@ function fun() {
   context.registerNativeHandler(
     "EXCLUDE/fisce/test/TestService.fail0.(Ljava/lang/String;)V", function(
       context, thread, ops) {
-      throw new FyException(null, "Test failed: " + context.heap.getString(thread.stack[thread.sp]));
+      throw new FyException(null, "Test failed: " + context.getHeap().getString(thread.stack[thread.sp]));
       return 0;
     });
   context.bootup(testClass);

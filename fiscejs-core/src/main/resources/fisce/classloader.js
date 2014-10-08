@@ -456,7 +456,7 @@ FyClassLoader.prototype.phase2 = function(clazz) {
       finalizeMethod = this.context.lookupMethodVirtual(clazz,
         FyConst.FY_METHODF_FINALIZE);
 
-      if (finalizeMethod && finalizeMethod.code.length > 3) {
+      if (finalizeMethod && finalizeMethod.code.length > 1 && finalizeMethod.code[1] > 3) {
         // console.log("Class " + clazz.name + " requires
         // finalize");
         clazz.accessFlags |= FyConstAcc.NEED_FINALIZE;

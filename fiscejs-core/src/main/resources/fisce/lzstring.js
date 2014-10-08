@@ -16,6 +16,11 @@ var LZString = {
 
   // private property
   /**
+   * @const
+   * @type {number}
+   */
+  UTF16_OFFSET : 0x2000,
+  /**
    * @private
    * @type {string}
    */
@@ -145,69 +150,69 @@ var LZString = {
       c = input.charCodeAt(i);
       switch (status++) {
         case 0:
-          output += f((c >> 1) + 32);
+          output += f((c >> 1) + LZString.UTF16_OFFSET);
           current = (c & 1) << 14;
           break;
         case 1:
-          output += f((current + (c >> 2)) + 32);
+          output += f((current + (c >> 2)) + LZString.UTF16_OFFSET);
           current = (c & 3) << 13;
           break;
         case 2:
-          output += f((current + (c >> 3)) + 32);
+          output += f((current + (c >> 3)) + LZString.UTF16_OFFSET);
           current = (c & 7) << 12;
           break;
         case 3:
-          output += f((current + (c >> 4)) + 32);
+          output += f((current + (c >> 4)) + LZString.UTF16_OFFSET);
           current = (c & 15) << 11;
           break;
         case 4:
-          output += f((current + (c >> 5)) + 32);
+          output += f((current + (c >> 5)) + LZString.UTF16_OFFSET);
           current = (c & 31) << 10;
           break;
         case 5:
-          output += f((current + (c >> 6)) + 32);
+          output += f((current + (c >> 6)) + LZString.UTF16_OFFSET);
           current = (c & 63) << 9;
           break;
         case 6:
-          output += f((current + (c >> 7)) + 32);
+          output += f((current + (c >> 7)) + LZString.UTF16_OFFSET);
           current = (c & 127) << 8;
           break;
         case 7:
-          output += f((current + (c >> 8)) + 32);
+          output += f((current + (c >> 8)) + LZString.UTF16_OFFSET);
           current = (c & 255) << 7;
           break;
         case 8:
-          output += f((current + (c >> 9)) + 32);
+          output += f((current + (c >> 9)) + LZString.UTF16_OFFSET);
           current = (c & 511) << 6;
           break;
         case 9:
-          output += f((current + (c >> 10)) + 32);
+          output += f((current + (c >> 10)) + LZString.UTF16_OFFSET);
           current = (c & 1023) << 5;
           break;
         case 10:
-          output += f((current + (c >> 11)) + 32);
+          output += f((current + (c >> 11)) + LZString.UTF16_OFFSET);
           current = (c & 2047) << 4;
           break;
         case 11:
-          output += f((current + (c >> 12)) + 32);
+          output += f((current + (c >> 12)) + LZString.UTF16_OFFSET);
           current = (c & 4095) << 3;
           break;
         case 12:
-          output += f((current + (c >> 13)) + 32);
+          output += f((current + (c >> 13)) + LZString.UTF16_OFFSET);
           current = (c & 8191) << 2;
           break;
         case 13:
-          output += f((current + (c >> 14)) + 32);
+          output += f((current + (c >> 14)) + LZString.UTF16_OFFSET);
           current = (c & 16383) << 1;
           break;
         case 14:
-          output += f((current + (c >> 15)) + 32, (c & 32767) + 32);
+          output += f((current + (c >> 15)) + LZString.UTF16_OFFSET, (c & 32767) + LZString.UTF16_OFFSET);
           status = 0;
           break;
       }
     }
 
-    return output + f(current + 32);
+    return output + f(current + LZString.UTF16_OFFSET);
   },
 
   /**
@@ -223,7 +228,7 @@ var LZString = {
       f = LZString._f;
 
     while (i < input.length) {
-      c = input.charCodeAt(i) - 32;
+      c = input.charCodeAt(i) - LZString.UTF16_OFFSET;
 
       switch (status++) {
         case 0:

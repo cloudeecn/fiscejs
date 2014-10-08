@@ -36,6 +36,12 @@ function FyClassDef() {
   this.constants = null;
 
   /**
+   *
+   * @type {Int32Array}
+   */
+  this.code = null;
+
+  /**
    * @dict
    * @type {Object.<string,string>}
    */
@@ -55,19 +61,17 @@ FyClassDef.prototype.addStrings = function(str) {
   var pos = 0;
   var idx;
   var len = decompressed.length;
+  var strLen;
   this.strings = [];
   while (pos < len) {
-    idx = decompressed.indexOf('\0', pos);
-    if (idx < 0) {
-      idx = len;
+    strLen = decompressed.charCodeAt(pos++);
+    if (pos + strLen > len) {
+      throw new FyException(null, "Failed decoding strings strId=" + this.strings.length + " pos=" + pos + " strLen=" + strLen + " len=" + len);
     }
-    // console.log(pos + " - " + idx);
-    this.strings.push(LZString
-      .decodeUTF16(decompressed
-        .substring(pos, idx)));
-    pos = idx + 1;
+    this.strings.push(decompressed.substring(pos, pos + strLen));
+    pos += strLen;
   }
-  console.log("String decode " + (performance.now() - t0) + "ms");
+  console.log("String decode " + (performance.now() - t0) + "ms, entries=" + this.strings.length);
 };
 
 /**
@@ -81,13 +85,33 @@ FyClassDef.prototype.addConstants = function(str) {
   var constantsStr = LZString
     .decompressFromUTF16(str);
   this.constants = new Int32Array(
-    constantsStr.length);
+    constantsStr.length >> 1);
   for (var i = 0, max = constantsStr.length; i < max; i++) {
     this.constants[i >> 1] |= constantsStr
       .charCodeAt(i) << ((i & 1) << 4);
 
   }
   console.log("Constants decode " + (performance.now() - t0) + "ms");
+}
+
+/**
+ * @param  {string} str
+ */
+FyClassDef.prototype.addCode = function(str) {
+  if (this.code) {
+    throw new FyException(null, "Illegal status: constants already parsed");
+  }
+  var t0 = performance.now();
+  var codeStr = LZString
+    .decompressFromUTF16(str);
+  this.code = new Int32Array(
+    codeStr.length >> 1);
+  for (var i = 0, max = codeStr.length; i < max; i++) {
+    this.code[i >> 1] |= codeStr
+      .charCodeAt(i) << ((i & 1) << 4);
+
+  }
+  console.log("Code decode " + (performance.now() - t0) + "ms");
 }
 
 /**
@@ -423,7 +447,11 @@ FyContext.prototype.addClassDef = function(data) {
         value = line;
         def.addStrings(value);
         break;
-      case 3: //files
+      case 3: //strings
+        value = line;
+        def.addCode(value);
+        break;
+      case 4: //files
         splitter = line.indexOf("\0");
         if (splitter < 0 || splitter >= line.length - 1) {
           key = line;
@@ -1246,6 +1274,9 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
               } else if (data.op === "strings") {
                 value = data.value;
                 def.addStrings(value);
+              } else if (data.op === "code") {
+                value = data.value;
+                def.addCode(value);
               } else if (data.op === "file") {
                 value = data.value;
                 name = data.name;

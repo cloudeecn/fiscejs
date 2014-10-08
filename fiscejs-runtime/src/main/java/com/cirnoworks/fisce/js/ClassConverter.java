@@ -67,6 +67,9 @@ public class ClassConverter {
 
 		@Override
 		public int poolString(String str) {
+			if (str.length() > 65535) {
+				throw new UnsupportedOperationException("String too long");
+			}
 			Integer pos = stringTable.get(str);
 			if (pos == null) {
 				pos = stringTable.size();
@@ -76,6 +79,18 @@ public class ClassConverter {
 		}
 
 	};
+
+	StringBuilder codeBuilder = new StringBuilder(1048576);
+
+	private final int putCode(int[] code) {
+		int ret = codeBuilder.length() >> 1;
+		for (int i = 0, max = code.length; i < max; i++) {
+			int c = code[i];
+			codeBuilder.append((char) c);
+			codeBuilder.append((char) (c >>> 16));
+		}
+		return ret;
+	}
 
 	private String convert(InputStream is, StringBuilder sb) throws IOException {
 		StringBuilder tmp = new StringBuilder(64);
@@ -232,8 +247,6 @@ public class ClassConverter {
 							(int) method.getMaxLocals(), true);
 
 					{
-						SimpleJSONUtil.add(sb, 3, "\"code\"", "[", false);
-						SimpleJSONUtil.addIndent(sb, 4);
 						int[] check = method.getCheckOps();
 
 						for (int j = 0, maxj = code.length; j < maxj; j++) {
@@ -297,17 +310,10 @@ public class ClassConverter {
 								code[j] |= frameSize << 16;
 								break;
 							}
-							sb.append(code[j]);
-							if (j < maxj - 1) {
-								sb.append(", ");
-								if (j % 32 == 31) {
-									sb.append('\n');
-									SimpleJSONUtil.addIndent(sb, 4);
-								}
-							}
 						}
-						sb.append('\n');
-						SimpleJSONUtil.add(sb, 3, "]", true);
+						SimpleJSONUtil.add(sb, 3, "\"code\"", "["
+								+ putCode(code) + ", " + code.length + "]",
+								true);
 					}
 					{
 						SimpleJSONUtil.add(sb, 3, "\"frames\"", "[", false);
@@ -505,24 +511,34 @@ public class ClassConverter {
 		sb.append("\n\n");
 		System.out.println("constants: " + tmp.length() + " => "
 				+ (sb.length() - len) + "chars");
-		len = sb.length();
 		tmp.setLength(0);
 		{
 			Iterator<String> i = stringTable.keySet().iterator();
 			while (i.hasNext()) {
 				String str = i.next();
 				if (str == null) {
-					tmp.append('\0');
+					tmp.append((char) 0);
 				} else {
-					LZString.encodeUTF16(str, tmp);
-					tmp.append('\0');
+					if (str.length() > Character.MAX_VALUE) {
+						throw new IllegalStateException("String too long: "
+								+ str.length());
+					}
+					tmp.append((char) str.length());
+					tmp.append(str);
 				}
 			}
 		}
+		len = sb.length();
 		LZString.compressToUTF16(tmp, sb);
-		sb.append("\n\n");
 		System.out.println("strings: " + tmp.length() + " => "
 				+ (sb.length() - len) + "chars");
+		sb.append("\n\n");
+		len = sb.length();
+		LZString.compressToUTF16(codeBuilder, sb);
+		System.out.println("code: " + codeBuilder.length() + " => "
+				+ (sb.length() - len) + "chars");
+		sb.append("\n\n");
+
 		StringBuilder ret = sb;
 		sb = null;
 		return ret;
