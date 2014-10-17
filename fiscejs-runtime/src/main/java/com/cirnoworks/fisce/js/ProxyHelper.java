@@ -6,9 +6,9 @@ import java.io.IOException;
 public class ProxyHelper {
 
 	public static Class<?> defineClass(ClassLoader cl, String className,
-			byte[] define) {
+			byte[] define, int ofs, int len) {
 		try {
-			ProxyHelper.defineClass(define, 0, define.length);
+			ProxyHelper.defineClass(define, ofs, len);
 			return Class.forName(className.replace('/', '.'));
 		} catch (IOException e) {
 			throw new RuntimeException(e);

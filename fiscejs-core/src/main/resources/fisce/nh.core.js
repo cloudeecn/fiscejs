@@ -847,7 +847,7 @@ function fyRegisterNativeCore(context) {
   function proxyDefineClass(context, thread, sp, ops) {
     context.lookupClass("com/cirnoworks/fisce/js/ProxyHelper");
     var method = context
-      .getMethod("com/cirnoworks/fisce/js/ProxyHelper.defineClass.(Ljava/lang/ClassLoader;Ljava/lang/String;[B)Ljava/lang/Class;");
+      .getMethod("com/cirnoworks/fisce/js/ProxyHelper.defineClass.(Ljava/lang/ClassLoader;Ljava/lang/String;[BII)Ljava/lang/Class;");
     // thread.sp += 3;
     thread.pushMethod(method, sp, ops - 1);
     return 0;
@@ -1035,7 +1035,7 @@ function fyRegisterNativeCore(context) {
     finalizerGetReferencesToEnqueue);
   context.registerNativeHandler(FyConst.FY_BASE_FINALIZER + ".getFinalizee.()[L" + FyConst.FY_BASE_OBJECT + ";",
     finalizerGetFinalizee);
-  context.registerNativeHandler("java/lang/reflect/Proxy.defineClassImpl.(L" + FyConst.FY_BASE_CLASSLOADER + ";L" + FyConst.FY_BASE_STRING + ";[B)L" + FyConst.FY_BASE_CLASS + ";", proxyDefineClass);
+  context.registerNativeHandler("java/lang/ClassLoader.defineClassImpl.(L" + FyConst.FY_BASE_STRING + ";[BII)L" + FyConst.FY_BASE_CLASS + ";", proxyDefineClass);
 
   context.registerNativeHandler(
     "com/cirnoworks/fisce/js/ProxyHelper.defineClassViaJSON.(L" + FyConst.FY_BASE_STRING + ";)V", proxyHelperDefineClass);
