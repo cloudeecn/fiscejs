@@ -1262,7 +1262,26 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
             // console.log(event.origin + ": " + data.op + " " + data.name + " // " + url + " " + data.hash);
             if (!failed && data.hash === hash) {
               var name, value;
-              if (data.op === "class") {
+              if (data.op === "loadProgress") {
+                if (callbacks["loadProgress"]) {
+                  callbacks["loadProgress"](url, 
+                    data.value.substring(0, data.value.indexOf("/")) | 0, 
+                    data.value.substring(data.value.indexOf("/") + 1) | 0);
+                }
+              } else if (data.op === "loadStart") {
+                if ("loadStart" in callbacks) {
+                  callbacks["loadStart"](url);
+                }
+              } else if (data.op === "loadSuccess") {
+                if ("loadSuccess" in callbacks) {
+                  callbacks["loadSuccess"](url);
+                }
+              } else if (data.op === "loadError") {
+                failed = true;
+                if ("error" in callbacks) {
+                  callbacks["error"](url, "Can't read data from " + url);
+                }
+              } else if (data.op === "class") {
                 value = data.value;
                 name = data.name;
                 def.addClassDef(name, value);
@@ -1275,15 +1294,15 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
               } else if (data.op === "code") {
                 value = data.value;
                 def.addCode(value);
-              } else if (data.op === "file") {
+              } else if (data.op === "file")  {
                 value = data.value;
                 name = data.name;
                 def.addFile(name, value);
-              } else if (data.op === "begin") {
-                if ("begin" in callbacks) {
-                  callbacks["begin"](url, count);
+              } else if (data.op === "start") {
+                if ("start" in callbacks) {
+                  callbacks["start"](url, count);
                 }
-              } else if (data.op === "done") {
+              } else if (data.op === "success") {
                 count--;
                 iframe.parentNode.removeChild(iframe);
                 context.classDefs[idx] = def;
@@ -1295,18 +1314,21 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
                     callbacks["success"]();
                   }
                 }
+                window.removeEventListener("message", onmessage);
               } else if (data.op === "error") {
                 failed = true;
                 if ("error" in callbacks) {
-                  callbacks["error"]("Can't read data from " + url);
+                  callbacks["error"](url, "Can't parse data from " + url);
                 }
+              }else{
+                console.log("Unknown op: " + data.op);
+                console.log(data);
               }
-              return false;
-            } else {
-              return true;
+              event.stopPropagation();
+              event.preventDefault();
             }
           }
-          window.addEventListener("message", onmessage);
+          window.addEventListener("message", onmessage, false);
           iframe = document.createElement("iframe");
           iframe.setAttribute("src", url + hash);
           iframe.setAttribute("class", "fisce-data-iframe");
@@ -1320,7 +1342,7 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
           iframe.addEventListener("error", function() {
             failed = true;
             if ("error" in callbacks) {
-              callbacks["error"]("Can't read data from " + url);
+              callbacks["error"](url, "Can't read data from " + url);
             }
           });
           document.getElementsByTagName("body")[0].appendChild(iframe);
