@@ -1232,6 +1232,12 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
   }
 };
 
+/**
+ * @export
+ * @param {string} domain
+ * @param {Array.<string>} urls
+ * @param {FyDict} callbacks
+ */
 FyContext.prototype.loadClassDefinesDirectly = function(domain, urls, callbacks) {
   if (typeof urls == "string") {
     urls = [urls];
