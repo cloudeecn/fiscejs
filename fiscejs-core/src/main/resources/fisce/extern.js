@@ -3,6 +3,9 @@ String.prototype.startsWith;
 String.prototype.endsWith;
 Object.keys;
 var performance;
+/**
+ * @nosideeffects
+ */
 performance.now;
 Date.now;
 var goog;

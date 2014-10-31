@@ -344,11 +344,11 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
    * @type {Object.<string,Object.<string,string>>}
    */
   var ops = this.template["ops"];
-  if (!method.code || method.code.length < 2) {
-    throw new FyException(null, "Can't recompile method: " + method.uniqueName);
-  }
-  var codeBegin = method.code[0];
-  var codeLen = method.code[1];
+  /**
+   *
+   * @type {number}
+   */
+  var codeLen = method.code.length;
   /**
    *
    * @type {number}
@@ -412,15 +412,23 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
     /**
      * @type {number}
      */
-    var op = global.code[codeBegin + base];
+    var base1 = base + 1;
     /**
      * @type {number}
      */
-    var oprand1 = global.code[codeBegin + base + 1];
+    var base2 = base + 2
+      /**
+       * @type {number}
+       */
+    var op = method.code[base];
     /**
      * @type {number}
      */
-    var oprand2 = global.code[codeBegin + base + 2];
+    var oprand1 = method.code[base1];
+    /**
+     * @type {number}
+     */
+    var oprand2 = method.code[base2];
     /**
      * @type {number}
      */
@@ -854,7 +862,7 @@ __FyAOTUtil.prototype.aot = function(thread, method) {
         "method.sample.js should not have content begins with '$' except $ip $1 $2 $spo");
     }
   }
-
+  method.code = null;
   try {
     var body = "'use strict';// " + method.uniqueName + "\n" + result;
     // var foo = new Function("context", "thread", "ops", "//

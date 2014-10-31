@@ -36,7 +36,7 @@ public final class SimpleJSONUtil {
 			String translated = c < 128 ? translateTable[c] : null;
 			if (translated != null) {
 				sb.append(translated);
-			} else if (c < 32 || c > 127) {
+			} else if (c < 32 || c > 127 && c < 0x2000 || c > 0xa000) {
 				// unicode escape
 				sb.append("\\u");
 				if (c <= 0xf) {

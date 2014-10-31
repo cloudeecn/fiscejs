@@ -80,16 +80,15 @@ public class ClassConverter {
 
 	};
 
-	StringBuilder codeBuilder = new StringBuilder(1048576);
-
-	private final int putCode(int[] code) {
-		int ret = codeBuilder.length() >> 1;
+	private final String putCode(int[] code) {
+		StringBuilder codeBuilder = new StringBuilder(code.length << 1);
 		for (int i = 0, max = code.length; i < max; i++) {
 			int c = code[i];
 			codeBuilder.append((char) c);
 			codeBuilder.append((char) (c >>> 16));
 		}
-		return ret;
+		return LZString.compressToUTF16(codeBuilder,
+				new StringBuilder(code.length)).toString();
 	}
 
 	private String convert(InputStream is, StringBuilder sb) throws IOException {
@@ -311,9 +310,8 @@ public class ClassConverter {
 								break;
 							}
 						}
-						SimpleJSONUtil.add(sb, 3, "\"code\"", "["
-								+ putCode(code) + ", " + code.length + "]",
-								true);
+						SimpleJSONUtil.add(sb, 3, "\"code\"", SimpleJSONUtil
+								.escapeString(putCode(code), true), true);
 					}
 					{
 						SimpleJSONUtil.add(sb, 3, "\"frames\"", "[", false);
@@ -534,10 +532,6 @@ public class ClassConverter {
 				+ (sb.length() - len) + "chars");
 		sb.append("\n\n");
 		len = sb.length();
-		LZString.compressToUTF16(codeBuilder, sb);
-		System.out.println("code: " + codeBuilder.length() + " => "
-				+ (sb.length() - len) + "chars");
-		sb.append("\n\n");
 
 		StringBuilder ret = sb;
 		sb = null;

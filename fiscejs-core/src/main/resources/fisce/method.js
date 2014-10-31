@@ -28,6 +28,11 @@
  *            strings
  */
 function FyMethod(owner, methodDef, strings) {
+  /**
+   * @type {string}
+   */
+  var codeStr;
+
   this.owner = owner;
   /**
    * @type {string}
@@ -150,7 +155,14 @@ function FyMethod(owner, methodDef, strings) {
    */
   this.code = [];
   if ("code" in methodDef) {
-    FyUtils.cloneIntArray(methodDef["code"], this.code);
+    codeStr = LZString.decompressFromUTF16(methodDef["code"]);
+    for (var i = 0, max = codeStr.length; i < max; i++) {
+      if ((i & 1) === 0) {
+        this.code.push(0);
+      }
+      this.code[i >> 1] |= codeStr
+        .charCodeAt(i) << ((i & 1) << 4);
+    }
   }
 
   /**

@@ -1,9 +1,116 @@
 /**
-@param {Window} targetWindow
-@param {string} namespace
-@param {string} baseUrl
+@param {string} url
+@param {function} callback
 */
-function sendData(targetWindow, hash, namespace, baseUrl) {
+function loadData(url, callback) {
+  var request;
+
+  /**
+   * @param  {[type]} event [description]
+   */
+  function onProgress(event) {
+    callback("loadProgress", event.loaded + "/" + event.total);
+  }
+
+  function onError(event) {
+    callback("loadError", "Connection error: " + event.currentTarget.status);
+  };
+
+  function onSuccess(event) {
+    var resp, len, idx, line, pos = 0,
+      mode = 0,
+      splitter, key, value;
+    if (event.currentTarget.status >= 200 && event.currentTarget.status < 400) {
+      resp = event.currentTarget.responseText;
+      // parse
+      len = resp.length;
+      while (pos < len) {
+        idx = resp.indexOf("\n", pos);
+        if (idx < 0) {
+          idx = pos.len;
+        }
+
+        line = resp.substring(pos, idx);
+        pos = idx + 1;
+        if (line.length === 0) {
+          //blank line, change process mode
+          mode++;
+          continue;
+        }
+        switch (mode) {
+          case 0: //classes
+            splitter = line.indexOf("\0");
+            if (splitter < 0 || splitter >= line.length - 1) {
+              key = line;
+              value = "";
+            } else {
+              key = line.substring(0, splitter);
+              value = line.substring(splitter + 1);
+            }
+            localStorage.setItem("c:" + key, value);
+            break;
+          case 1: //constants
+            value = line;
+            localStorage.setItem("constants", value);
+            break;
+          case 2: //strings
+            value = line;
+            localStorage.setItem("strings", value);
+            break;
+          case 3: //files
+            splitter = line.indexOf("\0");
+            if (splitter < 0 || splitter >= line.length - 1) {
+              key = line;
+              value = "";
+            } else {
+              key = line.substring(0, splitter);
+              value = line.substring(splitter + 1);
+            }
+            localStorage.setItem("f:" + key, value);
+            break;
+        }
+      }
+      localStorage.setItem("loaded", "true");
+      callback("loadSuccess");
+    } else {
+      onError(event);
+    }
+  };
+
+
+  callback("loadStart");
+
+  request = new XMLHttpRequest();
+  request.open('GET', url, true);
+  request.addEventListener("progress", onProgress, false);
+  request.addEventListener("load", onSuccess, false);
+  request.addEventListener("error", onError, false);
+  request.addEventListener("abort", onError, false);
+  request.send();
+};
+
+function getClassDef(name) {
+  return localStorage.getItem("c:" + name);
+}
+
+function getFile(name) {
+  return localStorage.getItem("f:" + name);
+}
+
+function getStrings() {
+  return localStorage.getItem("strings");
+}
+
+function getConstants() {
+  return localStorage.getItem("constants");
+}
+
+/**
+@param {Window} targetWindow
+@param {string} hash
+@param {string} url
+*/
+function sendDataByMessage(targetWindow, hash, url) {
   "use strict";
   var classMatcher = /^c\:(.*)$/;
   var fileMatcher = /^f\:(.*)$/;
@@ -19,114 +126,8 @@ function sendData(targetWindow, hash, namespace, baseUrl) {
   var key;
   var value;
 
-  baseUrl = baseUrl || "";
+  console.log("sendDataByMessage: ", Array.prototype.join.call(arguments, ", "));
 
-  if (localStorage.getItem("loaded") == "true" && !window.location.hostname.substring(0, 7) == "latest.") {
-    doSend(targetWindow);
-  } else {
-    (function() {
-
-      /**
-       * @param  {[type]} event [description]
-       */
-      function onProgress(event) {
-        targetWindow.postMessage({
-          hash: hash,
-          op: "loadProgress",
-          value: event.loaded + "/" + event.total
-        }, "*");
-      }
-
-      function onError(event) {
-        targetWindow.postMessage({
-          hash: hash,
-          op: "loadError",
-          value: "Connection error: " + event.currentTarget.status
-        }, "*");
-      };
-
-      function onSuccess(event) {
-        if (event.currentTarget.status >= 200 && event.currentTarget.status < 400) {
-          resp = event.currentTarget.responseText;
-          // parse
-          len = resp.length;
-          while (pos < len) {
-            idx = resp.indexOf("\n", pos);
-            if (idx < 0) {
-              idx = pos.len;
-            }
-
-            line = resp.substring(pos, idx);
-            pos = idx + 1;
-            if (line.length === 0) {
-              //blank line, change process mode
-              mode++;
-              continue;
-            }
-            switch (mode) {
-              case 0: //classes
-                splitter = line.indexOf("\0");
-                if (splitter < 0 || splitter >= line.length - 1) {
-                  key = line;
-                  value = "";
-                } else {
-                  key = line.substring(0, splitter);
-                  value = line.substring(splitter + 1);
-                }
-                localStorage.setItem("c:" + key, value);
-                break;
-              case 1: //constants
-                value = line;
-                localStorage.setItem("constants", value);
-                break;
-              case 2: //strings
-                value = line;
-                localStorage.setItem("strings", value);
-                break;
-              case 3: //code
-                value = line;
-                localStorage.setItem("code", value);
-                break;
-              case 4: //files
-                splitter = line.indexOf("\0");
-                if (splitter < 0 || splitter >= line.length - 1) {
-                  key = line;
-                  value = "";
-                } else {
-                  key = line.substring(0, splitter);
-                  value = line.substring(splitter + 1);
-                }
-                localStorage.setItem("f:" + key, value);
-                break;
-            }
-          }
-          targetWindow.postMessage({
-            hash: hash,
-            op: "loadSuccess"
-          }, "*");
-          localStorage.setItem("loaded", "true");
-          doSend(targetWindow);
-        } else {
-          onError(event);
-        }
-      };
-
-
-
-      targetWindow.postMessage({
-        hash: hash,
-        op: "loadStart"
-      }, "*");
-
-      request = new XMLHttpRequest();
-      request.open('GET', baseUrl + "/" + namespace + ".txt", true);
-      request.addEventListener("progress", onProgress, false);
-      request.addEventListener("load", onSuccess, false);
-      request.addEventListener("error", onError, false);
-      request.addEventListener("abort", onError, false);
-      request.send();
-    })();
-  }
   /**
    * @param {Window} target
    */
@@ -166,12 +167,6 @@ function sendData(targetWindow, hash, namespace, baseUrl) {
             op: "constants",
             value: value
           }, "*");
-        } else if (key == "code") {
-          target.postMessage({
-            hash: hash,
-            op: "code",
-            value: value
-          }, "*");
         }
       }
       target.postMessage({
@@ -184,5 +179,20 @@ function sendData(targetWindow, hash, namespace, baseUrl) {
         op: "error"
       }, "*");
     }
+  }
+
+  if (localStorage.getItem("loaded") == "true" && !window.location.hostname.substring(0, 7) == "latest.") {
+    doSend(targetWindow);
+  } else {
+    loadData(url, function(op, value) {
+      targetWindow.postMessage({
+        hash: hash,
+        op: op,
+        value: value
+      }, "*");
+      if (op === "loadSuccess") {
+        doSend(targetWindow);
+      }
+    });
   }
 }

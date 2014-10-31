@@ -152,9 +152,14 @@ FyClassLoader.prototype.getClassDef = function(name) {
      * @type {FyClassDef}
      */
     var cd = this.context.classDefs[i];
-    if (name in cd.classes) {
+
+    /**
+     * @type {string|null}
+     */
+    var clazz = cd.getClass(name);
+    if (clazz != null) {
       var classDef = JSON.parse(LZString
-        .decompressFromUTF16(cd.classes[name]));
+        .decompressFromUTF16(clazz));
       if (typeof classDef !== "object") {
         throw new FyException(null, "Illegal classDef: " + classDef);
       } else {

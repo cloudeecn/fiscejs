@@ -10,10 +10,13 @@
 <script type="text/javascript" src="../fisce/hashmapio.js"></script>
 <script type="text/javascript" src="../fisce/hashmapi.js"></script>
 <script type="text/javascript" src="../fisce/vfs.js"></script>
+<script type="text/javascript" src="../fisce/utils.js"></script>
+<script type="text/javascript" src="../fisce/consts.js"></script>
 <script type="text/javascript" src="../fisce/structs.js"></script>
 <script type="text/javascript" src="../fisce/method.js"></script>
 <script type="text/javascript" src="../fisce/field.js"></script>
 <script type="text/javascript" src="../fisce/class.js"></script>
+<script type="text/javascript" src="../fisce/classdef.js"></script>
 <script type="text/javascript" src="../fisce/context.js"></script>
 <script type="text/javascript" src="../fisce/heap.js"></script>
 <script type="text/javascript" src="../fisce/classloader.js"></script>
@@ -28,11 +31,69 @@
 <script type="text/javascript" src="../fisce/nh.math.js"></script>
 <script type="text/javascript">
 	var clazz = "com/cirnoworks/fisce/privat/Linpack";
+	var runtimes = ["http://latest.fisce.dev.cirnoworks.com/direct/"];
+	var domain = "cirnoworks.com";
+
 	if (location.hash && location.hash.length > 1) {
 		clazz = location.hash.substring(1);
 	}
 	var context = new FyContext();
 	var t0 = performance.now();
+
+	function startup() {
+		function setLoadingStatus(loadingStatus) {
+			document.getElementById("loading-status").innerHTML = loadingStatus;
+		}
+		if (window.console) {
+			window.oldConsole = window.console;
+		} else {
+			window = oldConsole = {
+				log: function() {}
+			}
+		}
+		window.console = {
+			log: function(param) {
+				document.getElementById("console").appendChild(
+					document.createTextNode(param + "\n"));
+				window.oldConsole.log.apply(window.oldConsole, arguments);
+			}
+		}
+		context
+			.loadClassDefinesDirectly(
+				domain,
+				runtimes, {
+					success: function() {
+						setLoadingStatus("data loaded in " + ((((performance.now() - t0) * 1000) | 0) / 1000) + "ms\n");
+						context.bootup(clazz);
+						context
+							.run({
+								end: function() {
+									console.log("ended");
+								},
+								panic: function(e) {
+									console.log("panic!\n" + e.message);
+									console.log(e.cause.stack);
+								}
+							});
+					},
+					error: function(url, message) {
+						setLoadingStatus(message);
+					},
+					start: function(url) {
+						console.log("start receive");
+					},
+					done: function(url) {},
+					loadStart: function(url) {
+						setLoadingStatus("Loading remote data.");
+					},
+					loadSuccess: function(url) {
+						setLoadingStatus("Remote data loaded.");
+					},
+					loadProgress: function(url, current, total) {
+						setLoadingStatus("Loading remote data: " + current + " / " + total + " (" + (current / total * 100) + "%)");
+					}
+				});
+	}
 </script>
 <style type="text/css">
 .fisce-data-iframe {
@@ -48,70 +109,5 @@
 <body onload="startup();">
 	<div id="loading-status"></div>
 	<pre id="console"></pre>
-	<script type="text/javascript">
-		function startup() {
-			function setLoadingStatus(loadingStatus) {
-				document.getElementById("loading-status").innerHTML = loadingStatus;
-			}
-			if (window.console) {
-				window.oldConsole = window.console;
-			} else {
-				window = oldConsole = {
-					log: function() {}
-				}
-			}
-			window.console = {
-				log: function(param) {
-					document.getElementById("console").appendChild(
-						document.createTextNode(param + "\n"));
-					window.oldConsole.log.apply(window.oldConsole, arguments);
-				}
-			}
-			context
-				.registerNativeHandler(
-					"EXCLUDE/fisce/test/TestService.fail0.(Ljava/lang/String;)V",
-					function(context, thread, ops) {
-						throw new FyException(
-							"java/lang/Error",
-							"Test failed: " + context.heap
-							.getString(thread.stack[thread.sp]));
-						return 0;
-					});
-			context
-				.loadClassDefines(
-					["http://latest.fisce.dev.cirnoworks.com"], {
-						success: function() {
-							setLoadingStatus("data loaded in " + ((((performance.now() - t0) * 1000) | 0) / 1000) + "ms\n");
-							context.bootup(clazz);
-							context
-								.run({
-									end: function() {
-										console.log("ended");
-									},
-									panic: function(e) {
-										console.log("panic!\n" + e.message);
-										console.log(e.cause.stack);
-									}
-								});
-						},
-						error: function(url, message) {
-							setLoadingStatus(message);
-						},
-						start: function(url) {
-							console.log("start receive");
-						},
-						done: function(url) {},
-						loadStart: function(url) {
-							setLoadingStatus("Loading remote data.");
-						},
-						loadSuccess: function(url) {
-							setLoadingStatus("Remote data loaded.");
-						},
-						loadProgress: function(url, current, total) {
-							setLoadingStatus("Loading remote data: " + current + " / " + total + " (" + (current / total * 100) + "%)");
-						}
-					});
-		}
-	</script>
 </body>
 </html>

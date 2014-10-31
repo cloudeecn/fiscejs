@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+  <head>
+    <script type="text/javascript" src="../datastorage.js"></script>
+    <script type="text/javascript">
+      (function() {
+        var hash = location.hash;
+        var idx;
+        if (hash && hash.length > 1) {
+          idx = hash.indexOf("|");
+          document.domain = hash.substring(idx + 1);
+        }
+      })();
+
+      function loadDataDirect(callback) {
+        loadData("../rt.txt", callback);
+      }
+    </script>
+  </head>
+  <body>
+  </body>
+</html>

@@ -42,6 +42,14 @@
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>
+			<source>src/main/resources/fisce/utils.js</source>
+			<outputDirectory>/</outputDirectory>
+		</file>
+		<file>
+			<source>src/main/resources/fisce/consts.js</source>
+			<outputDirectory>/</outputDirectory>
+		</file>
+		<file>
 			<source>src/main/resources/fisce/structs.js</source>
 			<outputDirectory>/</outputDirectory>
 		</file>
@@ -55,6 +63,10 @@
 		</file>
 		<file>
 			<source>src/main/resources/fisce/class.js</source>
+			<outputDirectory>/</outputDirectory>
+		</file>
+		<file>
+			<source>src/main/resources/fisce/classdef.js</source>
 			<outputDirectory>/</outputDirectory>
 		</file>
 		<file>

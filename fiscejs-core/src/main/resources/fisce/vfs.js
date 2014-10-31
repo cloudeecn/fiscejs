@@ -141,16 +141,28 @@ FyVFS.prototype.bindHandle = function(handle, name, pos) {
      */
     var def = null;
 
+    /**
+     * @type {string|null}
+     */
+    var fileStr = null;
+
     for (var i = this.context.classDefs.length - 1; i >= 0; i--) {
-      if (name in this.context.classDefs[i].files) {
+      fileStr = this.context.classDefs[i].getFile(name);
+      if (fileStr != null) {
         def = this.context.classDefs[i];
       }
     }
     if (!def) {
       throw new FyException(FyConst.FY_EXCEPTION_FNF, name);
     } else {
-      entry = new VFSEntry(name, def.files[name]);
-      this.nameEntryMap[name] = entry;
+      fileStr = def.getFile(name);
+      if (fileStr != null) {
+        entry = new VFSEntry(name, fileStr);
+        this.nameEntryMap[name] = entry;
+      }else{
+        // will never happen, but make closure compiler happy
+        throw new FyException(FyConst.FY_EXCEPTION_FNF, name);
+      }
     }
   }
   entry.refs++;

@@ -537,7 +537,7 @@ var LZString = {
    * @returns {string}
    */
   decompress: function(compressed) {
-    if(!compressed){
+    if(compressed == null){
       throw new Error("Illegal compressed string");
     }
     var dictionary = [],

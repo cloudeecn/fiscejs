@@ -16,120 +16,6 @@
  */
 
 /**
- * @class
- * @constructor
- * @struct
- */
-function FyClassDef() {
-  /**
-   * @dict
-   * @type {Object.<string, string>}
-   */
-  this.classes = {};
-  /**
-   * @type {Array.<string>}
-   */
-  this.strings = null;
-  /**
-   * @type {Int32Array}
-   */
-  this.constants = null;
-
-  /**
-   *
-   * @type {Int32Array}
-   */
-  this.code = null;
-
-  /**
-   * @dict
-   * @type {Object.<string,string>}
-   */
-  this.files = {};
-};
-
-/**
- * @param  {string} str
- */
-FyClassDef.prototype.addStrings = function(str) {
-  if (this.strings) {
-    throw new FyException(null, "Illegal status: strings already parsed");
-  }
-  var t0 = performance.now();
-  var decompressed = LZString
-    .decompressFromUTF16(str);
-  var pos = 0;
-  var idx;
-  var len = decompressed.length;
-  var strLen;
-  this.strings = [];
-  while (pos < len) {
-    strLen = decompressed.charCodeAt(pos++);
-    if (pos + strLen > len) {
-      throw new FyException(null, "Failed decoding strings strId=" + this.strings.length + " pos=" + pos + " strLen=" + strLen + " len=" + len);
-    }
-    this.strings.push(decompressed.substring(pos, pos + strLen));
-    pos += strLen;
-  }
-  console.log("String decode " + (performance.now() - t0) + "ms, entries=" + this.strings.length);
-};
-
-/**
- * @param  {string} str
- */
-FyClassDef.prototype.addConstants = function(str) {
-  if (this.constants) {
-    throw new FyException(null, "Illegal status: constants already parsed");
-  }
-  var t0 = performance.now();
-  var constantsStr = LZString
-    .decompressFromUTF16(str);
-  this.constants = new Int32Array(
-    constantsStr.length >> 1);
-  for (var i = 0, max = constantsStr.length; i < max; i++) {
-    this.constants[i >> 1] |= constantsStr
-      .charCodeAt(i) << ((i & 1) << 4);
-
-  }
-  console.log("Constants decode " + (performance.now() - t0) + "ms");
-}
-
-/**
- * @param  {string} str
- */
-FyClassDef.prototype.addCode = function(str) {
-  if (this.code) {
-    throw new FyException(null, "Illegal status: constants already parsed");
-  }
-  var t0 = performance.now();
-  var codeStr = LZString
-    .decompressFromUTF16(str);
-  this.code = new Int32Array(
-    codeStr.length >> 1);
-  for (var i = 0, max = codeStr.length; i < max; i++) {
-    this.code[i >> 1] |= codeStr
-      .charCodeAt(i) << ((i & 1) << 4);
-
-  }
-  console.log("Code decode " + (performance.now() - t0) + "ms");
-}
-
-/**
- * @param  {string} name
- * @param  {string} def
- */
-FyClassDef.prototype.addClassDef = function(name, def) {
-  this.classes[name] = def;
-}
-
-/**
- * @param  {string} name
- * @param  {string} content
- */
-FyClassDef.prototype.addFile = function(name, content) {
-  this.files[name] = content;
-}
-/**
  * Walk through all interfaces from one class, and invoke a custom function on
  * it
  *
@@ -447,11 +333,7 @@ FyContext.prototype.addClassDef = function(data) {
         value = line;
         def.addStrings(value);
         break;
-      case 3: //strings
-        value = line;
-        def.addCode(value);
-        break;
-      case 4: //files
+      case 3: //files
         splitter = line.indexOf("\0");
         if (splitter < 0 || splitter >= line.length - 1) {
           key = line;
@@ -1264,8 +1146,8 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
               var name, value;
               if (data.op === "loadProgress") {
                 if (callbacks["loadProgress"]) {
-                  callbacks["loadProgress"](url, 
-                    data.value.substring(0, data.value.indexOf("/")) | 0, 
+                  callbacks["loadProgress"](url,
+                    data.value.substring(0, data.value.indexOf("/")) | 0,
                     data.value.substring(data.value.indexOf("/") + 1) | 0);
                 }
               } else if (data.op === "loadStart") {
@@ -1291,10 +1173,7 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
               } else if (data.op === "strings") {
                 value = data.value;
                 def.addStrings(value);
-              } else if (data.op === "code") {
-                value = data.value;
-                def.addCode(value);
-              } else if (data.op === "file")  {
+              } else if (data.op === "file") {
                 value = data.value;
                 name = data.name;
                 def.addFile(name, value);
@@ -1309,7 +1188,7 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
                 if ("done" in callbacks) {
                   callbacks["done"](url, count);
                 }
-                if (count === 0) {
+                if (count === 0 && !failed) {
                   if ("success" in callbacks) {
                     callbacks["success"]();
                   }
@@ -1320,7 +1199,7 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
                 if ("error" in callbacks) {
                   callbacks["error"](url, "Can't parse data from " + url);
                 }
-              }else{
+              } else {
                 console.log("Unknown op: " + data.op);
                 console.log(data);
               }
@@ -1352,6 +1231,104 @@ FyContext.prototype.loadClassDefines = function(urls, callbacks) {
     // node
   }
 };
+
+FyContext.prototype.loadClassDefinesDirectly = function(domain, urls, callbacks) {
+  if (typeof urls == "string") {
+    urls = [urls];
+  }
+
+  var defPosBegin = this.classDefs.length;
+  for (var i = 0; i < urls.length; i++) {
+    this.classDefs.push(null);
+  }
+
+  if (window.document) {
+    document.domain = domain;
+    // browser
+    var i;
+    var failed = false;
+    var count = urls.length;
+    for (i = 0; i < urls.length; i++) {
+      (
+        /**
+         * @param {FyContext}
+         *            context
+         * @param {string}
+         *            url
+         */
+        function(context, url, idx) {
+          /**
+           * @type {HTMLIFrameElement|Element}
+           */
+          var iframe;
+          var hash = "#" + Math.floor(Math.random() * (2147483647)).toString(16) + "-" + Math.floor(Math.random() * (2147483647)).toString(16) + "|" + domain;
+          var def;
+
+          iframe = document.createElement("iframe");
+          iframe.setAttribute("src", url + hash);
+          iframe.setAttribute("class", "fisce-data-iframe");
+          iframe.style.width = "0px";
+          iframe.style.height = "0px";
+          iframe.style.position = "static";
+          iframe.style.left = "0";
+          iframe.style.top = "0";
+          iframe.style.overflow = "hidden";
+          iframe.style.border = "none";
+          iframe.addEventListener("error", function() {
+            failed = true;
+            if ("error" in callbacks) {
+              callbacks["error"](url, "Can't read data from " + url);
+            }
+          });
+          iframe.addEventListener("load", function() {
+            iframe.contentWindow["loadDataDirect"](
+              /**
+               * @param  {string} op
+               * @param  {string} value
+               */
+              function(op, value) {
+                if (op == "loadStart") {
+                  if ("loadStart" in callbacks) {
+                    callbacks["loadStart"](url);
+                  }
+                } else if (op == "loadProgress") {
+                  if (callbacks["loadProgress"]) {
+                    callbacks["loadProgress"](url,
+                      value.substring(0, value.indexOf("/")) | 0,
+                      value.substring(value.indexOf("/") + 1) | 0);
+                  }
+                } else if (op == "loadSuccess") {
+                  if ("loadSuccess" in callbacks) {
+                    callbacks["loadSuccess"](url);
+                  }
+                  count--;
+                  def = new FyRemoteClassDef(iframe.contentWindow);
+                  def.addStrings(iframe.contentWindow["getStrings"]());
+                  def.addConstants(iframe.contentWindow["getConstants"]());
+                  context.classDefs[idx] = def;
+                  if ("done" in callbacks) {
+                      callbacks["done"](url);
+                    }
+                  if (count === 0 && !failed) {
+                    if ("success" in callbacks) {
+                      callbacks["success"](url);
+                    }
+                  }
+                } else if (op == "loadError") {
+                  failed = true;
+                  if ("error" in callbacks) {
+                    callbacks["error"](url, "Can't read data from " + url);
+                  }
+                }
+              })
+          });
+          document.getElementsByTagName("body")[0].appendChild(iframe);
+        })(this, urls[i], i + defPosBegin);
+    }
+  } else {
+    // node
+  }
+}
 
 /**
  * @export
